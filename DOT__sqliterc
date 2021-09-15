@@ -1,0 +1,6 @@
+-- pretty display :
+.mode column
+.headers on
+
+-- properly load CSV with ".import myfile.csv mytable" :
+.separator ","
