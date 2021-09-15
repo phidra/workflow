@@ -1,0 +1,551 @@
+"########################################################################################################################
+"# zR / zM  = déplier / replier tous les folds
+"########################################################################################################################
+
+
+"# GÉNÉRALITÉS : {{{
+"########################################################################################################################
+
+set tabstop=4         " largeur d'affichage des tabulations
+set shiftwidth=4      " nombre d'espaces à insérer quand on indente
+set expandtab         " forcer l'utilisation des espaces au lieu de tabulations
+set textwidth=0       " désactiver la coupure automatique d'une ligne
+set mouse=a           " activer la souris (par contre on ne peut-plus copier-coller une sélection à la souris depuis une autre application)
+set incsearch         " surbrillance en cours de tapage d'une recherche
+set hlsearch          " surbrillance des résultats d'une recherche
+set noignorecase      " ignorer la casse dans les recherches :
+set tabpagemax=30     " pas plus de tant d'onglets
+set bufhidden=delete  " suppression d'un buffer lorsqu'il devient caché :
+set breakat=" "       " seuls les espaces 'cassent' des lignes (e.g. pour ne pas splitter une URL)
+set foldlevelstart=99 " Tous les folds automatiques sont ouverts par défaut :
+set whichwrap=b,s,<,>,[,],h,l  " pouvoir se déplacer d'une ligne à l'autre avec ces touches
+set wrap
+set backspace=indent,eol,start  " cf. https://vi.stackexchange.com/questions/2162/why-doesnt-the-backspace-key-work-in-insert-mode
+
+" Par défaut, on désactive les pair-match facilities, (à réactiver pour les buffers de code).
+" (en effet, hors du code, c'est relou de voir se colorer une parenthèse quand je survole sa parente)
+let g:loaded_matchparen = 0
+set noshowmatch
+
+let g:mapleader = "ç"
+
+" Coloration syntaxique (désactivé pour le mode vimdiff, pour bien voir tous les caractères)
+if ! &diff
+    syntax on                  " À placer AVANT la ligne filetype
+    filetype plugin indent on  " À placer APRÈS la ligne syntax
+endif
+
+colorscheme morning
+
+" (généralités) }}}
+
+
+"# CODE : {{{
+"########################################################################################################################
+
+let g:codepatterns = [
+            \ '*.html',
+            \ '*.css',
+            \ '*.py',
+            \ '*.js',
+            \ '*.c',
+            \ '*.cpp',
+            \ '*.h',
+            \ '*.hpp',
+            \ '*.rb'
+            \]
+
+for codepattern in g:codepatterns
+    execute "autocmd BufEnter " . codepattern . " call CodeSettings()"
+    colorscheme morning
+endfor
+
+function CodeSettings()  " settings spécifiques aux buffers contenant du code
+    " Affichage de limites verticales à 100 caractères :
+    set colorcolumn=100  " possible aussi : 80,100,120
+    highlight ColorColumn ctermbg=LightRed ctermfg=Black
+    highlight TrailingWhitespace ctermbg=red
+    match TrailingWhitespace  /\s\+$/
+    set nu
+endfunction
+
+" Coloration des non-breakable spaces :
+highlight nbspColor ctermbg=red
+call matchadd("nbspColor", " ")
+
+" Compatibilité tmux (cf. https://sunaku.github.io/vim-256color-bce.html), qui nécessite côté tmux :
+" set-window-option -g xterm-keys on
+" set -g default-terminal "screen-256color"
+set t_ut=
+redraw
+
+" " buffer HTML => template django => commentaire jinja2 :
+" autocmd BufEnter *.html setlocal filetype=htmldjango
+" autocmd FileType htmldjango set commentstring={#%s#}
+
+runtime macros/matchit.vim  " permet de switcher entre les tags HTML avec %
+
+" Folding avec les brackets triples {{{ }}} pour l'édition des fichiers vim (y compris le présent fichier) :
+augroup filetype_vim
+    autocmd!
+    autocmd FileType vim setlocal foldmethod=marker
+    autocmd FileType vim setlocal foldlevel=0
+augroup END
+
+augroup json
+    autocmd FileType json setlocal foldmethod=syntax
+augroup END
+
+" Par défaut, on recherche 'tags' jusqu'à la racine :
+set tags=tags;/
+
+" Augmenter la taille de la QuickfixList (et la réduire si inutile) :
+" cf. http://vim.wikia.com/wiki/Automatically_fitting_a_quickfix_window_height
+function! AdjustWindowHeight(minheight, maxheight)
+  exe max([min([line("$"), a:maxheight]), a:minheight]) . "wincmd _"
+endfunction
+autocmd FileType qf call AdjustWindowHeight(3, 40)
+
+" (code) }}}
+
+
+"# PERSONNALISATION DE LA FENÊTRE {{{
+"########################################################################################################################
+
+" Barre de statut (cf. :help statusline) :
+set laststatus=2
+if has("statusline")
+  set statusline=%m       " flag de modification : [+]
+  set statusline=\ %F     " chemin du fichier édité
+  set statusline+=%r%h%w  " flags RO / help / preview
+  set statusline+=%=      " passe de l'autre côté de la ligne
+  set statusline+=FT=%y   " filetype
+  set statusline+=\ \|\ EOL=%{&fileformat}           " fileformat (ex: python, ou vo_base)
+  set statusline+=\ \|\ %{(&fenc==\"\"?&enc:&fenc)}  " encoding
+  set statusline+=\ \|\ C=%v                         " colonne actuelle
+  set statusline+=\ \|\ L=%l/%L                      " ligne actuelle / lignes totales
+endif
+
+" Changement de couleur en mode insertion (help ctermbg) :
+if version >= 700
+  autocmd InsertEnter * hi StatusLine term=reverse ctermfg=1
+  autocmd InsertLeave * hi StatusLine term=reverse ctermfg=0 ctermbg=7
+endif
+
+" Coloration des tabulations :
+highlight TabulationsColor ctermbg=LightRed
+call matchadd("TabulationsColor", "\t")
+
+" Ligne des tabs (cf. :help setting-tabline)
+highlight UnsavedTabLine term=underline cterm=underline ctermfg=1 ctermbg=7 gui=underline guibg=LightGrey
+highlight UnsavedTabLineSel ctermfg=1 term=bold cterm=bold gui=bold " Copie modifiée de TabLineSel
+
+function MyTabLine()
+    let return_string = ''
+    for fake_tab_number in range(tabpagenr('$'))
+        " Initialisation des variables :
+        let tab_number = fake_tab_number + 1
+        let buflist = tabpagebuflist(tab_number)
+        let win_number = tabpagewinnr(tab_number)
+        let buffer_number = buflist[win_number - 1]
+        let is_buffer_modified = getbufvar(buffer_number, "&modified")
+
+        " Coloration du tab courant (dépend du fait qu'il soit sélectionné, et qu'il soit modifié) :
+        if tab_number == tabpagenr()
+            if is_buffer_modified
+                let return_string .= '%#UnsavedTabLineSel#'
+            else
+                let return_string .= '%#TabLineSel#'
+            endif
+        else
+            if is_buffer_modified
+                let return_string .= '%#UnsavedTabLine#'
+            else
+                let return_string .= '%#TabLine#'
+            endif
+        endif
+
+        " Numéro de l'onglet (pour les clics de souris) :
+        let return_string .= '%' . tab_number . 'T'
+
+        " Le titre du tab courant est le nom court du buffer :
+        let tab_name = fnamemodify(bufname(buffer_number), ":t")
+        if empty(tab_name)
+            let tab_name = "*EMPTY*"
+        endif
+        let return_string .= ' ' . tab_name . ' '
+    endfor
+
+    " Complétion de la ligne avec TabLineFill, et reset du tab page number :
+    let return_string .= '%#TabLineFill#%T'
+
+    " Ajout du symbole de fermeture, aligné à droite :
+    let close_symbol = 'X'
+    if tabpagenr('$') > 1
+        let return_string .= '%=%#TabLine#%999X' . close_symbol
+    endif
+
+    return return_string
+endfunction
+
+set tabline=%!MyTabLine()
+
+" (personnalisation de la fenêtre) }}}
+
+
+"# VIMOUTLINER / VIMDIFF {{{
+"########################################################################################################################
+
+function RobustDeleteTabMatch()
+    " Suppression de la coloration des tabulations, robuste à l'absence du match :
+    for potential_match in getmatches()
+        let l:group = potential_match["group"]
+        let l:id = potential_match["id"]
+        let l:tabcolor = "TabulationsColor"
+        " On ne supprime le match que s'il existe :
+        if l:group == l:tabcolor
+            call matchdelete(l:id)
+        endif
+    endfor
+endfunction
+
+" Options spécifiques à VimOutliner :
+autocmd BufEnter *.otl setlocal wrap " Remettre le wrap
+autocmd BufEnter *.otl setlocal linebreak " Remettre le linebreak
+autocmd BufEnter *.otl call RobustDeleteTabMatch() " Supprimer la coloration des tabulations
+
+
+" Options spécifiques à vimdiff :
+" On colorie toutes les lignes de la même façon = MatchParen :
+highlight! link DiffAdd MatchParen
+highlight! link DiffDelete MatchParen
+highlight! link DiffChange MatchParen
+highlight! link DiffText Todo  " dans une ligne, la couleur Todo qui signale le changement
+
+" (vimoutliner/vimdiff) }}}
+
+
+"# MES ALIAS HORS PLUGINS  {{{
+"########################################################################################################################
+
+" Navigation dans les onglets avec ALT + gauche/droite (EDIT : fonctionne aussi avec gt/gT)
+noremap  <A-Right>        :tabn<CR>
+inoremap <A-Right>   <Esc>:tabn<CR>
+noremap  <A-Left>         :tabp<CR>
+inoremap <A-Left>    <Esc>:tabp<CR>
+
+" Défiler l'écran (sans bouger le curseur) avec CTRL + haut/bas
+noremap   <C-Down> <C-E>
+inoremap  <C-Down> <C-E>
+noremap!  <C-Down> <C-X><C-E>
+" NOTE : pour C-Y, je dois désactiver le timeout pour ne pas interférer avec emmet.
+noremap   <C-Up>   :set notimeout nottimeout<CR><C-Y>:set timeout ttimeout<CR>
+inoremap  <C-Up>   <Esc>:set notimeout nottimeout<CR><C-Y>:set timeout ttimeout<CR>i
+noremap!  <C-Up>   <C-X><C-Y>
+
+" ouverture d'un tag directement dans un onglet :
+" cf.  https://stackoverflow.com/questions/22776092/have-vim-tag-matchlist-open-a-new-tab/22788353#22788353
+"     s'il n'y a qu'un match, on l'ouvre dans un tab
+"     s'il y a plusieurs matchs, ouvre la matchlist dans un tab
+"     ça n'empêche pas d'utiliser C-] / C-t  pour naviguer vers un tag dans la fenêtre courante
+" NOTE : autre option = mapper la séquence : C-W + C-]  puis C-W + S-T
+nnoremap \| :tab tjump <C-r><C-w><CR>
+
+" Toggle d'options utiles :
+noremap <leader><leader>h :set hlsearch!<CR>:set hlsearch?<CR>
+noremap <leader><leader>i :set ignorecase!<CR>:set ignorecase?<CR>
+noremap <leader><leader>n :set nu!<CR>:set nu?<CR>
+noremap! <leader><leader>h <Esc>:set hlsearch!<CR>:set hlsearch?<CR>a
+noremap! <leader><leader>i <Esc>:set ignorecase!<CR>:set ignorecase?<CR>a
+noremap! <leader><leader>n <Esc>:set nu!<CR>:set nu?<CR>a
+
+" Refresh de la syntaxe :
+noremap <leader><leader>syntax :syntax sync fromstart<CR>
+noremap! <leader><leader>syntax <Esc>:syntax sync fromstart<CR>a
+
+
+" récupérer facilement le répertoire racine d'un éventuel projet git :
+" cf. https://github.com/mileszs/ack.vim/issues/188#issuecomment-417939294
+function! Git_root()
+  return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
+endfunction
+
+function! Cat_to_git_root(file)
+    " note : a final space is added to facilitate the append of the next text
+    return Git_root() . '/' . a:file . ' '
+endfunction
+
+" exécution de ctags :
+noremap  <F5>              :execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
+noremap! <F5>         <Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
+vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
+" NOTE : exemples de commandes de génération de tags :
+"     apt-get install exuberant-ctags 
+"     ctags -R --exclude='.git' --languages=python
+"     ctags -R --exclude='.git' --languages=python,js
+"     ctags -R --exclude='.git' --languages=python,js -f myspecifictagfile
+
+
+" Ctrl+r prépare à insérer le contenu de... quelque chose (registre, mot sous le curseur, etc.) :
+" :help C-r
+"
+" Ctrl+r suivi de " insère le registre anonyme
+" peut-être utilisé dans un mapping, permettant par exemple en visualmode de récupérer la sélection avec :
+" vnoremap <leader>echoselection  y:echo '<C-R>"'<CR>
+" EXPLICATION :
+"    le "y" yanke la sélection (et le place donc dans le registre anonyme ")
+"    le <C-R>"  utilise le contenu du registre anonyme
+"
+" Ctrl+r suivi de <C-w> insère le mot sous le curseur :
+"    noremap <leader>pouet  y:echo '<C-R>"'<CR>
+" c'est très pratique même manuellement : pour rechercher le mot sous le curseur, je peux taper moi-même :
+"     :Ag <C-r> <C-w>
+" <cword> est une variable qui représente le word sous le curseur :-o
+
+
+ " (mes alias hors plugins) }}}
+
+
+"# PLUGINS {{{
+"########################################################################################################################
+
+call plug#begin('~/.vim/plugged')
+Plug 'https://github.com/scrooloose/nerdtree.git', { 'on':  'NERDTreeToggle' }
+Plug 'https://github.com/godlygeek/tabular.git', {'on': 'Tabularize' }
+Plug 'https://github.com/majutsushi/tagbar', {'on': 'TagbarOpenAutoClose' }
+Plug 'https://github.com/kien/ctrlp.vim'
+Plug 'https://github.com/Yggdroot/indentLine'
+Plug 'https://github.com/tpope/vim-surround.git'
+Plug 'https://github.com/tpope/vim-fugitive', {'on': 'Gblame' }
+Plug 'https://github.com/nvie/vim-flake8', {'for': 'python' }
+Plug 'https://github.com/tpope/vim-commentary.git'
+Plug 'https://github.com/tpope/vim-repeat.git'
+Plug 'https://github.com/vim-scripts/a.vim'
+Plug 'https://github.com/mattn/emmet-vim.git', {'for': 'html' }
+Plug 'https://github.com/plasticboy/vim-markdown', {'for': 'markdown'}
+Plug 'https://github.com/habamax/vim-asciidoctor', {'for': 'asciidoc'}
+Plug 'https://github.com/mileszs/ack.vim'
+Plug 'https://github.com/tpope/vim-repeat'
+Plug 'https://github.com/tpope/vim-characterize'
+Plug 'https://github.com/dense-analysis/ale'
+Plug 'https://github.com/vimoutliner/vimoutliner.git'
+Plug 'https://github.com/psliwka/vim-smoothie'
+Plug 'https://github.com/chr4/nginx.vim',
+" un jour utilisés, aujourd'hui abandonnés :
+" https://github.com/elzr/vim-json
+" https://github.com/LucHermitte/local_vimrc
+" https://github.com/LucHermitte/lh-vim-lib
+" https://github.com/tmhedberg/SimpylFold
+" https://github.com/jlanzarotta/bufexplorer
+" Plug 'https://github.com/rking/ag.vim'
+" Plug 'https://github.com/airblade/vim-rooter'
+" Plug 'https://github.com/integralist/vim-mypy', {'for': 'python' }
+call plug#end()
+
+" Désactiver le conceal pour markdown :
+" NOTE 2020-12 : indentLine nécessite conceallevel >= 0, et je voudrais le désactiver pour vim-markdown.
+" g:vim_markdown_conceal n'a pas l'air de marcher, donc je contourne le problème :
+"   - je sette le conceallevel global à 1
+"   - je désactive l'overwriting du conceallevel par indentLine
+"   - je sette le conceallevel à 0 pour le markdown
+" cf. les docs d'indentLine et vim-markdown, ainsi que : https://github.com/plasticboy/vim-markdown/issues/253
+let g:indentLine_setConceal = 0
+set conceallevel=1
+au FileType markdown setl conceallevel=0
+
+" utilisation d'ack.vim (mais je garde le raccourci Ag qui est plus court) :
+let g:ackprg = 'ag --vimgrep --smart-case'
+" recherche dans tout le projet git :
+command! -nargs=1 Ag execute "Ack! <args> " . Git_root()
+" recherche dans le même répertoire que le fichier courant :
+command! -nargs=1 AgLocal  execute "Ack! <args> " . expand("%:p:h")
+cnoreabbrev Agl AgLocal
+" TODO : permettre une recherche case-sensitive / case-insensitive ?
+
+" NERDTree :
+let g:NERDTreeWinSize=60
+let g:NERDTreeIgnore=['\.pyc$', '\~$']
+let g:NERDTreeQuitOnOpen=1
+" NERDTree sur le même répertoire que le fichier courant = expand("%:p:h") :
+noremap <F8>               :execute ':NERDTree ' . expand("%:p:h")<CR>
+noremap! <F8>         <Esc>:execute ':NERDTree ' . expand("%:p:h")<CR>
+vnoremap <F8>    <Esc><Esc>:execute ':NERDTree ' . expand("%:p:h")<CR>
+" NERDTree sur le répertoire racine d'un éventuel projet git :
+noremap <S-F8>               :execute ':NERDTree ' . Git_root()<CR>
+noremap! <S-F8>         <Esc>:execute ':NERDTree ' . Git_root()<CR>
+vnoremap <S-F8>    <Esc><Esc>:execute ':NERDTree ' . Git_root()<CR>
+
+
+" lancer Tabularize sur une sélection
+vnoremap <C-T> :Tabularize /
+
+" " Ajout de surroundings particuliers pour django (cf. https://code.djangoproject.com/wiki/UsingVimWithDjango) :
+" let g:surround_{char2nr("v")} = "{{ \r }}"
+" let g:surround_{char2nr("%")} = "{% \r %}"
+" let g:surround_{char2nr("b")} = "{% block \1block name: \1 %}\r{% endblock \1\1 %}"
+" let g:surround_{char2nr("i")} = "{% if \1condition: \1 %}\r{% endif %}"
+" let g:surround_{char2nr("w")} = "{% with \1with: \1 %}\r{% endwith %}"
+" let g:surround_{char2nr("f")} = "{% for \1for loop: \1 %}\r{% endfor %}"
+" let g:surround_{char2nr("c")} = "{% comment %}\r{% endcomment %}"
+" let g:surround_{char2nr("#")} = "{# \r #}"
+
+" Alternate (a.vim) :
+noremap <S-F12>               :execute ':A'<CR>
+noremap! <S-F12>         <Esc>:execute ':A'<CR>
+vnoremap <S-F12>    <Esc><Esc>:execute ':A'<CR>
+
+" Ctrl+P :
+set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.pyc
+
+" Ne pas masquer les guillemets en json :
+let g:vim_json_syntax_conceal = 0
+
+" flake8
+let g:flake8_quickfix_height=3
+let g:flake8_show_quickfix=0
+let g:flake8_show_in_file=1
+let g:flake8_show_in_gutter=1
+autocmd BufWritePost *.py call Flake8()  " lancement automatique au save de fichiers python
+" effacer les marqueurs flake8 avec F12:
+noremap <F12>             :call flake8#Flake8UnplaceMarkers()<CR>
+noremap! <F12>       <Esc>:call flake8#Flake8UnplaceMarkers()<CR>
+vnoremap <F12>  <Esc><Esc>:call flake8#Flake8UnplaceMarkers()<CR>
+
+" TagBar :
+let g:tagbar_sort = 0  " par défaut, les tags sont triés par ordre d'apparition dans le fichier.
+noremap <F9>             :TagbarOpenAutoClose<CR>
+noremap! <F9>       <Esc>:TagbarOpenAutoClose<CR>
+vnoremap <F9>  <Esc><Esc>:TagbarOpenAutoClose<CR>
+
+" Voir les indentations python :
+" cf. https://github.com/nathanaelkane/vim-indent-guide://github.com/Yggdroot/indentLine
+let g:indentLine_char = '┊'
+let g:indentLine_enabled = 1
+
+" cf. journal du jeudi 4 février 2021
+" TL;DR : la valeur par défaut de cette option (-std=c++14 -Wall) ne convient
+" pas à tous les projets, et écrase le contenu de compile_commands.json
+" En settant cette variable à une string vide, j'autorise ALE à utiliser
+" correctement compile_commands.json
+let g:ale_cpp_cc_options = ''
+" EDIT : arf, semble nécessaire tout de même pour les headers (sans doute car
+" ils n'ont pas d'information les concernant dans compile_commands.json)
+let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' -std=c++17'
+" par ailleurs, pour contourner les warnings/erreurs à la compilation de boost
+" lorsque boost est installé par conan, j'ajoute :
+let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' --system-header-prefix=boost/'
+let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' -Wno-pragma-once-outside-header'
+
+let g:ale_default_navigation = 'tab'
+
+" scrolling plus rapide avec smoothie :
+let g:smoothie_base_speed = 15
+let g:smoothie_speed_exponentiation_factor = 0.95
+
+
+" (plugins) }}}
+
+
+function CheatsheetFunction()
+    let mycheatsheet  = [
+        \ "",
+        \ "Pour afficher cette cheatsheet :   CTRL+h  /  :Cheat  /  :call CheatsheetFunction()",
+        \ "",
+        \ "======= SEARCH :",
+        \ "    :copen / :ccl[ose]     ouvrir / fermer la quickfix list",
+        \ "    :Ag  pattern           rechercher un pattern dans tout le projet git",
+        \ "    :Agl pattern           (alias pour AgLocal) rechercher un pattern dans le répertoire courant",
+        \ "      ├─ t                  dans la fenêtre quickfix, ouvrir le fichier dans un nouvel onglet",
+        \ "      ├─ o                  dans la fenêtre quickfix, ouvrir le fichier dans l'onglet courant",
+        \ "      ├─ q                  dans la fenêtre quickfix, fermer la quickfix sans rien ouvrir",
+        \ "      └─ q                  dans la fenêtre quickfix, fermer la quickfix sans rien ouvrir",
+        \ "    F8                     ouvrir NERDTree sur le répertoire courant",
+        \ "    S-F8                   ouvrir NERDTree sur le répertoire racine git",
+        \ "      ├─ o / Entrée         sans fermer le NERDTree, ouvrir le fichier dans l'onglet actuel",
+        \ "      ├─ T                  sans fermer le NERDTree, ouvrir le fichier dans un nouvel onglet",
+        \ "      └─ q                  fermer le NERDTree",
+        \ "    F9                     ouvrir la tagbar du fichier courant",
+        \ "      ├─ q                  fermer la tagbar",
+        \ "      ├─ o                  plier/déplier un folding de la tagbar",
+        \ "      ├─ Entrée             sauter sur le tag, et fermer la tagbar",
+        \ "      └─ p                  afficher le tag, mais garder le curseur sur la tagbar",
+        \ "    CTRL-p                 fuzzy search",
+        \ "      ├─ CTRL-t             dans la fenêtre quickfix, ouvrir le fichier dans un onglet",
+        \ "      ├─ Entrée             dans la fenêtre quickfix, ouvrir le fichier dans l'onglet courant",
+        \ "      └─ CTRL-d             dans la fenêtre quickfix, limiter le pattern au fichier vs. path",
+        \ "",
+        \ "======= VRAC PLUGINS :",
+        \ "    https://github.com/junegunn/vim-plug",
+        \ "      ├─ :PlugStatus        liste des plugins et leur status",
+        \ "      ├─ :PlugUpdate        liste des plugins + mise à jour",
+        \ "      └─ :PlugClean         suppression effective d'un plugin après l'avoir supprimé du vimrc",
+        \ "    :call Flake8()         lance flake8 (automatique au save d'un *.py), config = ~/.config/flake8",
+        \ "    F12                    toggle les marqueurs flake8, shortcut pour :call flake8#Flake8UnplaceMarkers()",
+        \ "    S-F12                  alterner entre .h / .cpp",
+        \ "    :AT                    alterner entre .h / .cpp dans un nouvel onglet",
+        \ "    CTRL-Y + ,             lancer emmet (pour tags HTML faciles)",
+        \ "    CTRL-T + <sep>         tabularize avec des colonnes séparées par <sep>",
+        \ "    :IndentLinesToggle     toggle le marqueur des indentations python",
+        \ "",
+        \ "======= MES ALIAS PERSOS (hors plugins) :",
+        \ "    CTRL-HAUT/BAS          scroller une ligne vers le bas/haut",
+        \ "    ALT-DROITE/GAUCHE      :tabNext / :tabPrev  (EDIT : également commandes natives : gt/gT)",
+        \ "    ççh                    toggle hlsearch",
+        \ "    ççi                    toggle ignorecase",
+        \ "    ççn                    toggle line numbers",
+        \ "    ççsyntax               refresh la syntaxe",
+        \ "    F5                     lancement de ctags sur le git-root-dir",
+        \ "    |                      ouvrir le tag dans un onglet (ou sinon : C-w + C-]  puis C-w + S-T)",
+        \ "",
+        \ "======= CORE VIM FEATURES :",
+        \ "    CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur",
+        \ "    :help tags",
+        \ "      ├─build tags :",
+        \ "      │   apt install exuberant-ctags",
+        \ "      │   ctags --recurse --c++-kinds=+p --fields=+iaS --extras=+q .",
+        \ "      ├─CTRL+]              jumper à la définition du tag",
+        \ "      ├─CTRL+t              revenir à l'emplacement précédent",
+        \ "      ├─g puis CTRL+]       choisir la destination du jump dans une liste",
+        \ "      └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'",
+        \ "    :help fold",
+        \ "      ├─:set foldlevel=3    setter le foldlevel",
+        \ "      ├─zO / zC             ouvrir/fermer le fold actuel et tous ses fils",
+        \ "      ├─zr / zm             ouvrir/fermer un niveau de fold supplémentaire",
+        \ "      └─zR / zM             ouvrir/fermer TOUS les folds du fichier (utile dans vimdiff)",
+        \ "    vimdiff file1 file2",
+        \ "      ├─dp                  [P]ut the diff to other file",
+        \ "      ├─do                  [O]btain the diff from other file",
+        \ "      ├─:diffupdate         refresh diff",
+        \ "      ├─CTRL-w + w          mettre le curseur sur l'autre fichier",
+        \ "      └─zR / zM             afficher/masquer les portions identiques du fichier",
+        \ "    :help split",
+        \ "      ├─CTRL-w + _          maximiser le split courant",
+        \ "      ├─CTRL-w + =          égaliser les splits",
+        \ "      ├─:res[ize] 15        setter la taille du split à 15",
+        \ "      ├─:res[ize] +3        augmenter la taille du split de 3 (également CTRL-w - 3+)",
+        \ "      ├─CTRL-w + w          déplacer le focus sur un autre split",
+        \ "      └─CTRL-w + CTRL-r     swapper les splits",
+        \ "    :help C-r",
+        \ "      ├─CTRL-r + REG        insère le contenu du registre REG (\" pour le registre anonyme)",
+        \ "      ├─CTRL-r + /          insère le pattern de recherche",
+        \ "      └─CTRL-r + CTRL-w     insère le mot sous le curseur",
+        \ "    :norm! @a              applique la macro 'a' (à utiliser sur un groupe de lignes)",
+        \ "    :set conceallevel=0    ne pas masquer de texte (e.g. markdown)",
+        \ "    :echo mapleader        afficher le <leader> actuel",
+        \ "    :map STRING            afficher les mappings commençant par STRING -> doc de mes raccourcis !",
+        \ "    :map <leader>          afficher les mappings commençant par <leader> (marche aussi avec p.ex. <F5>)",
+        \ "    ma / 'a                définir la / sauter vers la marque <a>",
+        \ "    ''                     après avoir sauté vers une marque, '' permet de revenir là où on était",
+        \ "",
+        \ "    ... to be continued ...",
+        \ "",
+        \ ]
+    tabnew mycheatsheet
+    call append(0, mycheatsheet)
+    call cursor(1, 1)
+endfunction
+command Cheat call CheatsheetFunction()
+command Cheatsheet call CheatsheetFunction()
+noremap <C-h>             :Cheat<CR>
+noremap! <C-h>       <Esc>:Cheat<CR>
+vnoremap <C-h>  <Esc><Esc>:Cheat<CR>
