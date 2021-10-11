@@ -21,6 +21,8 @@ set foldlevelstart=99 " Tous les folds automatiques sont ouverts par défaut :
 set whichwrap=b,s,<,>,[,],h,l  " pouvoir se déplacer d'une ligne à l'autre avec ces touches
 set wrap
 set backspace=indent,eol,start  " cf. https://vi.stackexchange.com/questions/2162/why-doesnt-the-backspace-key-work-in-insert-mode
+set splitbelow
+set splitright
 
 " Par défaut, on désactive les pair-match facilities, (à réactiver pour les buffers de code).
 " (en effet, hors du code, c'est relou de voir se colorer une parenthèse quand je survole sa parente)
