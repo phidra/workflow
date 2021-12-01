@@ -466,6 +466,9 @@ let g:splitjoin_trailing_comma = 1
 " (il faut donc que je réapplique manuellement l'opérateur '=' après avoir utilisé splitjoin)
 autocmd FileType c,cpp map <buffer> = <Plug>(operator-clang-format)
 
+" disabling polyglot ftdetect, in order for OTL files to properly be detected :
+let g:polyglot_disabled = ['ftdetect']
+
 " (plugins) }}}
 
 
