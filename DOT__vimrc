@@ -319,6 +319,9 @@ vnoremap = =gv
 "# PLUGINS {{{
 "########################################################################################################################
 
+" disabling polyglot ftdetect, in order for OTL files to properly be detected :
+let g:polyglot_disabled = ['ftdetect']  " must be set BEFORE polyglot is loaded
+
 call plug#begin('~/.vim/plugged')
 Plug 'https://github.com/scrooloose/nerdtree.git', { 'on':  'NERDTreeToggle' }
 Plug 'https://github.com/godlygeek/tabular.git', {'on': 'Tabularize' }
@@ -465,9 +468,6 @@ let g:splitjoin_trailing_comma = 1
 " (note : ça ne marche pas avec splitjoin, qui semble utiliser le formattage C++ par défaut)
 " (il faut donc que je réapplique manuellement l'opérateur '=' après avoir utilisé splitjoin)
 autocmd FileType c,cpp map <buffer> = <Plug>(operator-clang-format)
-
-" disabling polyglot ftdetect, in order for OTL files to properly be detected :
-let g:polyglot_disabled = ['ftdetect']
 
 " (plugins) }}}
 
