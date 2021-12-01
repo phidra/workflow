@@ -340,8 +340,9 @@ Plug 'https://github.com/tpope/vim-characterize'
 Plug 'https://github.com/dense-analysis/ale'
 Plug 'https://github.com/vimoutliner/vimoutliner.git'
 Plug 'https://github.com/psliwka/vim-smoothie'
-Plug 'https://github.com/chr4/nginx.vim',
-Plug 'https://github.com/AndrewRadev/splitjoin.vim',
+Plug 'https://github.com/chr4/nginx.vim'
+Plug 'https://github.com/AndrewRadev/splitjoin.vim'
+Plug 'https://github.com/sheerun/vim-polyglot'
 " un jour utilisés, aujourd'hui abandonnés :
 " https://github.com/elzr/vim-json
 " https://github.com/LucHermitte/local_vimrc
