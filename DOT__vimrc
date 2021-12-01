@@ -502,7 +502,7 @@ function CheatsheetFunction()
         \ "    CTRL-Y + ,             lancer emmet (pour tags HTML faciles)",
         \ "    CTRL-T + <sep>         tabularize avec des colonnes séparées par <sep>",
         \ "    :IndentLinesToggle     toggle le marqueur des indentations python",
-        \ "    :gJ  /  gS             splitter sur plusieurs lignes ou join les arguments d'une fonction",
+        \ "    :gJ  /  gS             split/join les arguments d'une fonction, placer curseur sur parenthèse ouvrante",
         \ "",
         \ "======= MES ALIAS PERSOS (hors plugins) :",
         \ "    CTRL-HAUT/BAS          scroller une ligne vers le bas/haut",
