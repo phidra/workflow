@@ -343,6 +343,8 @@ Plug 'https://github.com/psliwka/vim-smoothie'
 Plug 'https://github.com/chr4/nginx.vim'
 Plug 'https://github.com/AndrewRadev/splitjoin.vim'
 Plug 'https://github.com/sheerun/vim-polyglot'
+Plug 'https://github.com/kana/vim-operator-user'  " pour utiliser vim-clang-format avec '='
+Plug 'https://github.com/rhysd/vim-clang-format', {'for': 'cpp'}
 " un jour utilisés, aujourd'hui abandonnés :
 " https://github.com/elzr/vim-json
 " https://github.com/LucHermitte/local_vimrc
@@ -458,6 +460,11 @@ let g:smoothie_speed_exponentiation_factor = 0.95
 " splitjoin config :
 let g:splitjoin_python_brackets_on_separate_lines = 1
 let g:splitjoin_trailing_comma = 1
+
+" Utiliser clang-format pour indenter le code :
+" (note : ça ne marche pas avec splitjoin, qui semble utiliser le formattage C++ par défaut)
+" (il faut donc que je réapplique manuellement l'opérateur '=' après avoir utilisé splitjoin)
+autocmd FileType c,cpp map <buffer> = <Plug>(operator-clang-format)
 
 " (plugins) }}}
 
