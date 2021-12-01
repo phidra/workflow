@@ -341,6 +341,7 @@ Plug 'https://github.com/dense-analysis/ale'
 Plug 'https://github.com/vimoutliner/vimoutliner.git'
 Plug 'https://github.com/psliwka/vim-smoothie'
 Plug 'https://github.com/chr4/nginx.vim',
+Plug 'https://github.com/AndrewRadev/splitjoin.vim',
 " un jour utilisés, aujourd'hui abandonnés :
 " https://github.com/elzr/vim-json
 " https://github.com/LucHermitte/local_vimrc
@@ -427,7 +428,7 @@ noremap <F9>             :TagbarOpenAutoClose<CR>
 noremap! <F9>       <Esc>:TagbarOpenAutoClose<CR>
 vnoremap <F9>  <Esc><Esc>:TagbarOpenAutoClose<CR>
 
-" Voir les indentations python :
+" Voir les indentations, utile pour fichiers python :
 " cf. https://github.com/nathanaelkane/vim-indent-guide://github.com/Yggdroot/indentLine
 let g:indentLine_char = '┊'
 let g:indentLine_enabled = 1
@@ -452,6 +453,10 @@ let g:ale_default_navigation = 'tab'
 let g:smoothie_base_speed = 15
 let g:smoothie_speed_exponentiation_factor = 0.95
 
+
+" splitjoin config :
+let g:splitjoin_python_brackets_on_separate_lines = 1
+let g:splitjoin_trailing_comma = 1
 
 " (plugins) }}}
 
@@ -496,6 +501,7 @@ function CheatsheetFunction()
         \ "    CTRL-Y + ,             lancer emmet (pour tags HTML faciles)",
         \ "    CTRL-T + <sep>         tabularize avec des colonnes séparées par <sep>",
         \ "    :IndentLinesToggle     toggle le marqueur des indentations python",
+        \ "    :gJ  /  gS             splitter sur plusieurs lignes ou join les arguments d'une fonction",
         \ "",
         \ "======= MES ALIAS PERSOS (hors plugins) :",
         \ "    CTRL-HAUT/BAS          scroller une ligne vers le bas/haut",
