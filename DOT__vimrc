@@ -23,6 +23,10 @@ set wrap
 set backspace=indent,eol,start  " cf. https://vi.stackexchange.com/questions/2162/why-doesnt-the-backspace-key-work-in-insert-mode
 set splitbelow
 set splitright
+set title
+set list
+set listchars=tab:▶\ ,trail:◆
+set redrawtime=10000  " autorise le chargement de syntaxe à prendre plus de temps que les 2s par défaut
 
 " Par défaut, on désactive les pair-match facilities, (à réactiver pour les buffers de code).
 " (en effet, hors du code, c'est relou de voir se colorer une parenthèse quand je survole sa parente)
@@ -63,8 +67,8 @@ for codepattern in g:codepatterns
 endfor
 
 function CodeSettings()  " settings spécifiques aux buffers contenant du code
-    " Affichage de limites verticales à 100 caractères :
-    set colorcolumn=100  " possible aussi : 80,100,120
+    " Affichage de limites verticales à 120 caractères :
+    set colorcolumn=120  " possible aussi : 80,100,120
     highlight ColorColumn ctermbg=LightRed ctermfg=Black
     highlight TrailingWhitespace ctermbg=red
     match TrailingWhitespace  /\s\+$/
@@ -215,7 +219,7 @@ endfunction
 autocmd BufEnter *.otl setlocal wrap " Remettre le wrap
 autocmd BufEnter *.otl setlocal linebreak " Remettre le linebreak
 autocmd BufEnter *.otl call RobustDeleteTabMatch() " Supprimer la coloration des tabulations
-
+autocmd BufEnter *.otl setlocal listchars+=tab:\ \  " ne pas afficher les leading-tabs pour les fichiers OTL
 
 " Options spécifiques à vimdiff :
 " On colorie toutes les lignes de la même façon = MatchParen :
@@ -304,6 +308,10 @@ vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f 
 "     :Ag <C-r> <C-w>
 " <cword> est une variable qui représente le word sous le curseur :-o
 
+" indenter la sélection visuelle conserve celle-ci (au lieu de la déselectionner) :
+vnoremap < <gv
+vnoremap > >gv
+vnoremap = =gv
 
  " (mes alias hors plugins) }}}
 
