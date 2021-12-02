@@ -309,9 +309,11 @@ vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f 
 " <cword> est une variable qui représente le word sous le curseur :-o
 
 " indenter la sélection visuelle conserve celle-ci (au lieu de la déselectionner) :
-vnoremap < <gv
-vnoremap > >gv
-vnoremap = =gv
+" EDIT 2021-12-02 : finalement, je préfère le comportement normal -> je
+" commente en attendant de confirmer, et je supprimerai si besoin...
+" vnoremap < <gv
+" vnoremap > >gv
+" vnoremap = =gv
 
  " (mes alias hors plugins) }}}
 
