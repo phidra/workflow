@@ -25,7 +25,7 @@ set splitbelow
 set splitright
 set title
 set list
-set listchars=tab:▶\ ,trail:◆
+set listchars=tab:▶\ ,trail:●
 set redrawtime=10000  " autorise le chargement de syntaxe à prendre plus de temps que les 2s par défaut
 
 " Par défaut, on désactive les pair-match facilities, (à réactiver pour les buffers de code).
