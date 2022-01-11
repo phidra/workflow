@@ -132,3 +132,18 @@ export CONAN_COLOR_DARK=1
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init --path)"
 eval "$(pyenv virtualenv-init -)"
+
+
+# Customize agnoster by overriding functions :
+# use cyan for username@host :
+prompt_context() {
+  if [[ "$USERNAME" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+    prompt_segment cyan default "%(!.%{%F{yellow}%}.)%n@%m"
+  fi
+}
+# use red for virtualenv :
+prompt_virtualenv() {
+  if [[ -n "$VIRTUAL_ENV" && -n "$VIRTUAL_ENV_DISABLE_PROMPT" ]]; then
+    prompt_segment red black "(${VIRTUAL_ENV:t:gs/%/%%})"
+  fi
+}
