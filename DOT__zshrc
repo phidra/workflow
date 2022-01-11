@@ -70,8 +70,8 @@ plugins=(
   fabric
   pip
   python
+  virtualenv
   tmux
-  #tmuxinator
 )
 
 CASE_SENSITIVE="true"
