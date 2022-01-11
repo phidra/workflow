@@ -130,5 +130,5 @@ export CONAN_COLOR_DARK=1
 
 # 2022-01-11 = pyenv :
 export PATH="$HOME/.pyenv/bin:$PATH"
-eval "$(pyenv init -)"
+eval "$(pyenv init --path)"
 eval "$(pyenv virtualenv-init -)"
