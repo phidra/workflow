@@ -129,8 +129,11 @@ export CONAN_COLOR_DARK=1
 
 
 # 2022-01-11 = pyenv :
+# warning : pyenv instructions are not sufficent, see :
+# https://stackoverflow.com/questions/45577194/failed-to-activate-virtualenv-with-pyenv/70307478#70307478
 export PATH="$HOME/.pyenv/bin:$PATH"
 eval "$(pyenv init --path)"
+eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 
 
