@@ -43,6 +43,8 @@ if ! &diff
 endif
 
 colorscheme morning
+" set Search highlight-group to IncSearch (which I prefer) :
+hi! link Search IncSearch
 
 " (généralités) }}}
 
@@ -64,7 +66,6 @@ let g:codepatterns = [
 
 for codepattern in g:codepatterns
     execute "autocmd BufEnter " . codepattern . " call CodeSettings()"
-    colorscheme morning
 endfor
 
 function CodeSettings()  " settings spécifiques aux buffers contenant du code
