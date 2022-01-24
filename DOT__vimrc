@@ -61,7 +61,8 @@ let g:codepatterns = [
             \ '*.cpp',
             \ '*.h',
             \ '*.hpp',
-            \ '*.rb'
+            \ '*.rb',
+            \ '*.sh'
             \]
 
 for codepattern in g:codepatterns
