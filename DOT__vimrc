@@ -416,8 +416,10 @@ noremap <S-F12>               :execute ':A'<CR>
 noremap! <S-F12>         <Esc>:execute ':A'<CR>
 vnoremap <S-F12>    <Esc><Esc>:execute ':A'<CR>
 
-" Ctrl+P :
-set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.pyc
+" Ctrl+P (see :help ctrlp-options if needed) :
+set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.pyc " wildignore is not specific to ctrlp, it's a vim config
+let g:ctrlp_show_hidden = 0  " notably, ignore hidden dirs such as .tox or .clangd
+let g:ctrlp_custom_ignore = '\vNOGIT|__pycache__'
 
 " Ne pas masquer les guillemets en json :
 let g:vim_json_syntax_conceal = 0
