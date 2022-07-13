@@ -359,27 +359,26 @@ Plug 'https://github.com/scrooloose/nerdtree.git', { 'on':  'NERDTreeToggle' }
 Plug 'https://github.com/godlygeek/tabular.git', {'on': 'Tabularize' }
 Plug 'https://github.com/majutsushi/tagbar', {'on': 'TagbarOpenAutoClose' }
 Plug 'https://github.com/kien/ctrlp.vim'
-Plug 'https://github.com/Yggdroot/indentLine'
+Plug 'https://github.com/Yggdroot/indentLine'  " display indentation character
 Plug 'https://github.com/tpope/vim-surround.git'
-Plug 'https://github.com/tpope/vim-fugitive', {'on': 'Gblame' }
-Plug 'https://github.com/nvie/vim-flake8', {'for': 'python' }
 Plug 'https://github.com/tpope/vim-commentary.git'
-Plug 'https://github.com/tpope/vim-repeat.git'
-Plug 'https://github.com/vim-scripts/a.vim'
+Plug 'https://github.com/tpope/vim-repeat'
+Plug 'https://github.com/vim-scripts/a.vim'  " alternate source/header
+Plug 'https://github.com/mileszs/ack.vim'
+Plug 'https://github.com/tpope/vim-characterize'  " enchances ga
+Plug 'https://github.com/dense-analysis/ale'  " LSP client
+Plug 'https://github.com/psliwka/vim-smoothie'  " smooth scrolling
+Plug 'https://github.com/AndrewRadev/splitjoin.vim'  " function arguments on several/single line
+Plug 'https://github.com/sheerun/vim-polyglot'
+Plug 'https://github.com/tpope/vim-fugitive',
+" pour des types de fichiers particuliers :
 Plug 'https://github.com/mattn/emmet-vim.git', {'for': 'html' }
 Plug 'https://github.com/plasticboy/vim-markdown', {'for': 'markdown'}
 Plug 'https://github.com/habamax/vim-asciidoctor', {'for': 'asciidoc'}
-Plug 'https://github.com/mileszs/ack.vim'
-Plug 'https://github.com/tpope/vim-repeat'
-Plug 'https://github.com/tpope/vim-characterize'
-Plug 'https://github.com/dense-analysis/ale'
-Plug 'https://github.com/vimoutliner/vimoutliner.git'
-Plug 'https://github.com/psliwka/vim-smoothie'
-Plug 'https://github.com/chr4/nginx.vim'
-Plug 'https://github.com/AndrewRadev/splitjoin.vim'
-Plug 'https://github.com/sheerun/vim-polyglot'
+Plug 'https://github.com/vimoutliner/vimoutliner.git', {'for': 'votl'}
 Plug 'https://github.com/kana/vim-operator-user'  " pour utiliser vim-clang-format avec '='
 Plug 'https://github.com/rhysd/vim-clang-format', {'for': 'cpp'}
+Plug 'https://github.com/nvie/vim-flake8', {'for': 'python' }
 " un jour utilisés, aujourd'hui abandonnés :
 " https://github.com/elzr/vim-json
 " https://github.com/LucHermitte/local_vimrc
@@ -389,6 +388,7 @@ Plug 'https://github.com/rhysd/vim-clang-format', {'for': 'cpp'}
 " Plug 'https://github.com/rking/ag.vim'
 " Plug 'https://github.com/airblade/vim-rooter'
 " Plug 'https://github.com/integralist/vim-mypy', {'for': 'python' }
+" Plug 'https://github.com/chr4/nginx.vim'
 call plug#end()
 
 " Désactiver le conceal pour markdown :
@@ -502,6 +502,7 @@ let g:splitjoin_trailing_comma = 1
 " (note : ça ne marche pas avec splitjoin, qui semble utiliser le formattage C++ par défaut)
 " (il faut donc que je réapplique manuellement l'opérateur '=' après avoir utilisé splitjoin)
 autocmd FileType c,cpp map <buffer> = <Plug>(operator-clang-format)
+let g:clang_format#command = 'clang-format-11'
 
 " (plugins) }}}
 
