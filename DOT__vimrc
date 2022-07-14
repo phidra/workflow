@@ -420,9 +420,16 @@ noremap <F8>               :execute ':NERDTree ' . expand("%:p:h")<CR>
 noremap! <F8>         <Esc>:execute ':NERDTree ' . expand("%:p:h")<CR>
 vnoremap <F8>    <Esc><Esc>:execute ':NERDTree ' . expand("%:p:h")<CR>
 " NERDTree sur le répertoire racine d'un éventuel projet git :
-noremap <S-F8>               :execute ':NERDTree ' . Git_root()<CR>
-noremap! <S-F8>         <Esc>:execute ':NERDTree ' . Git_root()<CR>
-vnoremap <S-F8>    <Esc><Esc>:execute ':NERDTree ' . Git_root()<CR>
+if has("nvim")
+    " to make S-Fxx work in neovim, I have to add 12 to xx :
+    noremap <F20>               :execute ':NERDTree ' . Git_root()<CR>
+    noremap! <F20>         <Esc>:execute ':NERDTree ' . Git_root()<CR>
+    vnoremap <F20>    <Esc><Esc>:execute ':NERDTree ' . Git_root()<CR>
+else
+    noremap <S-F8>               :execute ':NERDTree ' . Git_root()<CR>
+    noremap! <S-F8>         <Esc>:execute ':NERDTree ' . Git_root()<CR>
+    vnoremap <S-F8>    <Esc><Esc>:execute ':NERDTree ' . Git_root()<CR>
+endif
 
 
 " lancer Tabularize sur une sélection
@@ -439,9 +446,16 @@ vnoremap <C-T> :Tabularize /
 " let g:surround_{char2nr("#")} = "{# \r #}"
 
 " Alternate (a.vim) :
-noremap <S-F12>               :execute ':A'<CR>
-noremap! <S-F12>         <Esc>:execute ':A'<CR>
-vnoremap <S-F12>    <Esc><Esc>:execute ':A'<CR>
+if has("nvim")
+    " to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
+    noremap <F24>               :execute ':A'<CR>
+    noremap! <F24>         <Esc>:execute ':A'<CR>
+    vnoremap <F24>    <Esc><Esc>:execute ':A'<CR>
+else
+    noremap <S-F12>               :execute ':A'<CR>
+    noremap! <S-F12>         <Esc>:execute ':A'<CR>
+    vnoremap <S-F12>    <Esc><Esc>:execute ':A'<CR>
+endif
 
 " Ctrl+P (see :help ctrlp-options if needed) :
 set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.pyc " wildignore is not specific to ctrlp, it's a vim config
@@ -473,21 +487,24 @@ vnoremap <F9>  <Esc><Esc>:TagbarOpenAutoClose<CR>
 let g:indentLine_char = '┊'
 let g:indentLine_enabled = 1
 
-" cf. journal du jeudi 4 février 2021
-" TL;DR : la valeur par défaut de cette option (-std=c++14 -Wall) ne convient
-" pas à tous les projets, et écrase le contenu de compile_commands.json
-" En settant cette variable à une string vide, j'autorise ALE à utiliser
-" correctement compile_commands.json
-let g:ale_cpp_cc_options = ''
-" EDIT : arf, semble nécessaire tout de même pour les headers (sans doute car
-" ils n'ont pas d'information les concernant dans compile_commands.json)
-let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' -std=c++17'
-" par ailleurs, pour contourner les warnings/erreurs à la compilation de boost
-" lorsque boost est installé par conan, j'ajoute :
-let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' --system-header-prefix=boost/'
-let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' -Wno-pragma-once-outside-header'
+" EDIT du 13 juillet 2022 = je commente tout ceci, qui ne semble plus nécessaire pour neovim + ALE sur ubuntu 20.04
+" " cf. journal du jeudi 4 février 2021
+" " TL;DR : la valeur par défaut de cette option (-std=c++14 -Wall) ne convient
+" " pas à tous les projets, et écrase le contenu de compile_commands.json
+" " En settant cette variable à une string vide, j'autorise ALE à utiliser
+" " correctement compile_commands.json
+" let g:ale_cpp_cc_options = ''
+" " EDIT : arf, semble nécessaire tout de même pour les headers (sans doute car
+" " ils n'ont pas d'information les concernant dans compile_commands.json)
+" let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' -std=c++17'
+" " par ailleurs, pour contourner les warnings/erreurs à la compilation de boost
+" " lorsque boost est installé par conan, j'ajoute :
+" let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' --system-header-prefix=boost/'
+" let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' -Wno-pragma-once-outside-header'
 
 let g:ale_default_navigation = 'tab'
+let g:ale_completion_enabled = 1
+
 
 " scrolling plus rapide avec smoothie :
 let g:smoothie_base_speed = 15
