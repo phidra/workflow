@@ -28,6 +28,9 @@ set list
 set showbreak=↪
 set listchars=tab:▶\ ,trail:●,nbsp:␣,precedes:←,extends:→
 set redrawtime=10000  " autorise le chargement de syntaxe à prendre plus de temps que les 2s par défaut
+set wildignore+=*/tmp/*,*.so,*.o,*.swp,*.zip,*.pyc
+set nocompatible
+
 
 " Par défaut, on désactive les pair-match facilities, (à réactiver pour les buffers de code).
 " (en effet, hors du code, c'est relou de voir se colorer une parenthèse quand je survole sa parente)
@@ -329,30 +332,6 @@ vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f 
 "     ctags -R --exclude='.git' --languages=python,js
 "     ctags -R --exclude='.git' --languages=python,js -f myspecifictagfile
 
-
-" Ctrl+r prépare à insérer le contenu de... quelque chose (registre, mot sous le curseur, etc.) :
-" :help C-r
-"
-" Ctrl+r suivi de " insère le registre anonyme
-" peut-être utilisé dans un mapping, permettant par exemple en visualmode de récupérer la sélection avec :
-" vnoremap <leader>echoselection  y:echo '<C-R>"'<CR>
-" EXPLICATION :
-"    le "y" yanke la sélection (et le place donc dans le registre anonyme ")
-"    le <C-R>"  utilise le contenu du registre anonyme
-"
-" Ctrl+r suivi de <C-w> insère le mot sous le curseur :
-"    noremap <leader>pouet  y:echo '<C-R>"'<CR>
-" c'est très pratique même manuellement : pour rechercher le mot sous le curseur, je peux taper moi-même :
-"     :Ag <C-r> <C-w>
-" <cword> est une variable qui représente le word sous le curseur :-o
-
-" indenter la sélection visuelle conserve celle-ci (au lieu de la déselectionner) :
-" EDIT 2021-12-02 : finalement, je préfère le comportement normal -> je
-" commente en attendant de confirmer, et je supprimerai si besoin...
-" vnoremap < <gv
-" vnoremap > >gv
-" vnoremap = =gv
-
  " (mes alias hors plugins) }}}
 
 
@@ -364,7 +343,11 @@ vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f 
 
 
 " disabling polyglot ftdetect, in order for OTL files to properly be detected :
-let g:polyglot_disabled = ['ftdetect']  " must be set BEFORE polyglot is loaded
+" also disabling it for markdown (I cannot get polyglot's markdown to work with
+" vim-markdown-folding, and I value markdown folding more than markdown
+" highlighting...) :
+let g:polyglot_disabled = ['ftdetect', 'markdown']  " must be set BEFORE polyglot is loaded
+
 
 
 call plug#begin('~/.vim/plugged')
@@ -405,14 +388,6 @@ noremap! <F9>       <Esc>:TagbarOpenAutoClose<CR>
 vnoremap <F9>  <Esc><Esc>:TagbarOpenAutoClose<CR>
 
 
-" fuzzy file opener
-Plug 'https://github.com/kien/ctrlp.vim'
-" :help ctrlp-options
-set wildignore+=*/tmp/*,*.so,*.o,*.swp,*.zip,*.pyc " wildignore is not specific to ctrlp, it's a vim config
-let g:ctrlp_show_hidden = 0  " notably, ignore hidden dirs such as .tox or .clangd
-let g:ctrlp_custom_ignore = '\vNOGIT|__pycache__'
-
-
 " display indentation character (very useful for python)
 Plug 'https://github.com/Yggdroot/indentLine'
 let g:indentLine_char = '┊'
@@ -445,18 +420,6 @@ Plug 'https://github.com/vim-scripts/a.vim'
 noremap <A-o>               :execute ':A'<CR>
 noremap! <A-o>         <Esc>:execute ':A'<CR>
 vnoremap <A-o>    <Esc><Esc>:execute ':A'<CR>
-
-
-" integration with ack (or actually ag)
-Plug 'https://github.com/mileszs/ack.vim'
-let g:ackprg = 'ag --vimgrep --smart-case'
-" recherche dans tout le projet git :
-command! -nargs=1 Ag execute "Ack! <args> " . Git_root()
-" recherche dans le même répertoire que le fichier courant :
-command! -nargs=1 AgLocal  execute "Ack! <args> " . expand("%:p:h")
-cnoreabbrev Agl AgLocal
-" TODO : permettre une recherche case-sensitive / case-insensitive ?
-"
 
 " enhances ga to display info on a character, including its digraph code
 Plug 'https://github.com/tpope/vim-characterize'
@@ -547,20 +510,40 @@ hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black
 " running generic tools as LSP servers
 Plug 'https://github.com/jose-elias-alvarez/null-ls.nvim'
 
+
+" fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
+Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.0' }
+
+
 endif  " has("nvim")
+
+
+" markdown folding :
+Plug 'https://github.com/masukomi/vim-markdown-folding'
+autocmd FileType markdown set foldexpr=NestedMarkdownFolds()
+
+
+" auto cd to git root dir :
+Plug 'ahmedkhalf/project.nvim'
+
 
 call plug#end()
 
 
-" deferred plugin configuration :
 if has("nvim")
-" see https://github.com/nanotee/nvim-lua-guide
-" (notably : each lua command has its own scope)
-lua require('nvim_comment').setup{}
 
-" LSP
 lua << EOF
+
+-- if needed, see https://github.com/nanotee/nvim-lua-guide
+-- (notably : each :lua command has its own scope)
+
+-- plugin init :
+require('nvim_comment').setup{}
+require("project_nvim").setup{}
+
+
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
+-- native LSP client
 
 local opts = { noremap=true, silent=true }
 vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, opts)
@@ -579,12 +562,19 @@ local on_attach = function(client, bufnr)
   vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.definition, bufopts)
   -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
   vim.keymap.set({'n', 'i', 'v'}, '<F24>', vim.lsp.buf.references, bufopts)
-  vim.keymap.set({'n', 'i', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
+  vim.keymap.set({'n', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
   vim.keymap.set('n', '==', vim.lsp.buf.formatting, bufopts)
   vim.keymap.set('v', '=', '<ESC><cmd>lua vim.lsp.buf.range_formatting()<CR>', bufopts)
 
-  -- NdM : suffisamment peu utile pour que je ne le mappe pas :
-  -- :lua vim.lsp.buf.rename('new_name')
+
+  -- NdM : rename = besoin suffisamment rare pour ne pas ajouter de mapping :
+  -- un alias me permettra de compléter la commande plus facilement
+  -- (et par cohérence, j'ajoute les autres alias) :
+  lsp_rename = vim.lsp.buf.rename
+  lsp_references = vim.lsp.buf.references
+  lsp_definition = vim.lsp.buf.definition
+  lsp_hover = vim.lsp.buf.hover
+  lsp_formatting = vim.lsp.buf.hover
 
   -- NdM : pas encore essayé :
   -- vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
@@ -595,6 +585,24 @@ local on_attach = function(client, bufnr)
   -- NdM : non-pris en charge par clangd et/ou pyright :
   -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.type_definition, bufopts)
   -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.implementation, bufopts)
+
+  -- toggling diagnostics (there is no native function for that) :
+  -- inspired by https://www.reddit.com/r/neovim/comments/ng0dj0/lsp_diagnostics_query_is_there_an_way_to_toggle/
+  vim.g.diagnostics_active = true
+  function _G.toggle_diagnostics()
+    if vim.g.diagnostics_active then
+      print('disabling diagnostics...')
+      vim.g.diagnostics_active = false
+      vim.diagnostic.disable()
+    else
+      print('enabling diagnostics...')
+      vim.g.diagnostics_active = true
+      vim.diagnostic.enable()
+    end
+  end
+  -- gt sert normalement à switcher de tab, mais je n'utilise pas -> g[T]oggle :
+  vim.keymap.set({'n', 'v'}, 'gt', _G.toggle_diagnostics, bufopts)
+
 end
 
 require('lspconfig')['pyright'].setup{
@@ -612,6 +620,22 @@ local sources = {
     null_ls.builtins.diagnostics.flake8,
 }
 null_ls.setup({ sources = sources })
+
+
+-- telescope :
+-- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
+vim.keymap.set({'n', 'i', 'v'}, '<C-p>', require('telescope.builtin').find_files, bufopts)
+-- vscode shortcut to search symbols is C-t ; as it's not available in vim, I use C-A-t :
+vim.keymap.set({'n', 'i', 'v'}, '<C-A-t>', require('telescope.builtin').lsp_dynamic_workspace_symbols, bufopts)
+-- https://code.visualstudio.com/docs/editor/codebasics#_search-across-files
+-- vscode shortcut to search text is C-S-f ; as it's not available in vim, I use C-A-g :
+vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
+
+
+-- always show error columns :
+vim.api.nvim_set_option('signcolumn', 'auto:1-3')
+
+
 EOF
 
 endif  " has("nvim")
@@ -709,6 +733,53 @@ endif  " has("nvim")
 " autocmd FileType c,cpp map <buffer> = <Plug>(operator-clang-format)
 " let g:clang_format#command = 'clang-format-11'
 
+
+" " fuzzy file opener (NdM : remplacé par telescope)
+" Plug 'https://github.com/kien/ctrlp.vim'
+" " :help ctrlp-options
+" let g:ctrlp_show_hidden = 0  " notably, ignore hidden dirs such as .tox or .clangd
+" let g:ctrlp_custom_ignore = '\vNOGIT|__pycache__'
+
+
+" " no need for a plugin to fold markdown :
+" " (EDIT : actually, it is confused by comments in code blocks...)
+" let g:markdown_folding = 1
+
+
+" " integration with ack (or actually ag)
+" Plug 'https://github.com/mileszs/ack.vim'
+" let g:ackprg = 'ag --vimgrep --smart-case'
+" " recherche dans tout le projet git :
+" command! -nargs=1 Ag execute "Ack! <args> " . Git_root()
+" " recherche dans le même répertoire que le fichier courant :
+" command! -nargs=1 AgLocal  execute "Ack! <args> " . expand("%:p:h")
+" cnoreabbrev Agl AgLocal
+" " TODO : permettre une recherche case-sensitive / case-insensitive ?
+
+
+" Ctrl+r prépare à insérer le contenu de... quelque chose (registre, mot sous le curseur, etc.) :
+" :help C-r
+"
+" Ctrl+r suivi de " insère le registre anonyme
+" peut-être utilisé dans un mapping, permettant par exemple en visualmode de récupérer la sélection avec :
+" vnoremap <leader>echoselection  y:echo '<C-R>"'<CR>
+" EXPLICATION :
+"    le "y" yanke la sélection (et le place donc dans le registre anonyme ")
+"    le <C-R>"  utilise le contenu du registre anonyme
+"
+" Ctrl+r suivi de <C-w> insère le mot sous le curseur :
+"    noremap <leader>pouet  y:echo '<C-R>"'<CR>
+" c'est très pratique même manuellement : pour rechercher le mot sous le curseur, je peux taper moi-même :
+"     :Ag <C-r> <C-w>
+" <cword> est une variable qui représente le word sous le curseur :-o
+
+" indenter la sélection visuelle conserve celle-ci (au lieu de la déselectionner) :
+" EDIT 2021-12-02 : finalement, je préfère le comportement normal -> je
+" commente en attendant de confirmer, et je supprimerai si besoin...
+" vnoremap < <gv
+" vnoremap > >gv
+" vnoremap = =gv
+
 " (deprecated) }}}
 
 
@@ -719,13 +790,6 @@ function CheatsheetFunction()
         \ "",
         \ "======= SEARCH :",
         \ "    :copen / :ccl[ose]     ouvrir / fermer la quickfix list",
-        \ "    :Ag  pattern           rechercher un pattern dans tout le projet git",
-        \ "    :Ag  'with spaces'     idem, mais pour un pattern qui contient des espaces",
-        \ "    :Agl pattern           (alias pour AgLocal) rechercher un pattern dans le répertoire courant",
-        \ "      ├─ t                  dans la fenêtre quickfix, ouvrir le fichier dans un nouvel onglet",
-        \ "      ├─ o                  dans la fenêtre quickfix, ouvrir le fichier dans l'onglet courant",
-        \ "      ├─ q                  dans la fenêtre quickfix, fermer la quickfix sans rien ouvrir",
-        \ "      └─ q                  dans la fenêtre quickfix, fermer la quickfix sans rien ouvrir",
         \ "    F8                     ouvrir NERDTree sur le répertoire courant",
         \ "    S-F8                   ouvrir NERDTree sur le répertoire racine git",
         \ "      ├─ o / Entrée         sans fermer le NERDTree, ouvrir le fichier dans l'onglet actuel",
@@ -737,10 +801,10 @@ function CheatsheetFunction()
         \ "      ├─ o                  plier/déplier un folding de la tagbar",
         \ "      ├─ Entrée             sauter sur le tag, et fermer la tagbar",
         \ "      └─ p                  afficher le tag, mais garder le curseur sur la tagbar",
-        \ "    CTRL-p                 fuzzy search",
-        \ "      ├─ CTRL-t             dans la fenêtre quickfix, ouvrir le fichier dans un onglet",
-        \ "      ├─ Entrée             dans la fenêtre quickfix, ouvrir le fichier dans l'onglet courant",
-        \ "      └─ CTRL-d             dans la fenêtre quickfix, limiter le pattern au fichier vs. path",
+        \ "    Ctrl+Alt+F             live grep sur une regex (telescope)",
+        \ "      ├─ CTRL-n/Ctrl-p       naviguer dans les propositions (telescope)",
+        \ "      ├─ Entrée              ouvrir le fichier matché dans l'onglet courant (telescope)",
+        \ "      └─ CTRL-t              ouvrir le fichier matché dans un nouvel onglet (telescope)",
         \ "",
         \ "======= VIM-PLUG :",
         \ "    https://github.com/junegunn/vim-plug",
@@ -760,13 +824,14 @@ function CheatsheetFunction()
         \ "      ├─g puis CTRL+]       choisir la destination du jump dans une liste",
         \ "      └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'",
         \ "    LSP",
-        \ "      ├─ F12                go to definition",
-        \ "      ├─ Shift+F12          see references",
-        \ "      ├─ gh                 hover",
-        \ "      ├─ Alt+j / Alt+k      go to next/previous error",
-        \ "      ├─ TODO               recherche dans l'index des symboles",
-        \ "      ├─ :LspStop/Start     (dés)activer le LSP client (semble mal marcher avec null-ls...)",
-        \ "      └─ :LspInfo           des infos sur la config des LSP (e.g. quels linters sont actifs)",
+        \ "      ├─ F12                 go to definition",
+        \ "      ├─ Shift+F12           see references",
+        \ "      ├─ gh                  hover",
+        \ "      ├─ Alt+j / Alt+k       go to next/previous error",
+        \ "      ├─ TODO                recherche dans l'index des symboles",
+        \ "      ├─ :LspStop/Start      (dés)activer le LSP client (semble mal marcher avec null-ls...)",
+        \ "      ├─ :LspInfo            des infos sur la config des LSP (e.g. quels linters sont actifs)",
+        \ "      └─ gt                  toggle les diagnostics LSP",
         \ "    Alt-o                  alterner entre .h / .cpp",
         \ "    :AT                    alterner entre .h / .cpp dans un nouvel onglet",
         \ "    CTRL-y + ,             lancer emmet (pour tags HTML faciles)",
@@ -774,6 +839,7 @@ function CheatsheetFunction()
         \ "    :IndentLinesToggle     toggle le marqueur des indentations python",
         \ "    :gJ  /  gS             split/join les arguments d'une fonction, placer curseur sur parenthèse ouvrante",
         \ "    == / (visual)=         reformatter tout le fichier (ou uniquement la sélection visuelle)",
+        \ "    CTRL-p                 fuzzy search files by name (telescope)",
         \ "",
         \ "======= MES ALIAS PERSOS (hors plugins) :",
         \ "    CTRL-HAUT/BAS          scroller une ligne vers le bas/haut",
