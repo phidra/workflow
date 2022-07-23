@@ -100,7 +100,12 @@ function CodeSettings()  " settings spécifiques aux buffers contenant du code
     highlight ColorColumn ctermbg=LightRed ctermfg=Black
     highlight TrailingWhitespace ctermbg=red
     match TrailingWhitespace  /\s\+$/
-    set nu
+    set nu 
+
+    " Plugins spécifiques aux fichiers de code :
+    " (c'est pas parfait car ils seront chargés sur tous les fichiers ouverts, y compris non-code)
+    " ouvert
+    call plug#load('vim-illuminate')
 endfunction
 
 " Coloration des non-breakable spaces :
@@ -264,6 +269,9 @@ highlight! link DiffText Todo  " dans une ligne, la couleur Todo qui signale le 
 "# MES ALIAS HORS PLUGINS  {{{
 "########################################################################################################################
 
+" ATTENTION : les commandes Alt sont interceptées par tmux (et doivent être
+" forwardées avec send-keys dans la config tmux).
+
 " Navigation dans les onglets avec ALT + gauche/droite (EDIT : fonctionne aussi avec gt/gT)
 noremap  <A-Right>        :tabn<CR>
 inoremap <A-Right>   <Esc>:tabn<CR>
@@ -351,67 +359,19 @@ vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f 
 "# PLUGINS {{{
 "########################################################################################################################
 
+
+" manually load plugins : https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
+
+
 " disabling polyglot ftdetect, in order for OTL files to properly be detected :
 let g:polyglot_disabled = ['ftdetect']  " must be set BEFORE polyglot is loaded
 
+
 call plug#begin('~/.vim/plugged')
+
+
+" file browser :
 Plug 'https://github.com/scrooloose/nerdtree.git', { 'on':  'NERDTreeToggle' }
-Plug 'https://github.com/godlygeek/tabular.git', {'on': 'Tabularize' }
-Plug 'https://github.com/majutsushi/tagbar', {'on': 'TagbarOpenAutoClose' }
-Plug 'https://github.com/kien/ctrlp.vim'
-Plug 'https://github.com/Yggdroot/indentLine'  " display indentation character
-Plug 'https://github.com/tpope/vim-surround.git'
-Plug 'https://github.com/tpope/vim-commentary.git'
-Plug 'https://github.com/tpope/vim-repeat'
-Plug 'https://github.com/vim-scripts/a.vim'  " alternate source/header
-Plug 'https://github.com/mileszs/ack.vim'
-Plug 'https://github.com/tpope/vim-characterize'  " enchances ga
-Plug 'https://github.com/dense-analysis/ale'  " LSP client
-Plug 'https://github.com/psliwka/vim-smoothie'  " smooth scrolling
-Plug 'https://github.com/AndrewRadev/splitjoin.vim'  " function arguments on several/single line
-Plug 'https://github.com/sheerun/vim-polyglot'
-Plug 'https://github.com/tpope/vim-fugitive',
-" pour des types de fichiers particuliers :
-Plug 'https://github.com/mattn/emmet-vim.git', {'for': 'html' }
-Plug 'https://github.com/plasticboy/vim-markdown', {'for': 'markdown'}
-Plug 'https://github.com/habamax/vim-asciidoctor', {'for': 'asciidoc'}
-Plug 'https://github.com/vimoutliner/vimoutliner.git', {'for': 'votl'}
-Plug 'https://github.com/kana/vim-operator-user'  " pour utiliser vim-clang-format avec '='
-Plug 'https://github.com/rhysd/vim-clang-format', {'for': 'cpp'}
-Plug 'https://github.com/nvie/vim-flake8', {'for': 'python' }
-" un jour utilisés, aujourd'hui abandonnés :
-" https://github.com/elzr/vim-json
-" https://github.com/LucHermitte/local_vimrc
-" https://github.com/LucHermitte/lh-vim-lib
-" https://github.com/tmhedberg/SimpylFold
-" https://github.com/jlanzarotta/bufexplorer
-" Plug 'https://github.com/rking/ag.vim'
-" Plug 'https://github.com/airblade/vim-rooter'
-" Plug 'https://github.com/integralist/vim-mypy', {'for': 'python' }
-" Plug 'https://github.com/chr4/nginx.vim'
-call plug#end()
-
-" Désactiver le conceal pour markdown :
-" NOTE 2020-12 : indentLine nécessite conceallevel >= 0, et je voudrais le désactiver pour vim-markdown.
-" g:vim_markdown_conceal n'a pas l'air de marcher, donc je contourne le problème :
-"   - je sette le conceallevel global à 1
-"   - je désactive l'overwriting du conceallevel par indentLine
-"   - je sette le conceallevel à 0 pour le markdown
-" cf. les docs d'indentLine et vim-markdown, ainsi que : https://github.com/plasticboy/vim-markdown/issues/253
-let g:indentLine_setConceal = 0
-set conceallevel=1
-au FileType markdown setl conceallevel=0
-
-" utilisation d'ack.vim (mais je garde le raccourci Ag qui est plus court) :
-let g:ackprg = 'ag --vimgrep --smart-case'
-" recherche dans tout le projet git :
-command! -nargs=1 Ag execute "Ack! <args> " . Git_root()
-" recherche dans le même répertoire que le fichier courant :
-command! -nargs=1 AgLocal  execute "Ack! <args> " . expand("%:p:h")
-cnoreabbrev Agl AgLocal
-" TODO : permettre une recherche case-sensitive / case-insensitive ?
-
-" NERDTree :
 let g:NERDTreeWinSize=60
 let g:NERDTreeIgnore=['\.pyc$', '\~$']
 let g:NERDTreeQuitOnOpen=1
@@ -432,8 +392,252 @@ else
 endif
 
 
-" lancer Tabularize sur une sélection
-vnoremap <C-T> :Tabularize /
+" align tokens of a line according to a separator
+Plug 'https://github.com/godlygeek/tabular.git', {'on': 'Tabularize' }
+vnoremap <C-T> :Tabularize /  " on the current selection
+
+
+" tag browser
+Plug 'https://github.com/majutsushi/tagbar', {'on': 'TagbarOpenAutoClose' }
+let g:tagbar_sort = 0  " par défaut, les tags sont triés par ordre d'apparition dans le fichier.
+noremap <F9>             :TagbarOpenAutoClose<CR>
+noremap! <F9>       <Esc>:TagbarOpenAutoClose<CR>
+vnoremap <F9>  <Esc><Esc>:TagbarOpenAutoClose<CR>
+
+
+" fuzzy file opener
+Plug 'https://github.com/kien/ctrlp.vim'
+" :help ctrlp-options
+set wildignore+=*/tmp/*,*.so,*.o,*.swp,*.zip,*.pyc " wildignore is not specific to ctrlp, it's a vim config
+let g:ctrlp_show_hidden = 0  " notably, ignore hidden dirs such as .tox or .clangd
+let g:ctrlp_custom_ignore = '\vNOGIT|__pycache__'
+
+
+" display indentation character (very useful for python)
+Plug 'https://github.com/Yggdroot/indentLine'
+let g:indentLine_char = '┊'
+let g:indentLine_enabled = 1
+" NOTE 2020-12 : indentLine nécessite conceallevel >= 0, et je voudrais le désactiver pour vim-markdown.
+" g:vim_markdown_conceal n'a pas l'air de marcher, donc je contourne le problème :
+"   - je sette le conceallevel global à 1
+"   - je désactive l'overwriting du conceallevel par indentLine
+"   - je sette le conceallevel à 0 pour le markdown
+" cf. les docs d'indentLine et vim-markdown, ainsi que : https://github.com/plasticboy/vim-markdown/issues/253
+let g:indentLine_setConceal = 0
+set conceallevel=1
+au FileType markdown setl conceallevel=0
+
+
+" add/change/delete surrounding characters
+Plug 'https://github.com/tpope/vim-surround.git'
+
+
+" comment line/motion with gc
+Plug 'https://github.com/terrortylor/nvim-comment'
+
+
+" repeat a surrounding command
+Plug 'https://github.com/tpope/vim-repeat'
+
+
+" alternate source header
+Plug 'https://github.com/vim-scripts/a.vim'
+noremap <A-o>               :execute ':A'<CR>
+noremap! <A-o>         <Esc>:execute ':A'<CR>
+vnoremap <A-o>    <Esc><Esc>:execute ':A'<CR>
+
+
+" integration with ack (or actually ag)
+Plug 'https://github.com/mileszs/ack.vim'
+let g:ackprg = 'ag --vimgrep --smart-case'
+" recherche dans tout le projet git :
+command! -nargs=1 Ag execute "Ack! <args> " . Git_root()
+" recherche dans le même répertoire que le fichier courant :
+command! -nargs=1 AgLocal  execute "Ack! <args> " . expand("%:p:h")
+cnoreabbrev Agl AgLocal
+" TODO : permettre une recherche case-sensitive / case-insensitive ?
+"
+
+" enhances ga to display info on a character, including its digraph code
+Plug 'https://github.com/tpope/vim-characterize'
+
+
+
+" function arguments on several/single line
+Plug 'https://github.com/AndrewRadev/splitjoin.vim'
+let g:splitjoin_python_brackets_on_separate_lines = 1
+let g:splitjoin_trailing_comma = 1
+
+
+" language pack
+Plug 'https://github.com/sheerun/vim-polyglot'
+
+
+" git integration
+Plug 'https://github.com/tpope/vim-fugitive',
+
+
+" make searched line pulse briefly to ease visualization
+Plug 'https://github.com/inside/vim-search-pulse'
+let g:vim_search_pulse_color_list = [22, 28, 34, 40, 46]
+
+
+" highlight same words as the one under cursor
+Plug 'https://github.com/RRethy/vim-illuminate', {'on': []}
+" changer la coloration de vim-illuminate (le default=CursorLine n'est pas assez visible)
+" note : pour visualiser dynamiquement les highlights groups :
+"   :so $VIMRUNTIME/syntax/hitest.vim
+augroup illuminate_augroup
+    autocmd!
+    autocmd VimEnter * hi link illuminatedWord CursorColumn
+augroup END
+
+
+" easily insert html tags
+Plug 'https://github.com/mattn/emmet-vim.git', {'for': 'html' }
+
+
+" vim-outliner colors + foldings
+Plug 'https://github.com/vimoutliner/vimoutliner.git', {'for': 'votl'}
+
+
+" nvim start screen ease the opening of recent files
+Plug 'https://github.com/mhinz/vim-startify'
+let g:startify_custom_header = [
+            \ 'MRU = most recently used files in general',
+            \ 'MRU /path/to/somewhere = idem, limited to files in this directory or its children',
+            \ ]
+
+
+" display register contents
+Plug 'https://github.com/junegunn/vim-peekaboo'
+let g:peekaboo_window = 'vert bo 80new'
+
+
+" allow to search current visual selection
+Plug 'https://github.com/nelstrom/vim-visual-star-search'
+
+
+" the following plugins only work with neovim :
+if has("nvim")
+
+" smooth scrolling (to ease visualizing Ctrl-down/Ctrl-up)
+Plug 'https://github.com/psliwka/vim-smoothie'
+" scrolling plus rapide avec smoothie :
+let g:smoothie_base_speed = 15
+let g:smoothie_speed_exponentiation_factor = 0.95
+
+" dependencies of other plugins
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
+Plug 'nvim-lua/plenary.nvim'
+
+
+Plug 'https://github.com/neovim/nvim-lspconfig'
+" :hi pour voir les highlights actuels (avec exemples)
+" pour info, valeurs par défaut :
+" DiagnosticError xxx ctermfg=1 guifg=Red
+" DiagnosticWarn xxx ctermfg=3 guifg=Orange
+" DiagnosticInfo xxx ctermfg=4 guifg=LightBlue
+" DiagnosticHint xxx ctermfg=7 guifg=LightGrey
+hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red
+hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange
+hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue
+hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black
+
+" running generic tools as LSP servers
+Plug 'https://github.com/jose-elias-alvarez/null-ls.nvim'
+
+endif
+
+call plug#end()
+
+
+" deferred plugin configuration :
+if has("nvim")
+" see https://github.com/nanotee/nvim-lua-guide
+" (notably : each lua command has its own scope)
+lua require('nvim_comment').setup{}
+
+" LSP
+lua << EOF
+-- See `:help vim.diagnostic.*` for documentation on any of the below functions
+
+local opts = { noremap=true, silent=true }
+vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, opts)
+vim.keymap.set('n', '<A-j>', vim.diagnostic.goto_next, opts)
+
+-- Use an on_attach function to only map the following keys
+-- after the language server attaches to the current buffer
+local on_attach = function(client, bufnr)
+  -- Enable completion triggered by <c-x><c-o>
+  vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+
+  -- Mappings.
+  -- See `:help vim.lsp.*` for documentation on any of the below functions
+  local bufopts = { noremap=true, silent=true, buffer=bufnr }
+
+  vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.definition, bufopts)
+  -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
+  vim.keymap.set({'n', 'i', 'v'}, '<F24>', vim.lsp.buf.references, bufopts)
+  vim.keymap.set({'n', 'i', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
+  vim.keymap.set('n', '==', vim.lsp.buf.formatting, bufopts)
+  vim.keymap.set('v', '=', '<ESC><cmd>lua vim.lsp.buf.range_formatting()<CR>', bufopts)
+
+  -- NdM : suffisamment peu utile pour que je ne le mappe pas :
+  -- :lua vim.lsp.buf.rename('new_name')
+
+  -- NdM : pas encore essayé :
+  -- vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
+
+  -- NdM : moins utile que 'definition' :
+  -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.declaration, bufopts)
+
+  -- NdM : non-pris en charge par clangd et/ou pyright :
+  -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.type_definition, bufopts)
+  -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.implementation, bufopts)
+end
+
+require('lspconfig')['pyright'].setup{
+    on_attach = on_attach,
+    flags = lsp_flags,
+}
+require('lspconfig')['clangd'].setup{
+    on_attach = on_attach,
+    flags = lsp_flags,
+}
+
+-- null-lsp :
+local null_ls = require("null-ls")
+local sources = {
+    null_ls.builtins.diagnostics.flake8,
+}
+null_ls.setup({ sources = sources })
+EOF
+
+endif
+
+" (plugins) }}}
+
+
+"# DEPRECATED {{{
+"########################################################################################################################
+
+" plugins un jour utilisés, aujourd'hui abandonnés :
+" https://github.com/elzr/vim-json
+" " Ne pas masquer les guillemets en json :
+" let g:vim_json_syntax_conceal = 0
+" https://github.com/LucHermitte/local_vimrc
+" https://github.com/LucHermitte/lh-vim-lib
+" https://github.com/tmhedberg/SimpylFold
+" https://github.com/jlanzarotta/bufexplorer
+" Plug 'https://github.com/rking/ag.vim'
+" Plug 'https://github.com/airblade/vim-rooter'
+" Plug 'https://github.com/integralist/vim-mypy', {'for': 'python' }
+" Plug 'https://github.com/chr4/nginx.vim'
+" Plug 'https://github.com/plasticboy/vim-markdown', {'for': 'markdown'}
+" Plug 'https://github.com/habamax/vim-asciidoctor', {'for': 'asciidoc'}
+" Plug 'https://github.com/tpope/vim-commentary.git'
+
 
 " " Ajout de surroundings particuliers pour django (cf. https://code.djangoproject.com/wiki/UsingVimWithDjango) :
 " let g:surround_{char2nr("v")} = "{{ \r }}"
@@ -445,83 +649,67 @@ vnoremap <C-T> :Tabularize /
 " let g:surround_{char2nr("c")} = "{% comment %}\r{% endcomment %}"
 " let g:surround_{char2nr("#")} = "{# \r #}"
 
-" Alternate (a.vim) :
-if has("nvim")
-    " to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
-    noremap <F24>               :execute ':A'<CR>
-    noremap! <F24>         <Esc>:execute ':A'<CR>
-    vnoremap <F24>    <Esc><Esc>:execute ':A'<CR>
-else
-    noremap <S-F12>               :execute ':A'<CR>
-    noremap! <S-F12>         <Esc>:execute ':A'<CR>
-    vnoremap <S-F12>    <Esc><Esc>:execute ':A'<CR>
-endif
-
-" Ctrl+P (see :help ctrlp-options if needed) :
-set wildignore+=*/tmp/*,*.so,*.swp,*.zip,*.pyc " wildignore is not specific to ctrlp, it's a vim config
-let g:ctrlp_show_hidden = 0  " notably, ignore hidden dirs such as .tox or .clangd
-let g:ctrlp_custom_ignore = '\vNOGIT|__pycache__'
-
-" Ne pas masquer les guillemets en json :
-let g:vim_json_syntax_conceal = 0
-
-" flake8
-let g:flake8_quickfix_height=3
-let g:flake8_show_quickfix=0
-let g:flake8_show_in_file=1
-let g:flake8_show_in_gutter=1
-autocmd BufWritePost *.py call Flake8()  " lancement automatique au save de fichiers python
-" effacer les marqueurs flake8 avec F12:
-noremap <F12>             :call flake8#Flake8UnplaceMarkers()<CR>
-noremap! <F12>       <Esc>:call flake8#Flake8UnplaceMarkers()<CR>
-vnoremap <F12>  <Esc><Esc>:call flake8#Flake8UnplaceMarkers()<CR>
-
-" TagBar :
-let g:tagbar_sort = 0  " par défaut, les tags sont triés par ordre d'apparition dans le fichier.
-noremap <F9>             :TagbarOpenAutoClose<CR>
-noremap! <F9>       <Esc>:TagbarOpenAutoClose<CR>
-vnoremap <F9>  <Esc><Esc>:TagbarOpenAutoClose<CR>
-
-" Voir les indentations, utile pour fichiers python :
-" cf. https://github.com/nathanaelkane/vim-indent-guide://github.com/Yggdroot/indentLine
-let g:indentLine_char = '┊'
-let g:indentLine_enabled = 1
-
-" EDIT du 13 juillet 2022 = je commente tout ceci, qui ne semble plus nécessaire pour neovim + ALE sur ubuntu 20.04
-" " cf. journal du jeudi 4 février 2021
-" " TL;DR : la valeur par défaut de cette option (-std=c++14 -Wall) ne convient
-" " pas à tous les projets, et écrase le contenu de compile_commands.json
-" " En settant cette variable à une string vide, j'autorise ALE à utiliser
-" " correctement compile_commands.json
-" let g:ale_cpp_cc_options = ''
-" " EDIT : arf, semble nécessaire tout de même pour les headers (sans doute car
-" " ils n'ont pas d'information les concernant dans compile_commands.json)
-" let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' -std=c++17'
-" " par ailleurs, pour contourner les warnings/erreurs à la compilation de boost
-" " lorsque boost est installé par conan, j'ajoute :
-" let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' --system-header-prefix=boost/'
-" let g:ale_cpp_cc_options = g:ale_cpp_cc_options . ' -Wno-pragma-once-outside-header'
-
-let g:ale_default_navigation = 'tab'
-let g:ale_completion_enabled = 1
+" flake8 est dorénavant directement utilisé via ALE
+" Plug 'https://github.com/nvie/vim-flake8', {'for': 'python' }
+" let g:flake8_quickfix_height=3
+" let g:flake8_show_quickfix=0
+" let g:flake8_show_in_file=1
+" let g:flake8_show_in_gutter=1
+" autocmd BufWritePost *.py call Flake8()  " lancement automatique au save de fichiers python
+" " effacer les marqueurs flake8 avec F11:
+" noremap <F11>             :call flake8#Flake8UnplaceMarkers()<CR>
+" noremap! <F11>       <Esc>:call flake8#Flake8UnplaceMarkers()<CR>
+" vnoremap <F11>  <Esc><Esc>:call flake8#Flake8UnplaceMarkers()<CR>
 
 
-" scrolling plus rapide avec smoothie :
-let g:smoothie_base_speed = 15
-let g:smoothie_speed_exponentiation_factor = 0.95
+" J'ai remplacé ALE par le client LSP natif à neovim :
+" " LSP client
+" Plug 'https://github.com/dense-analysis/ale'
+" let g:ale_default_navigation = 'tab'
+" let g:ale_completion_enabled = 1
+" " NOTE : pour les shortcuts, autant que possible, j'ai repris ceux de vscode :
+" " https://code.visualstudio.com/docs/editor/editingevolved
+" " https://marketplace.visualstudio.com/items?itemName=ryzngard.vscode-header-source
+" noremap gh                :ALEHover<CR>
 
+" noremap <F12>             :ALEGoToDefinition<CR>
+" noremap! <F12>       <Esc>:ALEGoToDefinition<CR>
+" vnoremap <F12>  <Esc><Esc>:ALEGoToDefinition<CR>
 
-" splitjoin config :
-let g:splitjoin_python_brackets_on_separate_lines = 1
-let g:splitjoin_trailing_comma = 1
+" noremap  <A-j>            :ALENextWrap<CR>
+" noremap! <A-j>       <Esc>:ALENextWrap<CR>a
+" vnoremap <A-j>  <Esc><Esc>:ALENextWrap<CR>
 
-" Utiliser clang-format pour indenter le code :
-" (note : ça ne marche pas avec splitjoin, qui semble utiliser le formattage C++ par défaut)
-" (il faut donc que je réapplique manuellement l'opérateur '=' après avoir utilisé splitjoin)
-autocmd FileType c,cpp map <buffer> = <Plug>(operator-clang-format)
-let g:clang_format#command = 'clang-format-11'
+" noremap  <A-k>            :ALEPreviousWrap<CR>
+" noremap! <A-k>       <Esc>:ALEPreviousWrap<CR>a
+" vnoremap <A-k>  <Esc><Esc>:ALEPreviousWrap<CR>
 
-" (plugins) }}}
+" if has("nvim")
+"     " to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
+"     noremap <F24>               :ALEFindReferences<CR>
+"     noremap! <F24>         <Esc>:ALEFindReferences<CR>
+"     vnoremap <F24>    <Esc><Esc>:ALEFindReferences<CR>
+" else
+"     noremap <S-F12>               :ALEFindReferences<CR>
+"     noremap! <S-F12>         <Esc>:ALEFindReferences<CR>
+"     vnoremap <S-F12>    <Esc><Esc>:ALEFindReferences<CR>
+" endif
+
+" " Quelques commandes non-mappées car trop peu souvent utiles :
+" " :ALESymbolSearch
+" " :ALEInfo
+" " :ALEDetail
+
+" clang-format semble maintenant appliqué par clangd :
+" " use clang-format to format code
+" Plug 'https://github.com/kana/vim-operator-user', {'for': 'cpp'}  " pour utiliser vim-clang-format avec '='
+" Plug 'https://github.com/rhysd/vim-clang-format', {'for': 'cpp'}
+" " (note : ça ne marche pas avec splitjoin, qui semble utiliser le formattage C++ par défaut)
+" " (contournement = réappliquer manuellement l'opérateur '=' après avoir utilisé splitjoin)
+" autocmd FileType c,cpp map <buffer> = <Plug>(operator-clang-format)
+" let g:clang_format#command = 'clang-format-11'
+
+" (deprecated) }}}
 
 
 function CheatsheetFunction()
@@ -532,6 +720,7 @@ function CheatsheetFunction()
         \ "======= SEARCH :",
         \ "    :copen / :ccl[ose]     ouvrir / fermer la quickfix list",
         \ "    :Ag  pattern           rechercher un pattern dans tout le projet git",
+        \ "    :Ag  'with spaces'     idem, mais pour un pattern qui contient des espaces",
         \ "    :Agl pattern           (alias pour AgLocal) rechercher un pattern dans le répertoire courant",
         \ "      ├─ t                  dans la fenêtre quickfix, ouvrir le fichier dans un nouvel onglet",
         \ "      ├─ o                  dans la fenêtre quickfix, ouvrir le fichier dans l'onglet courant",
@@ -541,6 +730,7 @@ function CheatsheetFunction()
         \ "    S-F8                   ouvrir NERDTree sur le répertoire racine git",
         \ "      ├─ o / Entrée         sans fermer le NERDTree, ouvrir le fichier dans l'onglet actuel",
         \ "      ├─ T                  sans fermer le NERDTree, ouvrir le fichier dans un nouvel onglet",
+        \ "      ├─ u                  remonter d'un cran dans la hiérarchie",
         \ "      └─ q                  fermer le NERDTree",
         \ "    F9                     ouvrir la tagbar du fichier courant",
         \ "      ├─ q                  fermer la tagbar",
@@ -552,19 +742,38 @@ function CheatsheetFunction()
         \ "      ├─ Entrée             dans la fenêtre quickfix, ouvrir le fichier dans l'onglet courant",
         \ "      └─ CTRL-d             dans la fenêtre quickfix, limiter le pattern au fichier vs. path",
         \ "",
-        \ "======= VRAC PLUGINS :",
+        \ "======= VIM-PLUG :",
         \ "    https://github.com/junegunn/vim-plug",
+        \ "      ├─ :PlugInstall       installer les plugins ajoutés au vimrc",
         \ "      ├─ :PlugStatus        liste des plugins et leur status",
         \ "      ├─ :PlugUpdate        liste des plugins + mise à jour",
         \ "      └─ :PlugClean         suppression effective d'un plugin après l'avoir supprimé du vimrc",
-        \ "    :call Flake8()         lance flake8 (automatique au save d'un *.py), config = ~/.config/flake8",
-        \ "    F12                    toggle les marqueurs flake8, shortcut pour :call flake8#Flake8UnplaceMarkers()",
-        \ "    S-F12                  alterner entre .h / .cpp",
+        \ "",
+        \ "======= CODE :",
+        \ "    CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur",
+        \ "    :help tags",
+        \ "      ├─build tags :",
+        \ "      │   apt install exuberant-ctags",
+        \ "      │   ctags --recurse --c++-kinds=+p --fields=+iaS --extras=+q .",
+        \ "      ├─CTRL+]              jumper à la définition du tag",
+        \ "      ├─CTRL+t              revenir à l'emplacement précédent",
+        \ "      ├─g puis CTRL+]       choisir la destination du jump dans une liste",
+        \ "      └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'",
+        \ "    LSP",
+        \ "      ├─ F12                go to definition",
+        \ "      ├─ Shift+F12          see references",
+        \ "      ├─ gh                 hover",
+        \ "      ├─ Alt+j / Alt+k      go to next/previous error",
+        \ "      ├─ TODO               recherche dans l'index des symboles",
+        \ "      ├─ :LspStop/Start     (dés)activer le LSP client (semble mal marcher avec null-ls...)",
+        \ "      └─ :LspInfo           des infos sur la config des LSP (e.g. quels linters sont actifs)",
+        \ "    Alt-o                  alterner entre .h / .cpp",
         \ "    :AT                    alterner entre .h / .cpp dans un nouvel onglet",
-        \ "    CTRL-Y + ,             lancer emmet (pour tags HTML faciles)",
-        \ "    CTRL-T + <sep>         tabularize avec des colonnes séparées par <sep>",
+        \ "    CTRL-y + ,             lancer emmet (pour tags HTML faciles)",
+        \ "    CTRL-t + <sep>         (visual) tabularize avec des colonnes séparées par <sep>",
         \ "    :IndentLinesToggle     toggle le marqueur des indentations python",
         \ "    :gJ  /  gS             split/join les arguments d'une fonction, placer curseur sur parenthèse ouvrante",
+        \ "    == / (visual)=         reformatter tout le fichier (ou uniquement la sélection visuelle)",
         \ "",
         \ "======= MES ALIAS PERSOS (hors plugins) :",
         \ "    CTRL-HAUT/BAS          scroller une ligne vers le bas/haut",
@@ -576,16 +785,7 @@ function CheatsheetFunction()
         \ "    F5                     lancement de ctags sur le git-root-dir",
         \ "    |                      ouvrir le tag dans un onglet (ou sinon : C-w + C-]  puis C-w + S-T)",
         \ "",
-        \ "======= CORE VIM FEATURES :",
-        \ "    CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur",
-        \ "    :help tags",
-        \ "      ├─build tags :",
-        \ "      │   apt install exuberant-ctags",
-        \ "      │   ctags --recurse --c++-kinds=+p --fields=+iaS --extras=+q .",
-        \ "      ├─CTRL+]              jumper à la définition du tag",
-        \ "      ├─CTRL+t              revenir à l'emplacement précédent",
-        \ "      ├─g puis CTRL+]       choisir la destination du jump dans une liste",
-        \ "      └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'",
+        \ "======= OTHER CORE VIM FEATURES :",
         \ "    :help fold",
         \ "      ├─:set foldlevel=3    setter le foldlevel",
         \ "      ├─zO / zC             ouvrir/fermer le fold actuel et tous ses fils",
@@ -623,6 +823,7 @@ function CheatsheetFunction()
     call append(0, mycheatsheet)
     call cursor(1, 1)
 endfunction
+
 command Cheat call CheatsheetFunction()
 command Cheatsheet call CheatsheetFunction()
 noremap <C-h>             :Cheat<CR>
