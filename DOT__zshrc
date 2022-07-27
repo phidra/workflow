@@ -150,3 +150,15 @@ prompt_virtualenv() {
     prompt_segment red black "(${VIRTUAL_ENV:t:gs/%/%%})"
   fi
 }
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+
+# 2022-07-12 = neovim :
+export PATH="$HOME/neovim/bin:$PATH"
+alias nvim="nvim -p"
+alias vim="echo '' ; echo 'UTILISER PLUTÔT NVIM !!!' ; echo '' ; sleep 1 ; nvim"
+
+alias clang-format=clang-format-11
