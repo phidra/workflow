@@ -30,6 +30,7 @@ set listchars=tab:▶\ ,trail:●,nbsp:␣,precedes:←,extends:→
 set redrawtime=10000  " autorise le chargement de syntaxe à prendre plus de temps que les 2s par défaut
 set wildignore+=*/tmp/*,*.so,*.o,*.swp,*.zip,*.pyc
 set nocompatible
+set switchbuf+=usetab,newtab
 
 
 " Par défaut, on désactive les pair-match facilities, (à réactiver pour les buffers de code).
@@ -377,7 +378,7 @@ endif
 
 " align tokens of a line according to a separator
 Plug 'https://github.com/godlygeek/tabular.git', {'on': 'Tabularize' }
-vnoremap <C-T> :Tabularize /  " on the current selection
+vnoremap <C-T> :Tabularize /
 
 
 " tag browser
