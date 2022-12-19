@@ -1,0 +1,38 @@
+# TO USE :
+# git config --global core.excludesfile  /path/to/workflow/DOT__gitignore
+# git config --list --show-origin
+
+
+# vim :
+*.swp
+tags
+
+# python :
+*.pyc
+*.pyd
+*.pyo
+*.egg
+*.egg-info
+.tox
+.pytest_cache/*
+__pycache__
+.mypy_cache
+
+# pyenv :
+.python-version
+
+# cpp files :
+a.out
+core
+*.o
+*.a
+*.so
+*.so.*
+.clangd
+
+# specific patterns to ignore :
+*GITIGNORE*
+*NOGIT*
+
+# jupyter notebook :
+.ipynb_checkpoints
