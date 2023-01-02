@@ -126,6 +126,10 @@ redraw
 " autocmd BufEnter *.html setlocal filetype=htmldjango
 " autocmd FileType htmldjango set commentstring={#%s#}
 
+" filetypes spécifiques :
+autocmd BufEnter *.Jenkinsfile setlocal filetype=groovy
+autocmd BufEnter tsconfig.json setlocal filetype=javascript  " fichier de config typescript
+
 runtime macros/matchit.vim  " permet de switcher entre les tags HTML avec %
 
 " Folding avec les brackets triples {{{ }}} pour l'édition des fichiers vim (y compris le présent fichier) :
