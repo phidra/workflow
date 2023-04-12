@@ -86,6 +86,7 @@ let g:codepatterns = [
             \ '*.css',
             \ '*.py',
             \ '*.js',
+            \ '*.ts',
             \ '*.c',
             \ '*.cpp',
             \ '*.h',
