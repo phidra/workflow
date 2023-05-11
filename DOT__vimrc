@@ -533,6 +533,9 @@ autocmd FileType markdown set foldexpr=NestedMarkdownFolds()
 Plug 'ahmedkhalf/project.nvim'
 
 
+" justfile syntax :
+Plug 'https://github.com/NoahTheDuke/vim-just'
+
 call plug#end()
 
 
