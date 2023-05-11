@@ -39,7 +39,7 @@ ZSH_THEME="agnoster"
 # ENABLE_CORRECTION="true"
 
 # Uncomment the following line to display red dots whilst waiting for completion.
-# COMPLETION_WAITING_DOTS="true"
+COMPLETION_WAITING_DOTS="true"
 
 # Uncomment the following line if you want to disable marking untracked files
 # under VCS as dirty. This makes repository status check for large repositories
@@ -76,6 +76,7 @@ plugins=(
 )
 
 CASE_SENSITIVE="true"
+fpath=(~/.local/custom-zsh-completions $fpath)
 source $ZSH/oh-my-zsh.sh
 
 # User configuration
@@ -165,3 +166,6 @@ alias clang-format=clang-format-11
 # bat --list-themes
 export BAT_THEME="Coldark-Cold"
 
+
+# 2023-05 = just :
+alias j=just
