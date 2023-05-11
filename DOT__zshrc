@@ -54,7 +54,8 @@ ZSH_THEME="agnoster"
 # Would you like to use another custom folder than $ZSH/custom?
 # ZSH_CUSTOM=/path/to/new-custom-folder
 
-#zstyle :omz:plugins:ssh-agent identities id_rsa id_rsa2 id_github
+# zstyle :omz:plugins:ssh-agent identities id_rsa id_rsa2 id_github id_ed25519
+# zstyle :omz:plugins:ssh-agent identities id_rsa id_ed25519
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
@@ -151,14 +152,16 @@ prompt_virtualenv() {
   fi
 }
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-
-
-# 2022-07-12 = neovim :
+# 2022-07 = neovim :
 export PATH="$HOME/neovim/bin:$PATH"
 alias nvim="nvim -p"
 alias vim="echo '' ; echo 'UTILISER PLUTÔT NVIM !!!' ; echo '' ; sleep 1 ; nvim"
 
 alias clang-format=clang-format-11
+
+# 2022-11 = bat :
+# sous Ubuntu, 'sudo apt install bat' installe "batcat" :
+[ ! -e ~/.local/bin/bat ] && ln -s /usr/bin/batcat ~/.local/bin/bat
+# bat --list-themes
+export BAT_THEME="Coldark-Cold"
+
