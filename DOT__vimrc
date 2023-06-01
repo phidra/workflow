@@ -536,6 +536,10 @@ Plug 'ahmedkhalf/project.nvim'
 " justfile syntax :
 Plug 'https://github.com/NoahTheDuke/vim-just'
 
+
+" rust-tools :
+Plug 'https://github.com/simrat39/rust-tools.nvim'
+
 call plug#end()
 
 
@@ -568,9 +572,10 @@ local on_attach = function(client, bufnr)
   -- See `:help vim.lsp.*` for documentation on any of the below functions
   local bufopts = { noremap=true, silent=true, buffer=bufnr }
 
-  vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.definition, bufopts)
+  vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.definition, bufopts)  -- F12 = go to definition in the same tab
+  vim.keymap.set({'n', 'i', 'v'}, 'g<F12>', '<ESC><cmd>tab split<CR><cmd>lua vim.lsp.buf.definition()<CR>', bufopts)  -- g-F12 = go to definition in a new tab
   -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
-  vim.keymap.set({'n', 'i', 'v'}, '<F24>', vim.lsp.buf.references, bufopts)
+  vim.keymap.set({'n', 'i', 'v'}, '<F24>', vim.lsp.buf.references, bufopts)  -- Shift-F12 = who uses this symbol ?
   vim.keymap.set({'n', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
   vim.keymap.set('n', '==', vim.lsp.buf.formatting, bufopts)
   vim.keymap.set('v', '=', '<ESC><cmd>lua vim.lsp.buf.range_formatting()<CR>', bufopts)
@@ -623,6 +628,10 @@ require('lspconfig')['clangd'].setup{
     flags = lsp_flags,
 }
 require('lspconfig')['tsserver'].setup{
+    on_attach = on_attach,
+    flags = lsp_flags,
+}
+require('rust-tools').setup{
     on_attach = on_attach,
     flags = lsp_flags,
 }
