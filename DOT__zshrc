@@ -169,3 +169,4 @@ export BAT_THEME="Coldark-Cold"
 
 # 2023-05 = just :
 alias j=just
+alias jn="just  --justfile NOGIT_justfile"  # pour utiliser mon justfile perso dans un projet git partagé (sans le commiter)
