@@ -168,5 +168,15 @@ export BAT_THEME="Coldark-Cold"
 
 
 # 2023-05 = just :
-alias j=just
-alias jn="just  --justfile NOGIT_justfile"  # pour utiliser mon justfile perso dans un projet git partagé (sans le commiter)
+# la façon dont je veux utiliser just :
+#     - si on est dans un répertoire qui contient un de mes justfile custom, c'est celui-ci qu'il faut utiliser
+#     - sinon, on utilise le comportement classique de just (chercher un `justfile` dans les répertoires parents)
+# Pour bypasser ce comportement, il suffit de bypasser la fonction ci-dessous, en appelant "just" directement.
+function j() {
+  if [ -e ./NOGIT_justfile ]
+  then
+    just  --justfile NOGIT_justfile "$@"
+  else
+    just "$@"
+  fi
+}
