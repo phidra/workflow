@@ -577,6 +577,7 @@ local on_attach = function(client, bufnr)
   -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
   vim.keymap.set({'n', 'i', 'v'}, '<F24>', vim.lsp.buf.references, bufopts)  -- Shift-F12 = who uses this symbol ?
   vim.keymap.set({'n', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
+  vim.keymap.set({'n', 'v'}, 'gb', vim.lsp.buf.code_action, bufopts)  -- gc (pour [C]ode-actions) et ga (pour code-[A]ctions) sont déjà pris...
   vim.keymap.set('n', '==', vim.lsp.buf.formatting, bufopts)
   vim.keymap.set('v', '=', '<ESC><cmd>lua vim.lsp.buf.range_formatting()<CR>', bufopts)
 
