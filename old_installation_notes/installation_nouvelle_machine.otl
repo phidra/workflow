@@ -1,0 +1,391 @@
+META : ces notes sont assez anciennes donc probablement plus très à jour, mais elles peuvent encore contenir quelques trucs intéressants → je garde pour consultation.
+
+
+FAIT DEPUIS L'INSTALL DE XFCE :
+	Mise à jour des paquest :
+		sudo apt update
+		sudo apt upgrade
+		sudo apt install xubuntu-desktop   (se déconnecter, puis, sur l'écran de login, ouvrir les paramètres et choisir xfce)
+	Ménage :
+		rmdir Downloads Documents Music Pictures Public Templates Videos
+		rm examples.desktop
+	tmux :
+		sudo apt install tmux
+		(sudo apt install tmuxinator  EDIT 2021-09-15 = j'arrête d'utiliser tmuxinator)
+		copie de mon .tmux.conf dans ~
+		git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+		tnew TEST
+		PREFIX+i  pour installer les plugins
+	zsh :
+		sudo apt install zsh
+		chsh -s /usr/bin/zsh myself
+		sudo chsh -s /usr/bin/zsh root
+		echo $SHELL
+		FIXME : ajouter les commandes pour installer oh-my-zsh
+	philenv.d :
+		Cloner le projet philenv.git
+		./release.sh
+		[ROOT] copie de la release du philenv dans /opt
+		cd /opt
+		ln -s RELEASED_philenv.d_09janvier2017_14h07m41s philenv.d
+		Ajout de ". /opt/philenv.d/set_philenv.sh" à la fin du bashrc de root et de myself.
+	Création du fichier de contextes :
+		[ROOT] echo "remotework" >> /opt/mylocalcontexts.philenv
+		[ROOT] chmod a+r echo "remotework" >> /opt/mylocalcontexts.philenv
+	vim :
+		apt-get install vim.gnome
+		apt-get install vim-vimoutliner
+		[ROOT] vim-addons -w install vimoutliner
+		copie du .vimrc
+		copie du .vimoutlinerrc
+		installation des plugins via VimPlug
+			curl -fLo ~/.vim/autoload/plug.vim --create-dirs     https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+			vim
+			:PlugInstall
+		Vérification que le copié-collé fonctionne.
+		NOTE : ne pas oublier de faire la même chose pour l'utilisateur ROOT !
+	diminution du timeout de grub :
+		[ROOT] vim /etc/default/grub
+		[ROOT] # Changer le GRUB_TIMEOUT à 3
+		[ROOT] update-grub
+	Installation du wifi :
+		lshw + lspci pour connaître le modèle de ma carte wifi
+		google pour connaître le driver correspondant + installation avec apt-get :
+			firmware-iwlwifi
+		utilisation de wicd-client pour configurer l'accès
+	updatedb même dans la partition de données :
+		[ROOT] vim /etc/updatedb.conf
+		remplacer :
+			PRUNEPATHS="/tmp /var/spool /media"
+		par :
+			PRUNEPATHS="/tmp /var/spool /media/cdrom /media/cdrom0"
+	ssh :
+		sudo apt install ssh
+		ssh-keygen -t ed25519
+			si besoin, choisir le chemin pour la clé privée :
+				/path/to/ssh/id_rsa
+			choisir la passphrase
+			NOTE : l'ancienne commande = ssh-keygen -t rsa -b 4096
+		vim /etc/ssh/ssh_config
+			Port 2288
+			IdentityFile /path/to/ssh/id_rsa
+			UserKnownHostsFile /path/to/ssh/known_hosts
+		Copier les clés sur le serveur auquel je veux avoir accès :
+			[sur myserver.fr, en tant que ROOT] vim /etc/ssh/sshd_config
+				PasswordAuthentication yes
+			[sur myserver.fr, en tant que ROOT] service ssh restart
+			[sur le nouveau PC, en tant que user normal] ssh-copy-id -i /path/to/ssh/id_rsa.pub myself@myserver.fr
+				entrer le mot de passe de myself
+			[sur le nouveau PC, en tant que user normal] ssh-copy-id -i /path/to/ssh/id_rsa.pub git@myserver.fr
+				entrer le mot de passe de git
+			[sur myserver.fr, en tant que ROOT] vim /etc/ssh/sshd_config
+				PasswordAuthentication no
+			[sur myserver.fr, en tant que ROOT] service ssh restart
+			# Vérifier que depuis le nouveau PC, on peut accéder à myserver avec myself ou git :
+				ssh myself@myserver.fr
+				git clone git@myserver.fr:notes_techniques.git /tmp/deleteme
+		Permettre à un PC 1 d'accéder à un PC 2 :
+			ssh-keygen -R POUET -f /path/to/ssh/known_hosts
+			ssh-copy-id -i /path/to/ssh/id_rsa.pub myself@myself-this-pc
+		Vérification :
+			systemctl status ssh
+		Dépôt de mes clés sur gitlab via l'IHM web
+	Changement de l'éditeur par défaut pour vim :
+		Commande pour ma machine locale :
+			select-editor
+		Commande pour mon serveur :
+			update-alternatives --config editor
+		Ne pas choisir vim.tiny (mais vim.gnome ou vim.nox)
+	Ajout de module loop au kernel (pour truecrypt)
+		# (si je veux le faire manuellement : modprobe loop)
+		tee /etc/modules-load.d/truecrypt.conf <<< "loop"
+	Installation de truecrypt :
+		Téléchargement de la version 7.1a (dernière version secure connue) sur https://truecrypt.ch
+		Installation.
+		Création d'un volume de 50 GB dans /home/myuser/remotework
+		[ROOT] chown -R myuser.myuser /path/to/
+
+TUNING DE L'ENVIRONNEMENT DE BUREAU :
+	Ajouté les raccourcis claviers :
+		[Ctrl+Alt+F]  exo-open --launch WebBrowser
+		[Ctrl+Alt+H]  thunar /home/myuser
+		[Ctrl+Alt+E]  xfce4-terminal --geometry=174x22
+		[Print]       xfce4-screenshooter -f
+		[Shift+Print] xfce4-screenshooter -w
+	Préférences du gestionnaire de fenêtres :
+		Onglet style > choisir le thème "Daloa"
+		Onglet clavier > utilisation de "Ctrl+Shift+Alt+flèche gauche/droite" pour déplacer une fenêtre sur un autre espace de travail
+	Dans thunar, réactivation du raccourcis "Retour Arrière" pour remonter vers le parent :
+		cf. http://docs.xfce.org/xfce/thunar/faq#how_do_i_assign_different_keyboard_shortcuts
+		ouvert thunar
+		positionner le pointeur de la souris sur le bouton "remonter vers le parent" (sans rien cliquer)
+		appuyé sur "Retour Arrière"
+	Préférences du clavier :
+		Délai avant répétition     = 250
+		Vitesse de répétition      = 50
+		Intervalle de clignotement = 800
+	Préférences de la souris/pavé tactile :
+		Onglet périphériques :
+			Pavé tactile -> Désactiver le pavé tactile pendant la frappe
+			Pavé tactile -> Tapoter le pavé tactile pour cliquer
+		Onglet comportement :
+			Délai du double-clic       = 400 ms
+	Restaurer le raccourci Alt+F10 (plutôt que Alt+F7 par défaut) pour maximiser une fenêtre :
+		vim ~/.config/xfce4/xfconf/xfce-perchannel-xml/xfce4-keyboard-shortcuts.xml
+		grepper "maximize_window_key"
+	Calcul du md5 dans thunar :
+		cf. http://forum.salixos.org/viewtopic.php?f=24&t=1274
+		Ajouter une action personnalisée à thunar :
+			zenity --info --title="Check md5 for %n" --text="$(md5sum %f)"	
+		Dans l'autre onglet, définir la condition d'apparition à tous les fichiers sauf les répertoires.
+	Applications préférées :
+		Dans les applications préférées (Menu XFCE > Paramètres > Applications favorites) :
+			Thunderbird pour mon mailreader
+			Firefox pour mon internet
+		Dans l'éditeur de type MIME (Menu XFCE > Paramètres > Éditeur de type MIME) :
+			application/pdf  →  "Visionneur de documents."
+	Terminal :
+		Dans les préférences du profil, définition de la police (cf. ci-dessous) et des 5000 lignes d'historique.
+		Définition de la couleur d'arrière-plan (blanc), de la couleur du texte (noir), et de la couleur du curseur (noir-vert sombre)
+		Dans les préférences du terminal > Général > Défilement, décocher "Défiler sur la sortie" (sans quoi on ne pourra pas facilement observer l'historique).
+		À la souris, redimensionner le terminal aux dimensions qui vont bien (chez moi : 174x22), et les mémoriser.
+		Les définir alors comme par défaut dans le profil du terminal (à faire APRÈS avoir défini la taille des polices ET les tableaux de bord).
+	Choix de la police et des paramètres d'apparence :
+		Dans les paramètres XFCE > Apparence > Polices > Rendu, je suis aussi passé par plusieurs essais (surtout que ça dépend de la police).
+		Au final, avec Liberation Mono en 9 :
+			activer l'anti-crénelage
+			mettre le hinting à "Léger"
+			mettre l'ordre de sous-pixellisation à "RVB"
+		Et pour la police par défaut du système (qui affiche par exemple les menus de Firefox), j'utilise :
+			Liberation Sans 10
+	affichage des noms complets des fichiers présents sur le bureau (sans les tronquer) :
+		cf. :
+			http://docs.xfce.org/xfce/xfdesktop/advanced
+		vim ~/.gtkrc-2.0   # chez moi, le fichier n'existait pas, je l'ai créé
+			:style "xfdesktop-icon-view" {
+			:	XfdesktopIconView::ellipsize-icon-labels = 0
+			:}
+			:widget_class "*XfdesktopIconView*" style "xfdesktop-icon-view"
+		Redémarrer, ou bien faire :
+			xfdesktop --quit
+			xfdesktop &
+	gestion du démarrage :
+		Modif mineure :
+			Paramètres > Session et démarrage
+			Dans l'onglet "Démarrage automatique", désactiver "Gestionnaire d'alimentation"
+		Quel login manager est installé :
+			dpkg -l *dm*|grep ^ii
+			j'ai l'air d'avoir lightdm installé...
+		Configuration de l'autologin :
+			[ROOT] vim /etc/lightdm/lightdm.conf
+			autologin-user=myself
+	configuration du bureau :
+		http://docs.xfce.org/xfce/xfce4-panel/preferences
+		----------------------------------------
+		recouvrement des panneaux :
+			http://forum.xfce.org/viewtopic.php?id=5305
+		----------------------------------------
+		Ce que j'ai fait :
+			défini deux panels, un à gauche (vertical, 40 pixels de large), l'autre en bas (horizontal, 30 pixels de haut)
+			celui du bas ne s'étend pas sur toute la longueur (car problème de recouvrement avec le premier)
+				→ je l'ai mis à 97% pour l'avoir à la bonne longueur
+				je l'ai déplacé à la main pour le faire se plaquer à droite
+			installé une calculette (apt-get install galculator)
+			installation de l'horloge orage
+				Date/heure custom de l'horloge : %A %d %B  -  %R
+			Désactivation du loop (cycle) entre les workspaces :
+				Paramètres > Peaufinage des fenêtres > Espaces de travail
+				Décocher "Changer d'espace de travail lorsque le premier ou le dernier est atteint"
+				Décocher "Changer d'espace de travail en fonction de la disposition du bureau"
+			tentative avorté d'utiliser le gnome-system-monitor :
+				réinstallé (apt-get install gnome-system-monitor) mon applet que j'aimais bien
+				mais je ne peux pas l'utiliser : il faut utiliser xfce4-xfapplet-plugin...
+				or ce paquet n'existe pas pour jessie (mais il existe bien pour wheezy et pour sid... grrr !)
+				j'ai vaguement essayé de le configurer, sans succès...
+				affaire à suivre (essayer de l'installer depuis un autre dépôt ?)
+		Applications dans ma barre de lancement verticale :
+			menu principal XFCE (sur lequel j'ai supprimé le texte)
+			terminal
+			xsane
+			gimp
+			mousepad
+			thunderbird
+			firefox
+			chromium
+			galculator
+			moniteur de batterie
+			zone de notification (ce qui indique notamment l'état du réseau filaire)
+			moniteur de la charge système (configuré pour ne montrer que la RAM, vu que le CPU est montré par CPU graph)
+			observateur de la charge CPU et de la RAM
+			observateur du réseau
+			contrôle du volume Pulsaudio (qui ouvre pavucontrol)
+			Connexions réseau
+			corbeille
+			notifications
+			applet météo (réglé pour n'afficher que la température)
+			pgadmin3  (si besoin)
+		Dans ma barre de lancement horizontale :
+			date+heure de Orage
+			liste des fenêtres
+			liste des espaces de travail
+	Définition de l'écran :
+		j'ai le choix entre 1366x768 et 1366x766
+		il faut prendre 1366x766, sinon, on a l'écran qui peut scroller latéralement
+	À prendre avec des pincettes car probablement spécifique au poste sur lequel j'ai fait ça :
+		echo "options snd-hda-intel model=generic" | sudo tee -a /etc/modprobe.d/alsa-base.conf
+	firefox :
+		Désactivation de l'affichage des sites les plus visités à l'ouverture d'un nouvel onglet :
+			about:config
+			rechercher "about:newtab", et remplacer partout par "about:blank"
+		Au démarrage, afficher une page vide.
+		Toujours demander où enregistrer les téléchargements.
+		Désactivation de l'affichage des sites les plus visités à l'ouverture d'un nouvel onglet :
+			ouvrir un nouvel onglet vierge
+			cliquer sur la roue dentée sur l'onglet qui s'ouvre
+			choisir de ne rien afficher à l'ouverture d'un nouvel onglet
+		Toujours visualiser le préfixe HTTP(S) dans les URLs :
+			about:config
+			browser.urlbar.trimURLs -> mettre à false
+	Préférences de chromium :
+		Ouvrir chrome://settings
+		Afficher les paramètres avancés...
+		Téléchargements > Toujours demander où enregistrer les fichiers.
+	thunderbird :
+		apt-get install thunderbird
+		copie de mon profil
+		lancement → il met à jour les plugins et ça fonctionne.
+	Désactivation du bluetooth au démarrage :
+		[ROOT] vim /etc/rc.local
+			rfkill block bluetooth
+		NOTE : pour le réactiver (en ROOT) :
+			rfkill unblock bluetooth && rfkill list bluetooth
+	Gestion du pavé numérique au démarrage :
+		NOTE : cf. https://doc.ubuntu-fr.org/numlockx
+		----------------------------------------
+		sudo apt-get install numlockx
+		sudo vim  /usr/share/lightdm/lightdm.conf.d/50-unity-greeter.conf
+			[SeatDefaults]
+			greeter-setup-script=/usr/bin/numlockx on
+
+INSTALLÉS PAR APT :
+	NOTE : pour connaître les paquets installés manuellement :
+		grep "apt-get install" /var/log/apt/history.log
+	----------------------------------------
+	vim.gnome
+	vim-vimoutliner
+	firefox
+	firefox-l10n-fr
+	lshw
+	thunderbird
+	thunderbird-l10n-fr
+	gparted
+	tree
+	mplayer
+	vlc
+	meld
+	ncdu
+	rsync
+	padevchooser
+	pavucontrol
+	galculator
+	gnome-system-monitor
+	xfce4-goodies [il était déjà installé, il est juste passé en "manuel"]
+	git
+	gitk
+	fonts-liberation
+	ttf-mscorefonts-installer
+	ttf-anonymous-pro
+	fonts-inconsolata
+	update-notifier
+	zenity
+	cifs-utils
+	strace
+	inkscape
+	gimp
+	dia
+	mupen
+	htop
+	zip
+	curl
+	python-sphinx
+	chromium
+	chromium-l10n
+	transmission-gtk
+	unrar
+	zsnes
+	build-essential
+	python-dev
+	python-setuptools
+	nmap
+	silversearcher-ag
+	jq
+	ruby-pygments.rb
+	clang-format
+	pgadmin3
+
+
+CONFIGURATION D'UN ENVIRONNEMENT DE DÉVELOPPEMENT :
+	Configuration de git :
+		git config --global color.diff auto
+		git config --global color.status auto
+		git config --global color.branch auto
+		git config --global color.ui true
+		#----------------------------------------
+		git config --global user.name Myself
+		git config --global user.email myself@pc-fixe
+		#----------------------------------------
+		git config --global alias.st status
+		git config --global push.default simple
+		#git config --global push.default simple    # CELUI-CI JE NE L'AI PAS FAIT
+		git config --global core.editor vim
+
+PYTHON-RELATED :
+	Installation des divers interpréteurs python :
+		à noter que sur ubuntu 16.04
+			python = python2 = 2.7.12
+			python3 = 3.5.2
+		sudo add-apt-repository ppa:deadsnakes/ppa
+		sudo apt update
+		sudo apt install python3.4
+		sudo apt install python3.5   <-- uniquement si nécessaire (il était déjà installé sur ubuntu 16.04)
+		sudo apt install python3.6
+	Installation de pip - à noter que pour python3.6, ça n'est sans doute plus nécessaire :
+		curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+		python get-pip.py   <-- installe pip pour python2.7
+		python3 get-pip.py  <-- installe pip por python3.5
+	Installation de venv :
+		sudo apt install python3.6-venv
+	Installation de pipx :
+		python3.6 -m pip install --user pipx
+		pipx list
+		pipx run cowsay moooo
+		pipx install cowsay
+		cowsay youpi
+	Outils utiles via pipx :
+		pipx install flake8
+		pipx install black
+	Installation et configuration de virtualenvwrapper :
+		pipx install virtualenvwrapper
+			alternative = python -m pip install virtualenvwrapper
+		de plus, j'ai dû mettre à jour mon chemin local vers virtualenvwrapper dans le philenv :
+			OLD = /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+			NEW = ~/.local/bin/virtualenvwrapper.sh
+		vim ~/.bashrc  (voire .zshrc)
+			export WORKON_HOME=~/.virtualenvs
+			mkdir -p $WORKON_HOME
+			source /usr/local/bin/virtualenvwrapper.sh    <--- possiblement, chemin à adapter, cf. ci-dessus
+		définir le PS1 :
+			vim ${WORKON_HOME}/postactivate
+				:venvname="$(basename ${VIRTUAL_ENV})"
+				:prefix="===== "
+				:suffix=" ====="
+				:ps1_to_use=""
+				:ps1_to_use+="\n"
+				:ps1_to_use+="$(tput setab 1 2> /dev/null)$(tput bold 2> /dev/null)"
+				:ps1_to_use+="${prefix}"
+				:ps1_to_use+="VIRTUALENV : "
+				:ps1_to_use+="${venvname}"
+				:ps1_to_use+="${suffix}"
+				:ps1_to_use+="$(tput sgr0 2> /dev/null)"
+				:ps1_to_use+="${_OLD_VIRTUAL_PS1}"
+				:export PS1="${ps1_to_use}"
