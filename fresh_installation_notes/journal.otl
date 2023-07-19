@@ -274,3 +274,7 @@ PHASE 2 = autres actions en vrac :
 			REGULARUSER> npm config set prefix '~/.local/'
 		installation de typescript + LSP :
 			npm install -g typescript typescript-language-server
+	cleaning de répertoires inutiles :
+		cd ~
+		rmdir Téléchargements Vidéos Public Musique Modèles Images Documents
+
