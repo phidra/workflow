@@ -1,0 +1,276 @@
+META :
+	CONTEXTE = juillet 2023 = installation from scratch d'ubuntu 22.04 sur le vieux petit PC portable
+	WARNING DE NON-EXHAUSTIVITÉ :
+		d'autres notes se trouvent dans l'ancien fichier → possiblement des trucs intéressants (e.g. pour XFCE)
+		notamment, le contexte est différent puisque je n'installe pas mon poste principal, mais un PC secondaire (p.ex. thunderbird ne m'intéresse pas)
+	Notes plus détaillées pour ce qui concerne le workflow de dev :
+		https://github.com/phidra/notes/blob/main/structured/workflow/dev-workflow.md
+
+PHASE 0 = préalable :
+	Partir d'une base propre :
+		sudo apt update
+		sudo apt upgrade
+	Si besoin, en attendant d'installer neovim, pouvoir éditer avec vim plutôt que nano :
+		sudo apt install vim
+
+PHASE 1 = les étapes à faire en priorité sont celles facilitant la suite de l'installation du poste :
+	prioritaire :
+		raccourci pour lancer facilement un terminal
+		neovim pour éditer des fichiers (notamment le journal d'installation)
+		zsh + zshrc + philenv pour naviguer facilement
+		serveur ssh + tmux pour pouvoir manipuler le PC à installer depuis le PC fixe
+	À FAIRE GRAPHIQUEMENT = DÉFINIR LES RACCOURCIS POUR LANCER DES TRUCS :
+		Navigateur = Ctrl + Alt + F
+		Home       = Ctrl + Alt + H
+		Terminal   = Ctrl + Alt + E
+	NEOVIM :
+		Je suis mes propres instructions ici :
+			https://github.com/phidra/notes/blob/main/structured/workflow/dev-workflow.md#notes-dinstallation
+		done :
+			sudo apt install git
+			sudo apt install make
+			sudo apt install ninja-build gettext cmake unzip curl
+			git clone https://github.com/neovim/neovim --depth 1 --branch stable
+			cd neovim/
+			make CMAKE_BUILD_TYPE=Release CMAKE_EXTRA_FLAGS="-DCMAKE_INSTALL_PREFIX=$HOME/neovim"
+			make install
+			cd .. ; rm -rf neovim  # cleaning
+		Téléchargé mes fichiers  + installé dans le home
+			wget --output-document ~/.vimrc https://github.com/phidra/workflow/raw/main/dotfiles/DOT__vimrc
+			wget --output-document ~/.vimoutlinerrc https://github.com/phidra/workflow/raw/main/dotfiles/DOT__vimoutlinerrc
+		Faire en sorte que neovim charge le vimrc = éditer ~/.config/nvim/init.vim
+			set runtimepath^=~/.vim runtimepath+=~/.vim/after
+			let &packpath = &runtimepath
+			source ~/.vimrc
+		Installer vim-plug et mes plugins :
+			sh -c 'curl -fLo "${XDG_DATA_HOME:-$HOME/.local/share}"/nvim/site/autoload/plug.vim --create-dirs https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+			nvim
+			:PlugInstall
+		Dépendances de telescope :
+			sudo apt install fd-find
+			sudo apt install ripgrep
+	ZSH RELATED :
+		zsh :
+			sudo apt install zsh
+			chsh -s /usr/bin/zsh myself
+			sudo chsh -s /usr/bin/zsh root
+			(il faut se délogger+relogger)
+			à la première connexion, on doit choisir la conf .zshrc : je choisis d'utiliser la config par défaut, mais peu importe ce que je choisis car oh-my-zsh va réécrire le fichier
+		oh-my-zsh :
+			cf. https://github.com/ohmyzsh/ohmyzsh#getting-started
+			sh -c "$(wget -O- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+		Configuration zshrc :
+			wget --output-document /tmp/myzshrc https://github.com/phidra/workflow/raw/main/dotfiles/DOT__zshrc
+			nvim -d ~/.zshrc /tmp/myzshrc
+				analyser les différence
+			nvim ~/.zshrc /tmp/myzshrc
+				reproduire dans ~/.zshrc ce que je veux garder
+			note sur les différences à date d'installation = les trucs à ajouter à la version baseline de oh-my-zsh :
+				ZSH_THEME="agnoster"
+				----------------------------------------
+				COMPLETION_WAITING_DOTS="true"
+				----------------------------------------
+				plugins=(
+				  git
+				  colored-man-pages
+				  colorize
+				  command-not-found
+				  history
+				  ssh-agent
+				  fabric
+				  pip
+				  python
+				  virtualenv
+				  tmux
+				)
+				CASE_SENSITIVE="true"
+				fpath=(~/.local/custom-zsh-completions $fpath)
+				source $ZSH/oh-my-zsh.sh
+				----------------------------------------
+				Tout le gros bloc qui suit la ligne suivante :
+					export EDITOR='vim'
+	PHILENV :
+		mkdir ~/git_projects
+		cd ~/git_projects
+		git clone https://github.com/phidra/workflow.git
+		cd workflow/philenv
+		[suivre les instructions du readme]
+	TMUX :
+		sudo apt install tmux
+		wget --output-document ~/.tmux.conf https://github.com/phidra/workflow/raw/main/dotfiles/DOT__tmux.conf
+		mkdir ~/.tmux
+		git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm
+		tnew TEST
+		PREFIX+i  pour installer les plugins
+	SSH :
+		objectif = installer un serveur SSH (éteint par défaut) et autoriser la clé publique du PC fixe à s'y connecter
+		sur le PC à installer :
+			sudo apt install openssh-server
+			sudo systemctl disable ssh
+			sudo systemctl is-active ssh
+				on attend "active", ce qui veut dire que le service est actuellement démarré
+			sudo systemctl is-enabled ssh
+				on attend "disabled", ce qui veut dire que le service ne sera pas démarré automatiquement au démarrage du PC
+			whoami
+				myself
+			sudo passwod ubuntu
+				(utile uniquement pour un live-USB = définir un password à l'utilisateur ubuntu)
+			ip addr show|grep 192
+				192.168.1.50
+			sudo vim /etc/ssh/sshd_config
+				PasswordAuthentication yes
+			sudo systemctl restart ssh
+		sur le PC fixe qu'on veut utiliser pour se connecter au PC à installer :
+			ssh-copy-id -i ~/.ssh/id_ed25519.pub myself@192.168.1.50
+				à ce stade, ssh-copy-id se connecte au PC à installer par mot de passe
+		sur le PC à installer :
+			sudo vim /etc/ssh/sshd_config
+				PasswordAuthentication no
+			sudo systemctl restart ssh
+		sur le PC fixe qu'on veut utiliser pour se connecter au PC à installer :
+			ssh myself@192.168.1.50
+				vérifier qu'on peut se connecter avec la clé (i.e. sans entrer le mot de passe de l'utilisateur myself sur le PC à installer)
+
+PHASE 2 = autres actions en vrac :
+	si besoin :
+		mkdir "${HOME}"/.local/bin
+	sudo apt install :
+		mlocate
+		gparted
+		tree
+		mplayer
+		vlc
+		meld
+		ncdu
+		rsync
+		lshw
+		strace
+		inkscape
+		gimp
+		htop
+		zip
+		curl
+		unrar
+		build-essential
+		jq
+		nmap
+		clang-format
+		borgbackup
+		fzf
+	Si besoin, autoriser ou interdire des trucs particuliers dans la base updatedb :
+		sudo vim /etc/updatedb.conf
+		modifier PRUNEPATHS
+		sudo updatedb
+	pyenv / python :
+		après une installation fraîche, le python3 système est la 3.10.6 :
+			python3 --version
+				Python 3.10.6
+		installation de pip /venv pour cette version système (les versions de python installées par pyenv viennent automatiquement avec pip et venv) :
+			sudo apt install python3-pip
+			sudo apt install python3.10-venv
+		NOTE : il n'y a pas de commande "python", uniquement une commande python3 :
+			python --version
+			La commande « python » n'a pas été trouvée, voulez-vous dire :
+				commande « python3 » du deb python3
+				commande « python » du deb python-is-python3
+		pipx :
+			python3 -m pip install --user pipx
+		mes notes :
+			https://github.com/phidra/notes/blob/main/structured/python/pyenv.md#installation
+		le wiki d'installation :
+			https://github.com/pyenv/pyenv/wiki#suggested-build-environment
+		done :
+			sudo apt update; sudo apt install build-essential libssl-dev zlib1g-dev \
+			libbz2-dev libreadline-dev libsqlite3-dev curl \
+			libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+			----------------------------------------
+			curl https://pyenv.run | bash
+		je regarde sur le site de python quelle est la dernière version stable à date :
+			c'est la 3.11.4
+		du coup, j'installe la dernière version :
+			pyenv install 3.11.4
+		et je vérifie qu'un python installé avec pyenv a bien pip :
+			pyenv shell 3.11.4
+			python3 -m pip --version
+			pip 23.1.2 from ...
+		LSP server :
+			pipx install pyright
+			pipx install black
+	bat :
+		sudo apt install bat
+		(mon zshrc fait le reste)
+	git :
+		git config --global user.email "phidra"
+		git config --global user.name "phidra"
+		----------------------------------------
+		pipx install pre-commit
+		----------------------------------------
+		cd ~/.local
+		git clone https://github.com/so-fancy/diff-so-fancy
+		cd bin
+		ln -s ../diff-so-fancy/diff-so-fancy
+		----------------------------------------
+		git config --global core.pager "diff-so-fancy | less --tabs=4 -RFX"
+		git config --global interactive.diffFilter "diff-so-fancy --patch"
+		----------------------------------------
+		git config --global color.ui true
+		git config --global color.diff-highlight.oldNormal    "red bold"
+		git config --global color.diff-highlight.oldHighlight "red bold 52"
+		git config --global color.diff-highlight.newNormal    "green bold"
+		git config --global color.diff-highlight.newHighlight "green bold 22"
+		git config --global color.diff.meta       "blue"
+		git config --global color.diff.frag       "magenta bold"
+		git config --global color.diff.func       "146 bold"
+		git config --global color.diff.commit     "blue bold"
+		git config --global color.diff.old        "red bold"
+		git config --global color.diff.new        "green bold"
+		git config --global color.diff.whitespace "red reverse"
+	création d'une paires de clés SSH pour le nouveau PC :
+		je vérifie qu'initialement, aucune clé SSH n'a été fabriquée :
+			ll ~/.ssh
+			[pas de clé]
+		ATTENTION : si je me contente de "ssh-keygen", la clé généré est une clé RSA, considérée comme deprecated :
+			ssh-keygen
+			[...]
+			Your public key has been saved in /home/myself/.ssh/id_rsa.pub
+		du coup, je modifie la commande :
+			ssh-keygen -t ed25519
+			(un prompt me demande la passphrase)
+	via les IHM web, ajout de la clé SSH publique du nouveau PC là où j'ai besoin de me connecter :
+		github
+		là où il faut pour récupérer mes JournauxDeSuivi
+		----------------------------------------
+		dans tous les cas, je vérifie que la connexion par clé est utilisable
+	Installation de polices permettant d'afficher les icones du prompt oh-my-zsh :
+		sudo apt install fonts-liberation ttf-mscorefonts-installer ttf-anonymous-pro fonts-inconsolata
+		EDIT : en fait, il s'agit plutôt de :
+			sudo apt install fonts-powerline
+	À faire graphiquement :
+		firefox :
+			Toujours demander où enregistrer les téléchargements.
+			about:preferences#home
+				choisir "Page vide" partout
+			Toujours visualiser le préfixe HTTP(S) dans les URLs :
+				about:config
+				browser.urlbar.trimURLs -> mettre à false
+		clavier :
+			La configuration de la répétition des touches au clavier est dans le menu "Accessibilité" des paramètres.
+	C++ :
+		sudo apt install clang clangd
+	rust :
+		je suis la doc officielle :
+			curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+		derrière, pour avoir le LSP-server sous neovim :
+			rustup component add rust-analyzer
+	just :
+		curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ${HOME}/.local/bin
+	javascript :
+		regarder quelle est la dernière version de node :
+			https://nodejs.org/en
+		installation de la dernière version :
+			curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+			sudo apt install nodejs
+			sudo apt autoremove
+			REGULARUSER> npm config set prefix '~/.local/'
+		installation de typescript + LSP :
+			npm install -g typescript typescript-language-server
