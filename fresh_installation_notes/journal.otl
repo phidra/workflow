@@ -132,6 +132,8 @@ PHASE 1 = les étapes à faire en priorité sont celles facilitant la suite de l
 				vérifier qu'on peut se connecter avec la clé (i.e. sans entrer le mot de passe de l'utilisateur myself sur le PC à installer)
 
 PHASE 2 = autres actions en vrac :
+	mon répertoire temporaire perso :
+		mkdir ~/temporaire
 	si besoin :
 		mkdir "${HOME}"/.local/bin
 	sudo apt install :
