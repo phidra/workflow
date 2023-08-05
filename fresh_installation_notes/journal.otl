@@ -255,6 +255,7 @@ PHASE 2 = autres actions en vrac :
 				browser.urlbar.trimURLs -> mettre à false
 		clavier :
 			La configuration de la répétition des touches au clavier est dans le menu "Accessibilité" des paramètres.
+			Il faut cliquer sur "Touches de répétition" pour accéder à l'IHM (ça n'est pas qu'un booléen).
 	C++ :
 		sudo apt install clang clangd
 	rust :
