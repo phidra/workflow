@@ -92,12 +92,16 @@ let g:codepatterns = [
             \ '*.h',
             \ '*.hpp',
             \ '*.rb',
-            \ '*.sh'
+            \ '*.sh',
+            \ '*.rs'
             \]
 
 for codepattern in g:codepatterns
     execute "autocmd BufEnter " . codepattern . " call CodeSettings()"
 endfor
+
+" coloration des type-infos par rust-tools à la fin de la ligne :
+highlight RustToolsTypeInfo cterm=bold
 
 function CodeSettings()  " settings spécifiques aux buffers contenant du code
     " Affichage de limites verticales à 120 caractères :
@@ -105,7 +109,14 @@ function CodeSettings()  " settings spécifiques aux buffers contenant du code
     highlight ColorColumn ctermbg=LightRed ctermfg=Black
     highlight TrailingWhitespace ctermbg=red
     match TrailingWhitespace  /\s\+$/
-    set nu 
+    set nu
+
+    " Visualiser la position du curseur :
+    set cursorline
+    set cursorcolumn
+    highlight CursorColumn ctermbg=189
+    " cf. https://smarttech101.com/how-to-configure-colorscheme-in-vim-neovim
+    " cf. https://gist.github.com/vivkin/567896630dbc588ad470b8196c601ad1#file-256-color-table-sh
 
     " Plugins spécifiques aux fichiers de code :
     " (c'est pas parfait car ils seront chargés sur tous les fichiers ouverts, y compris non-code)
@@ -635,6 +646,11 @@ require('lspconfig')['tsserver'].setup{
 require('rust-tools').setup{
     server = {on_attach = on_attach},
     flags = lsp_flags,
+    tools = {inlay_hints = {
+        max_len_align = true,
+        highlight= "RustToolsTypeInfo",
+        }
+    },
 }
 
 -- null-lsp :
