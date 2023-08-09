@@ -90,8 +90,8 @@ PHASE 1 = les étapes à faire en priorité sont celles facilitant la suite de l
 				Tout le gros bloc qui suit la ligne suivante :
 					export EDITOR='vim'
 	PHILENV :
-		mkdir ~/git_projects
-		cd ~/git_projects
+		mkdir -p ~/projects/github/
+		cd ~/projects/github/
 		git clone https://github.com/phidra/workflow.git
 		cd workflow/philenv
 		[suivre les instructions du readme]

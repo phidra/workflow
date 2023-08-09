@@ -4,15 +4,16 @@
 
 
 #################################################################################
-# gitprojects related :
+# projects related :
 #################################################################################
 
-export gitprojects="/media/DATA/git_projects/"
+export projects="/media/DATA/projects"
+export gitprojects="${projects}/github"
 function gogit
 {
     gogit_base "$gitprojects"
 }
-alias gojour="cd ${gitprojects}/JournauxDeSuivi"
+alias gojour="cd ${projects}/JournauxDeSuivi"
 
 #################################################################################
 # ci-dessous, les autres trucs machine-related :

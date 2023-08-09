@@ -223,7 +223,7 @@ alias tnew="tmux-smart-new-session"
 
 # Cette fonction ne fonctionne que si on lui passe le répertoire racine des projets git en argument.
 # Elle a vocation à être utilisée par une fonction de plus haut-niveau qui lui sette son argument
-#     function gogit { gogit_base "/path/to/git_projects/" }
+#     function gogit { gogit_base "/path/to/projects/github/" }
 # (en effet, gogit est machine-dependant)
 function gogit_base
 {
