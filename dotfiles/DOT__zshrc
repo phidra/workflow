@@ -170,10 +170,11 @@ export BAT_THEME="Coldark-Cold"
 # Recherche un fichier dans le répertoire actuel, puis dans tous ses ascendants
 function find_config_file()
 {
-    local searched_file="${1}"
-    local searched_dir="$(pwd)"
-    local nb_allowed_recursions=10
-    _find_config_file "${searched_file}"  "${searched_dir}"  "${nb_allowed_recursions}"
+    local SEARCHED_FILE="${1}"
+    local SEARCHED_DIR="$(pwd)"
+    local NB_ALLOWED_RECURSIONS=10
+    _find_config_file "${SEARCHED_FILE}"  "${SEARCHED_DIR}"  "${NB_ALLOWED_RECURSIONS}"
+    return $?
 }
 # Fonction récursive faisant le taf concret de find_config_file
 function _find_config_file ()
@@ -194,7 +195,8 @@ function _find_config_file ()
 
     # actually searching the file in parent dir :
     parent="$(dirname -- "$(realpath -- "${SEARCHED_DIR}" )" )"
-    _find_config_file "${searched_file}" "${parent}"  "$((NB_ALLOWED_RECURSIONS - 1))"
+    _find_config_file "${SEARCHED_FILE}" "${parent}"  "$((NB_ALLOWED_RECURSIONS - 1))"
+    return $?
 }
 
 
@@ -204,7 +206,9 @@ function _find_config_file ()
 #     - sinon, on utilise le comportement classique de just (chercher un `justfile` dans les répertoires parents)
 # Pour bypasser ce comportement, il suffit de bypasser la fonction ci-dessous, en appelant "just" directement.
 function j() {
-  local justfile=$(find_config_file NOGIT_justfile)
+  # attention, ne pas utiliser "local" pour définir cette variable
+  # (car ça sette le returncode à 0 au lieu d'utiliser celui de la commande wrappée)
+  justfile=$(find_config_file NOGIT_justfile)
   if [ $? -eq 0 ]
   then
     just  --justfile "$justfile" "$@"

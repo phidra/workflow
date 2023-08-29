@@ -1,0 +1,30 @@
+#!/usr/bin/env just --justfile
+
+# see https://cheatography.com/linux-china/cheat-sheets/justfile/
+
+
+list:
+  @just --list --unsorted --justfile {{justfile()}}
+
+alias p := pouet
+alias j := jedis
+alias h := howto
+
+# display pouet :
+pouet:
+  echo "pouet"
+
+# display jedis
+jedis:
+  echo "Luke"
+  echo "Yoda"
+  echo "Obi-Wan"
+
+# se contente d'afficher un howto
+howto:
+  @echo "pour faire un bon gâteau, il faut :"
+  @echo "   - du chocolat"
+  @echo "   - de la farine"
+  @echo "   - des oeufs"
+  @echo "   - du beurre"
+
