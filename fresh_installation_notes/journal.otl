@@ -199,8 +199,9 @@ PHASE 2 = autres actions en vrac :
 			pipx install pyright
 			pipx install black
 	bat :
+		mkdir "${HOME}"/.local/bin
 		sudo apt install bat
-		(mon zshrc fait le reste)
+		(mon zshrc fait le reste du taf, ne pas hésiter à y jeter un coup d'oeil)
 	git :
 		git config --global user.email "phidra"
 		git config --global user.name "phidra"

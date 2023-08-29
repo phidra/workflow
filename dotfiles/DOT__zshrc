@@ -160,7 +160,7 @@ alias vim="echo '' ; echo 'UTILISER PLUTÔT NVIM !!!' ; echo '' ; sleep 1 ; nvim
 
 alias clang-format=clang-format-11
 
-# 2022-11 = bat :
+# 2022-11 = bat = https://github.com/sharkdp/bat :
 # sous Ubuntu, 'sudo apt install bat' installe "batcat" :
 [ ! -e ~/.local/bin/bat ] && ln -s /usr/bin/batcat ~/.local/bin/bat
 # bat --list-themes
