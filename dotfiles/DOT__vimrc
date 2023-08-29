@@ -489,11 +489,6 @@ let g:startify_custom_header = [
             \ ]
 
 
-" display register contents
-Plug 'https://github.com/junegunn/vim-peekaboo'
-let g:peekaboo_window = 'vert bo 80new'
-
-
 " allow to search current visual selection
 Plug 'https://github.com/nelstrom/vim-visual-star-search'
 
