@@ -167,15 +167,47 @@ alias clang-format=clang-format-11
 export BAT_THEME="Coldark-Cold"
 
 
+# Recherche un fichier dans le répertoire actuel, puis dans tous ses ascendants
+function find_config_file()
+{
+    local searched_file="${1}"
+    local searched_dir="$(pwd)"
+    local nb_allowed_recursions=10
+    _find_config_file "${searched_file}"  "${searched_dir}"  "${nb_allowed_recursions}"
+}
+# Fonction récursive faisant le taf concret de find_config_file
+function _find_config_file ()
+{
+    local SEARCHED_FILE="$1"
+    local SEARCHED_DIR="$2"
+    local NB_ALLOWED_RECURSIONS="$3"
+
+    [ ! -d "${SEARCHED_DIR}" ]            && return 1  # SEARCHED_DIR is unreachable
+
+    # is the searched file in path ?
+    [ -r "${SEARCHED_DIR}/${SEARCHED_FILE}" ] && echo "${SEARCHED_DIR}/${SEARCHED_FILE}" && return 0
+
+    # file is not in the path : should we search in its parent ?
+    [ "${SEARCHED_DIR}" = "/" ]           && return 2  # we reached the filesystem's root dir
+    [ "${NB_ALLOWED_RECURSIONS}" = 0 ]    && return 3  # max recursions reached
+    [ -d "${SEARCHED_DIR}/.git" ]         && return 4  # we reached the project's root dir
+
+    # actually searching the file in parent dir :
+    parent="$(dirname -- "$(realpath -- "${SEARCHED_DIR}" )" )"
+    _find_config_file "${searched_file}" "${parent}"  "$((NB_ALLOWED_RECURSIONS - 1))"
+}
+
+
 # 2023-05 = just :
 # la façon dont je veux utiliser just :
 #     - si on est dans un répertoire qui contient un de mes justfile custom, c'est celui-ci qu'il faut utiliser
 #     - sinon, on utilise le comportement classique de just (chercher un `justfile` dans les répertoires parents)
 # Pour bypasser ce comportement, il suffit de bypasser la fonction ci-dessous, en appelant "just" directement.
 function j() {
-  if [ -e ./NOGIT_justfile ]
+  local justfile=$(find_config_file NOGIT_justfile)
+  if [ $? -eq 0 ]
   then
-    just  --justfile NOGIT_justfile "$@"
+    just  --justfile "$justfile" "$@"
   else
     just "$@"
   fi
