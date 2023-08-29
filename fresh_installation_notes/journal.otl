@@ -196,6 +196,7 @@ PHASE 2 = autres actions en vrac :
 			python3 -m pip --version
 			pip 23.1.2 from ...
 		LSP server :
+			pipx install flake8
 			pipx install pyright
 			pipx install black
 	bat :
