@@ -130,6 +130,10 @@ PHASE 1 = les étapes à faire en priorité sont celles facilitant la suite de l
 		sur le PC fixe qu'on veut utiliser pour se connecter au PC à installer :
 			ssh myself@192.168.1.50
 				vérifier qu'on peut se connecter avec la clé (i.e. sans entrer le mot de passe de l'utilisateur myself sur le PC à installer)
+	SSH = ajouter à ssh-agent une clé qu'on utilise (cf. décisions de workflow) :
+		echo "AddKeysToAgent yes" > ~/.ssh/config
+
+		
 
 PHASE 2 = autres actions en vrac :
 	mon répertoire temporaire perso :
