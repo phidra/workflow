@@ -204,8 +204,8 @@ PHASE 2 = autres actions en vrac :
 		sudo apt install bat
 		(mon zshrc fait le reste du taf, ne pas hésiter à y jeter un coup d'oeil)
 	git :
-		git config --global user.email "phidra"
-		git config --global user.name "phidra"
+		git config --global user.email "phidra@pm.me"
+		git config --global user.name "Phidra"
 		----------------------------------------
 		pipx install pre-commit
 		----------------------------------------
