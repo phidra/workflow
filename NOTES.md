@@ -1,8 +1,14 @@
+* [Installation d'une nouvelle machine](#installation-dune-nouvelle-machine)
 * [Name et email git](#name-et-email-git)
    * [Contexte](#contexte)
    * [Différents niveaux de configuration git](#différents-niveaux-de-configuration-git)
    * [Le workflow retenu](#le-workflow-retenu)
    * [WARNING les points d'attention pour le futur](#warning-les-points-dattention-pour-le-futur)
+
+
+# Installation d'une nouvelle machine
+
+cf. [les notes brutes dédiées](./fresh_installation_notes).
 
 # Name et email git
 
