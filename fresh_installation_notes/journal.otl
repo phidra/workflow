@@ -208,8 +208,9 @@ PHASE 2 = autres actions en vrac :
 		sudo apt install bat
 		(mon zshrc fait le reste du taf, ne pas hésiter à y jeter un coup d'oeil)
 	git :
-		git config --global user.email "phidra@pm.me"
-		git config --global user.name "Phidra"
+		ATTENTION : cf. mon workflow pour le email+name git ;
+			git config --global user.email "phidra@pm.me"
+			git config --global user.name "Phidra"
 		----------------------------------------
 		pipx install pre-commit
 		----------------------------------------
@@ -233,6 +234,8 @@ PHASE 2 = autres actions en vrac :
 		git config --global color.diff.old        "red bold"
 		git config --global color.diff.new        "green bold"
 		git config --global color.diff.whitespace "red reverse"
+		----------------------------------------
+		git config --global alias.lol "log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit --all"
 	création d'une paires de clés SSH pour le nouveau PC :
 		je vérifie qu'initialement, aucune clé SSH n'a été fabriquée :
 			ll ~/.ssh
