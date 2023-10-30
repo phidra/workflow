@@ -163,6 +163,7 @@ PHASE 2 = autres actions en vrac :
 		clang-format
 		borgbackup
 		fzf
+		p7zip-full
 	Si besoin, autoriser ou interdire des trucs particuliers dans la base updatedb :
 		sudo vim /etc/updatedb.conf
 		modifier PRUNEPATHS
