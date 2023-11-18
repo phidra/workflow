@@ -73,7 +73,10 @@ function CustomFoldText()
     let expansionString = repeat(".", w - strwidth(foldSizeStr.line.foldLevelStr.foldPercentage))
     return line . expansionString . foldSizeStr . foldPercentage . foldLevelStr
 endf
-set foldtext=CustomFoldText()
+
+" for whatever reasons, foldtext must be manually set for each buffer instead of globally...
+autocmd BufEnter *.otl setlocal foldtext=CustomFoldText()
+autocmd BufEnter *.md setlocal foldtext=CustomFoldText()
 
 " (généralités) }}}
 
@@ -250,26 +253,10 @@ set tabline=%!MyTabLine()
 "# VIMOUTLINER / VIMDIFF {{{
 "########################################################################################################################
 
-function RobustDeleteTabMatch()
-    " Suppression de la coloration des tabulations, robuste à l'absence du match :
-    for potential_match in getmatches()
-        let l:group = potential_match["group"]
-        let l:id = potential_match["id"]
-        let l:tabcolor = "TabulationsColor"
-        " On ne supprime le match que s'il existe :
-        if l:group == l:tabcolor
-            call matchdelete(l:id)
-        endif
-    endfor
-endfunction
-
 " Options spécifiques à VimOutliner :
 autocmd BufEnter *.otl setlocal wrap " Remettre le wrap
 autocmd BufEnter *.otl setlocal linebreak " Remettre le linebreak
-autocmd BufEnter *.otl call RobustDeleteTabMatch() " Supprimer la coloration des tabulations
 autocmd BufEnter *.otl setlocal listchars+=tab:\ \  " ne pas afficher les leading-tabs pour les fichiers OTL
-" for whatever reasons, foldtext must be manually set for OTL files...
-autocmd BufEnter *.otl setlocal foldtext=CustomFoldText()
 
 " Options spécifiques à vimdiff :
 " On colorie toutes les lignes de la même façon = MatchParen :
@@ -322,58 +309,7 @@ noremap! <leader><leader>n <Esc>:set nu!<CR>:set nu?<CR>a
 noremap <leader><leader>syntax :syntax sync fromstart<CR>
 noremap! <leader><leader>syntax <Esc>:syntax sync fromstart<CR>a
 
-
-" récupérer facilement le répertoire racine d'un éventuel projet git :
-" cf. https://github.com/mileszs/ack.vim/issues/188#issuecomment-417939294
-function! Git_root()
-  return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
-endfunction
-
-function! Cat_to_git_root(file)
-    " note : a final space is added to facilitate the append of the next text
-    return Git_root() . '/' . a:file . ' '
-endfunction
-
-" exécution de ctags :
-noremap  <F5>              :execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
-noremap! <F5>         <Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
-vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
-" NOTE : exemples de commandes de génération de tags :
-"     apt-get install exuberant-ctags 
-"     ctags -R --exclude='.git' --languages=python
-"     ctags -R --exclude='.git' --languages=python,js
-"     ctags -R --exclude='.git' --languages=python,js -f myspecifictagfile
-
  " (mes alias hors plugins) }}}
-
-
-"# PLUGINS {{{
-"########################################################################################################################
-
-" disabling polyglot ftdetect, in order for OTL files to properly be detected :
-" also disabling it for markdown (I cannot get polyglot's markdown to work with
-" vim-markdown-folding, and I value markdown folding more than markdown
-" highlighting...) :
-let g:polyglot_disabled = ['ftdetect', 'markdown']  " must be set BEFORE polyglot is loaded
-
-autocmd FileType markdown set foldexpr=NestedMarkdownFolds()
-
-
-let g:vim_search_pulse_color_list = [22, 28, 34, 40, 46]
-
-" :hi pour voir les highlights actuels (avec exemples)
-" pour info, valeurs par défaut :
-" DiagnosticError xxx ctermfg=1 guifg=Red
-" DiagnosticWarn xxx ctermfg=3 guifg=Orange
-" DiagnosticInfo xxx ctermfg=4 guifg=LightBlue
-" DiagnosticHint xxx ctermfg=7 guifg=LightGrey
-hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red
-hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange
-hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue
-hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black
-
-
-" (plugins) }}}
 
 
 "# LUACONFIG {{{
@@ -383,6 +319,38 @@ if has("nvim")
 
 lua << EOF
 
+
+-- Je préfère ces couleurs pour les diagnostics LSP :
+-- :hi pour voir les highlights actuels (avec exemples)
+-- pour info, valeurs par défaut :
+-- DiagnosticError xxx ctermfg=1 guifg=Red
+-- DiagnosticWarn xxx ctermfg=3 guifg=Orange
+-- DiagnosticInfo xxx ctermfg=4 guifg=LightBlue
+-- DiagnosticHint xxx ctermfg=7 guifg=LightGrey
+-- NDM : vim.cmd() permet de passer des commandes vimscript
+vim.cmd("hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red")
+vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
+vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
+vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
+
+-- for vim-markdown-plugin : folding a level 1 title should also fold all its children :
+vim.api.nvim_create_autocmd({"FileType"}, {
+    pattern = "markdown",
+    callback = function (opts)
+        -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
+        -- vim.opt: behaves like :set
+        vim.opt.foldexpr = "NestedMarkdownFolds()"
+    end,
+})
+
+-- disabling polyglot ftdetect, in order for OTL files to properly be detected :
+-- also disabling it for markdown (I cannot get polyglot's markdown to work with
+-- vim-markdown-folding, and I value markdown folding more than markdown
+-- highlighting...) :
+vim.g.polyglot_disabled = {'ftdetect', 'markdown'}  -- must be set BEFORE polyglot is loaded
+
+-- strict équivalent de :  let g:vim_search_pulse_color_list = [22, 28, 34, 40, 46]
+vim.g.vim_search_pulse_color_list = {22, 28, 34, 40, 46}
 
 -- nvim-tree recommande de disabler netrw, cf. :help nvim-tree-netrw
 vim.g.loaded_netrw       = 1
@@ -806,6 +774,28 @@ endif  " has("nvim")
 " " (EDIT : actually, it is confused by comments in code blocks...)
 " let g:markdown_folding = 1
 
+
+
+" " récupérer facilement le répertoire racine d'un éventuel projet git :
+" " cf. https://github.com/mileszs/ack.vim/issues/188#issuecomment-417939294
+" function! Git_root()
+"   return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
+" endfunction
+"
+" function! Cat_to_git_root(file)
+"     " note : a final space is added to facilitate the append of the next text
+"     return Git_root() . '/' . a:file . ' '
+" endfunction
+"
+" " exécution de ctags :
+" noremap  <F5>              :execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
+" noremap! <F5>         <Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
+" vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
+" " NOTE : exemples de commandes de génération de tags :
+" "     apt-get install exuberant-ctags 
+" "     ctags -R --exclude='.git' --languages=python
+" "     ctags -R --exclude='.git' --languages=python,js
+" "     ctags -R --exclude='.git' --languages=python,js -f myspecifictagfile
 
 " " integration with ack (or actually ag)
 " Plug 'https://github.com/mileszs/ack.vim'
