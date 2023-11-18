@@ -117,11 +117,6 @@ function CodeSettings()  " settings spécifiques aux buffers contenant du code
     highlight CursorColumn ctermbg=189
     " cf. https://smarttech101.com/how-to-configure-colorscheme-in-vim-neovim
     " cf. https://gist.github.com/vivkin/567896630dbc588ad470b8196c601ad1#file-256-color-table-sh
-
-    " Plugins spécifiques aux fichiers de code :
-    " (c'est pas parfait car ils seront chargés sur tous les fichiers ouverts, y compris non-code)
-    " ouvert
-    call plug#load('vim-illuminate')
 endfunction
 
 " Coloration des non-breakable spaces :
@@ -355,159 +350,17 @@ vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f 
 "# PLUGINS {{{
 "########################################################################################################################
 
-
-" manually load plugins : https://github.com/junegunn/vim-plug/wiki/tips#loading-plugins-manually
-
-
 " disabling polyglot ftdetect, in order for OTL files to properly be detected :
 " also disabling it for markdown (I cannot get polyglot's markdown to work with
 " vim-markdown-folding, and I value markdown folding more than markdown
 " highlighting...) :
 let g:polyglot_disabled = ['ftdetect', 'markdown']  " must be set BEFORE polyglot is loaded
 
+autocmd FileType markdown set foldexpr=NestedMarkdownFolds()
 
 
-call plug#begin('~/.vim/plugged')
-
-
-" file browser :
-Plug 'https://github.com/scrooloose/nerdtree.git', { 'on':  'NERDTreeToggle' }
-let g:NERDTreeWinSize=60
-let g:NERDTreeIgnore=['\.pyc$', '\~$']
-let g:NERDTreeQuitOnOpen=1
-" NERDTree sur le même répertoire que le fichier courant = expand("%:p:h") :
-noremap <F8>               :execute ':NERDTree ' . expand("%:p:h")<CR>
-noremap! <F8>         <Esc>:execute ':NERDTree ' . expand("%:p:h")<CR>
-vnoremap <F8>    <Esc><Esc>:execute ':NERDTree ' . expand("%:p:h")<CR>
-" NERDTree sur le répertoire racine d'un éventuel projet git :
-if has("nvim")
-    " to make S-Fxx work in neovim, I have to add 12 to xx :
-    noremap <F20>               :execute ':NERDTree ' . Git_root()<CR>
-    noremap! <F20>         <Esc>:execute ':NERDTree ' . Git_root()<CR>
-    vnoremap <F20>    <Esc><Esc>:execute ':NERDTree ' . Git_root()<CR>
-else
-    noremap <S-F8>               :execute ':NERDTree ' . Git_root()<CR>
-    noremap! <S-F8>         <Esc>:execute ':NERDTree ' . Git_root()<CR>
-    vnoremap <S-F8>    <Esc><Esc>:execute ':NERDTree ' . Git_root()<CR>
-endif
-
-
-" align tokens of a line according to a separator
-Plug 'https://github.com/godlygeek/tabular.git', {'on': 'Tabularize' }
-vnoremap <C-T> :Tabularize /
-
-
-" tag browser
-Plug 'https://github.com/majutsushi/tagbar', {'on': 'TagbarOpenAutoClose' }
-let g:tagbar_sort = 0  " par défaut, les tags sont triés par ordre d'apparition dans le fichier.
-noremap <F9>             :TagbarOpenAutoClose<CR>
-noremap! <F9>       <Esc>:TagbarOpenAutoClose<CR>
-vnoremap <F9>  <Esc><Esc>:TagbarOpenAutoClose<CR>
-
-
-" display indentation character (very useful for python)
-Plug 'https://github.com/Yggdroot/indentLine'
-let g:indentLine_char = '┊'
-let g:indentLine_enabled = 1
-" NOTE 2020-12 : indentLine nécessite conceallevel >= 0, et je voudrais le désactiver pour vim-markdown.
-" g:vim_markdown_conceal n'a pas l'air de marcher, donc je contourne le problème :
-"   - je sette le conceallevel global à 1
-"   - je désactive l'overwriting du conceallevel par indentLine
-"   - je sette le conceallevel à 0 pour le markdown
-" cf. les docs d'indentLine et vim-markdown, ainsi que : https://github.com/plasticboy/vim-markdown/issues/253
-let g:indentLine_setConceal = 0
-set conceallevel=1
-au FileType markdown setl conceallevel=0
-
-
-" add/change/delete surrounding characters
-Plug 'https://github.com/tpope/vim-surround.git'
-
-
-" comment line/motion with gc
-Plug 'https://github.com/terrortylor/nvim-comment'
-
-
-" repeat a surrounding command
-Plug 'https://github.com/tpope/vim-repeat'
-
-
-" alternate source header
-Plug 'https://github.com/vim-scripts/a.vim'
-noremap <A-o>               :execute ':A'<CR>
-noremap! <A-o>         <Esc>:execute ':A'<CR>
-vnoremap <A-o>    <Esc><Esc>:execute ':A'<CR>
-
-" enhances ga to display info on a character, including its digraph code
-Plug 'https://github.com/tpope/vim-characterize'
-
-
-
-" function arguments on several/single line
-Plug 'https://github.com/AndrewRadev/splitjoin.vim'
-let g:splitjoin_python_brackets_on_separate_lines = 1
-let g:splitjoin_trailing_comma = 1
-
-
-" language pack
-Plug 'https://github.com/sheerun/vim-polyglot'
-
-
-" git integration
-Plug 'https://github.com/tpope/vim-fugitive',
-
-
-" make searched line pulse briefly to ease visualization
-Plug 'https://github.com/inside/vim-search-pulse'
 let g:vim_search_pulse_color_list = [22, 28, 34, 40, 46]
 
-
-" highlight same words as the one under cursor
-Plug 'https://github.com/RRethy/vim-illuminate', {'on': []}
-" changer la coloration de vim-illuminate (le default=CursorLine n'est pas assez visible)
-" note : pour visualiser dynamiquement les highlights groups :
-"   :so $VIMRUNTIME/syntax/hitest.vim
-augroup illuminate_augroup
-    autocmd!
-    autocmd VimEnter * hi link illuminatedWord CursorColumn
-augroup END
-
-
-" easily insert html tags
-Plug 'https://github.com/mattn/emmet-vim.git', {'for': 'html' }
-
-
-" vim-outliner colors + foldings
-Plug 'https://github.com/vimoutliner/vimoutliner.git', {'for': 'votl'}
-
-
-" nvim start screen ease the opening of recent files
-Plug 'https://github.com/mhinz/vim-startify'
-let g:startify_custom_header = [
-            \ 'MRU = most recently used files in general',
-            \ 'MRU /path/to/somewhere = idem, limited to files in this directory or its children',
-            \ ]
-
-
-" allow to search current visual selection
-Plug 'https://github.com/nelstrom/vim-visual-star-search'
-
-
-" the following plugins only work with neovim :
-if has("nvim")
-
-" smooth scrolling (to ease visualizing Ctrl-down/Ctrl-up)
-Plug 'https://github.com/psliwka/vim-smoothie'
-" scrolling plus rapide avec smoothie :
-let g:smoothie_base_speed = 15
-let g:smoothie_speed_exponentiation_factor = 0.95
-
-" dependencies of other plugins
-Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}
-Plug 'nvim-lua/plenary.nvim'
-
-
-Plug 'https://github.com/neovim/nvim-lspconfig'
 " :hi pour voir les highlights actuels (avec exemples)
 " pour info, valeurs par défaut :
 " DiagnosticError xxx ctermfg=1 guifg=Red
@@ -519,46 +372,225 @@ hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange
 hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue
 hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black
 
-" running generic tools as LSP servers
-Plug 'https://github.com/jose-elias-alvarez/null-ls.nvim'
+
+" (plugins) }}}
 
 
-" fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
-Plug 'nvim-telescope/telescope.nvim', { 'tag': '0.1.0' }
-
-
-endif  " has("nvim")
-
-
-" markdown folding :
-Plug 'https://github.com/masukomi/vim-markdown-folding'
-autocmd FileType markdown set foldexpr=NestedMarkdownFolds()
-
-
-" auto cd to git root dir :
-Plug 'ahmedkhalf/project.nvim'
-
-
-" justfile syntax :
-Plug 'https://github.com/NoahTheDuke/vim-just'
-
-
-" rust-tools :
-Plug 'https://github.com/simrat39/rust-tools.nvim'
-
-call plug#end()
-
+"# LUACONFIG {{{
+"########################################################################################################################
 
 if has("nvim")
 
 lua << EOF
 
+
+-- nvim-tree recommande de disabler netrw, cf. :help nvim-tree-netrw
+vim.g.loaded_netrw       = 1
+vim.g.loaded_netrwPlugin = 1
+
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.loop.fs_stat(lazypath) then
+  vim.fn.system({
+    "git",
+    "clone",
+    "--filter=blob:none",
+    "https://github.com/folke/lazy.nvim.git",
+    "--branch=stable", -- latest stable release
+    lazypath,
+  })
+end
+vim.opt.rtp:prepend(lazypath)
+
+
+
+-- F8 = ouvrir nvim-tree sur le fichier courant :
+vim.keymap.set({'n', 'i', 'v'}, '<F8>', ':NvimTreeFindFileToggle<CR>', { noremap = true })
+
+-- S-F8 = ouvrir nvim-tree sur le git-root :
+local function get_git_root()
+    local dot_git_path = vim.fn.finddir(".git", ".;")
+    return vim.fn.fnamemodify(dot_git_path, ":h")
+end
+-- attention, sous neovim, pour qu'un shortcut S-Fxx marche, il faut utiliser F(xx+12) :
+vim.keymap.set({'n', 'i', 'v'}, '<F20>', ':NvimTreeToggle ' .. get_git_root() .. '<CR>', { noremap = true })
+
+-- Ctrl+T pour tabularize :
+vim.keymap.set({'v',}, '<C-T>', ':Tabularize /', { noremap = true })
+
+local plugins = {
+    {
+        -- vim-outliner colors + foldings :
+        "https://github.com/vimoutliner/vimoutliner.git",
+        ft = 'votl',
+    },
+    -- file browser :
+    {
+        "nvim-tree/nvim-tree.lua",
+        version = "*",
+        lazy = false,
+        dependencies = {
+            "nvim-tree/nvim-web-devicons",
+            },
+        config = function()
+            require("nvim-tree").setup {
+                actions = {
+                    open_file = {
+                        quit_on_open = true,
+                    },
+                },
+                sort_by = "case_sensitive",
+                view = {
+                    width = 60,
+                },
+                renderer = {
+                    group_empty = true,
+                },
+                filters = {
+                    dotfiles = true,
+                },
+            }
+        end,
+    },
+
+    -- " fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
+    {
+        'nvim-telescope/telescope.nvim',
+        tag = '0.1.4',
+        dependencies = { 'nvim-lua/plenary.nvim' },
+    },
+
+    -- enhances ga to display info on a character, including its digraph code
+    {
+        'https://github.com/tpope/vim-characterize'
+    },
+
+    -- ChatGPT :
+    {
+        "jackMort/ChatGPT.nvim",
+        event = "VeryLazy",
+        config = function()
+            require("chatgpt").setup()
+        end,
+        dependencies = {
+            "MunifTanjim/nui.nvim",
+            "nvim-lua/plenary.nvim",
+            "nvim-telescope/telescope.nvim"
+        }
+    },
+
+    -- align tokens of a line according to a separator :
+    {
+        "https://github.com/godlygeek/tabular.git",
+        cmd = "Tabularize",
+    },
+
+    -- surround :
+    {
+        "https://github.com/tpope/vim-surround.git",
+    },
+
+    -- repeat a surrounding command
+    {
+        "https://github.com/tpope/vim-repeat",
+    },
+
+    -- comment :
+    {
+        'numToStr/Comment.nvim',
+        config = function()
+            require('Comment').setup()
+        end,
+    },
+
+    -- language pack :
+    {
+        'https://github.com/sheerun/vim-polyglot',
+    },
+
+    -- indentline :
+    {
+        "lukas-reineke/indent-blankline.nvim",
+        main = "ibl",
+        opts = {},
+        config = function()
+            require("ibl").setup {
+                indent = { highlight = { "Normal" } },
+                whitespace = { highlight = { "Normal" } },
+            }
+        end,
+    },
+
+    -- markdown-folding :
+    {
+        "https://github.com/masukomi/vim-markdown-folding",
+    },
+
+    -- make searched line pulse briefly to ease visualization
+    {
+        "https://github.com/inside/vim-search-pulse",
+    },
+
+    -- smooth scrolling (to ease visualizing Ctrl-down/Ctrl-up)
+    {
+        "karb94/neoscroll.nvim",
+      config = function ()
+          require('neoscroll').setup {}
+      end
+    },
+
+    -- nvim LSP config :
+    {
+        "https://github.com/neovim/nvim-lspconfig",
+    },
+
+    -- running generic tools as LSP servers
+    {
+        "https://github.com/jose-elias-alvarez/null-ls.nvim",
+    },
+
+    -- rust-tools :
+    {
+        "https://github.com/simrat39/rust-tools.nvim",
+    },
+
+
+    -- highlight same words as the one under cursor
+    -- note : pour visualiser dynamiquement les highlights groups :
+    --   :so $VIMRUNTIME/syntax/hitest.vim
+    {
+        'tzachar/local-highlight.nvim',
+        config = function()
+            require('local-highlight').setup({
+                file_types = {'python', 'cpp', 'rust'},
+                hlgroup = 'CursorColumn',
+                insert_mode = false,
+            })
+        end
+    },
+
+    -- auto cd to git root dir :
+    {
+        "ahmedkhalf/project.nvim",
+        config = function()
+            require('project_nvim').setup {}
+        end,
+    },
+
+    -- justfile syntax
+    {
+        "https://github.com/NoahTheDuke/vim-just",
+    },
+}
+
+require("lazy").setup(plugins, opts)
+
+
 -- if needed, see https://github.com/nanotee/nvim-lua-guide
 -- (notably : each :lua command has its own scope)
 
--- plugin init :
-require('nvim_comment').setup{}
-require("project_nvim").setup{}
+-- -- plugin init :
+-- require('nvim_comment').setup{}
+-- require("project_nvim").setup{}
 
 
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
@@ -591,6 +623,10 @@ local on_attach = function(client, bufnr)
   -- NdM : rename = besoin suffisamment rare pour ne pas ajouter de mapping :
   -- un alias me permettra de compléter la commande plus facilement
   -- (et par cohérence, j'ajoute les autres alias) :
+  -- Exemple d'utilisation (il va demander le nouveau nom) :
+  --
+  --      :lua lsp_rename()
+  --
   lsp_rename = vim.lsp.buf.rename
   lsp_references = vim.lsp.buf.references
   lsp_definition = vim.lsp.buf.definition
@@ -656,6 +692,7 @@ local sources = {
 null_ls.setup({ sources = sources })
 
 
+
 -- telescope :
 -- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
 vim.keymap.set({'n', 'i', 'v'}, '<C-p>', require('telescope.builtin').find_files, bufopts)
@@ -674,7 +711,7 @@ EOF
 
 endif  " has("nvim")
 
-" (plugins) }}}
+" (luaconfig) }}}
 
 
 "# DEPRECATED {{{
@@ -696,16 +733,6 @@ endif  " has("nvim")
 " Plug 'https://github.com/habamax/vim-asciidoctor', {'for': 'asciidoc'}
 " Plug 'https://github.com/tpope/vim-commentary.git'
 
-
-" " Ajout de surroundings particuliers pour django (cf. https://code.djangoproject.com/wiki/UsingVimWithDjango) :
-" let g:surround_{char2nr("v")} = "{{ \r }}"
-" let g:surround_{char2nr("%")} = "{% \r %}"
-" let g:surround_{char2nr("b")} = "{% block \1block name: \1 %}\r{% endblock \1\1 %}"
-" let g:surround_{char2nr("i")} = "{% if \1condition: \1 %}\r{% endif %}"
-" let g:surround_{char2nr("w")} = "{% with \1with: \1 %}\r{% endwith %}"
-" let g:surround_{char2nr("f")} = "{% for \1for loop: \1 %}\r{% endfor %}"
-" let g:surround_{char2nr("c")} = "{% comment %}\r{% endcomment %}"
-" let g:surround_{char2nr("#")} = "{# \r #}"
 
 " flake8 est dorénavant directement utilisé via ALE
 " Plug 'https://github.com/nvie/vim-flake8', {'for': 'python' }
@@ -824,24 +851,26 @@ function CheatsheetFunction()
         \ "",
         \ "======= SEARCH :",
         \ "    :copen / :ccl[ose]     ouvrir / fermer la quickfix list",
-        \ "    F8                     ouvrir NERDTree sur le répertoire courant",
-        \ "    S-F8                   ouvrir NERDTree sur le répertoire racine git",
-        \ "      ├─ o / Entrée         sans fermer le NERDTree, ouvrir le fichier dans l'onglet actuel",
-        \ "      ├─ T                  sans fermer le NERDTree, ouvrir le fichier dans un nouvel onglet",
-        \ "      ├─ u                  remonter d'un cran dans la hiérarchie",
-        \ "      └─ q                  fermer le NERDTree",
+        \ "    F8                     ouvrir nvim-tree sur le répertoire courant",
+        \ "    S-F8                   ouvrir nvim-tree sur le git-root",
+        \ "      ├─ g?                 afficher les commandes",
+        \ "      ├─ q                  fermer nvim-tree",
+        \ "      ├─ Entrée             ouvrir le fichier sélectionné dans le buffer courant",
+        \ "      ├─ C-t / C-x / C-h    ouvrir le fichier sélectionné dans un nouveau tab / vsplit / hsplit",
+        \ "      ├─ o                  ouvrir/fermer un répertoire",
+        \ "      ├─ H                  toggle l'affichage des fichiers cachés",
+        \ "      ├─ a / r / d          ajouter / renommer / supprimer un fichier",
+        \ "      ├─ y  /  gy           copier le nom / le chemin complet du fichier",
+        \ "      └─ -  /  P            remonter d'un cran dans la hiérarchie / se déplacer sur le répertoire parent",
         \ "    F9                     ouvrir la tagbar du fichier courant",
         \ "      ├─ q                  fermer la tagbar",
         \ "      ├─ o                  plier/déplier un folding de la tagbar",
         \ "      ├─ Entrée             sauter sur le tag, et fermer la tagbar",
         \ "      └─ p                  afficher le tag, mais garder le curseur sur la tagbar",
         \ "",
-        \ "======= VIM-PLUG :",
-        \ "    https://github.com/junegunn/vim-plug",
-        \ "      ├─ :PlugInstall       installer les plugins ajoutés au vimrc",
-        \ "      ├─ :PlugStatus        liste des plugins et leur status",
-        \ "      ├─ :PlugUpdate        liste des plugins + mise à jour",
-        \ "      └─ :PlugClean         suppression effective d'un plugin après l'avoir supprimé du vimrc",
+        \ "======= LAZY.NVIM :",
+        \ "    https://github.com/folke/lazy.nvim",
+        \ "      └─ :Lazy check        afficher l'UI de gestion de lazy.nvim (qui donne accès à toutes les commandes)",
         \ "",
         \ "======= DEV :",
         \ "    CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur",
