@@ -2,6 +2,13 @@
 "# zR / zM  = déplier / replier tous les folds
 "########################################################################################################################
 
+" READING GUIDELINE : la config est splittée en deux sections :
+"   - une section en vimscript pour les situations basiques
+"   - une section en lua, utile pour les situations poweruser (e.g. coding)
+"
+" L'idée est que la config lua a vocation à n'être utilisée qu'avec neovim sur mes postes de travail,
+" alors que la config vimscript peut être utilisée avec un vim vanilla, depuis n'importe où.
+
 
 "# GÉNÉRALITÉS : {{{
 "########################################################################################################################
@@ -81,91 +88,6 @@ autocmd BufEnter *.md setlocal foldtext=CustomFoldText()
 " (généralités) }}}
 
 
-"# CODE : {{{
-"########################################################################################################################
-
-let g:codepatterns = [
-            \ '*.html',
-            \ '*.css',
-            \ '*.py',
-            \ '*.js',
-            \ '*.ts',
-            \ '*.c',
-            \ '*.cpp',
-            \ '*.h',
-            \ '*.hpp',
-            \ '*.rb',
-            \ '*.sh',
-            \ '*.rs'
-            \]
-
-for codepattern in g:codepatterns
-    execute "autocmd BufEnter " . codepattern . " call CodeSettings()"
-endfor
-
-" coloration des type-infos par rust-tools à la fin de la ligne :
-highlight RustToolsTypeInfo cterm=bold
-
-function CodeSettings()  " settings spécifiques aux buffers contenant du code
-    " Affichage de limites verticales à 120 caractères :
-    set colorcolumn=100,120  " possible aussi : 80,100,120
-    highlight ColorColumn ctermbg=LightRed ctermfg=Black
-    highlight TrailingWhitespace ctermbg=red
-    match TrailingWhitespace  /\s\+$/
-    set nu
-
-    " Visualiser la position du curseur :
-    set cursorline
-    set cursorcolumn
-    highlight CursorColumn ctermbg=189
-    " cf. https://smarttech101.com/how-to-configure-colorscheme-in-vim-neovim
-    " cf. https://gist.github.com/vivkin/567896630dbc588ad470b8196c601ad1#file-256-color-table-sh
-endfunction
-
-" Coloration des non-breakable spaces :
-highlight nbspColor ctermbg=red
-call matchadd("nbspColor", " ")
-
-" Compatibilité tmux (cf. https://sunaku.github.io/vim-256color-bce.html), qui nécessite côté tmux :
-" set-window-option -g xterm-keys on
-" set -g default-terminal "screen-256color"
-set t_ut=
-redraw
-
-" " buffer HTML => template django => commentaire jinja2 :
-" autocmd BufEnter *.html setlocal filetype=htmldjango
-" autocmd FileType htmldjango set commentstring={#%s#}
-
-" filetypes spécifiques :
-autocmd BufEnter *.Jenkinsfile setlocal filetype=groovy
-autocmd BufEnter tsconfig.json setlocal filetype=javascript  " fichier de config typescript
-
-runtime macros/matchit.vim  " permet de switcher entre les tags HTML avec %
-
-" Folding avec les brackets triples {{{ }}} pour l'édition des fichiers vim (y compris le présent fichier) :
-augroup filetype_vim
-    autocmd!
-    autocmd FileType vim setlocal foldmethod=marker
-    autocmd FileType vim setlocal foldlevel=0
-augroup END
-
-augroup json
-    autocmd FileType json setlocal foldmethod=syntax
-augroup END
-
-" Par défaut, on recherche 'tags' jusqu'à la racine :
-set tags=tags;/
-
-" Augmenter la taille de la QuickfixList (et la réduire si inutile) :
-" cf. http://vim.wikia.com/wiki/Automatically_fitting_a_quickfix_window_height
-function! AdjustWindowHeight(minheight, maxheight)
-  exe max([min([line("$"), a:maxheight]), a:minheight]) . "wincmd _"
-endfunction
-autocmd FileType qf call AdjustWindowHeight(3, 40)
-
-" (code) }}}
-
-
 "# TABS AND STATUSLINE {{{
 "########################################################################################################################
 
@@ -188,10 +110,6 @@ if version >= 700
   autocmd InsertEnter * hi StatusLine term=reverse ctermfg=1
   autocmd InsertLeave * hi StatusLine term=reverse ctermfg=0 ctermbg=7
 endif
-
-" Coloration des tabulations :
-highlight TabulationsColor ctermbg=LightRed
-call matchadd("TabulationsColor", "\t")
 
 " Ligne des tabs (cf. :help setting-tabline)
 highlight UnsavedTabLine term=underline cterm=underline ctermfg=1 ctermbg=7 gui=underline guibg=LightGrey
@@ -250,28 +168,7 @@ set tabline=%!MyTabLine()
 " (tabs and statusline) }}}
 
 
-"# VIMOUTLINER / VIMDIFF {{{
-"########################################################################################################################
-
-" Options spécifiques à VimOutliner :
-autocmd BufEnter *.otl setlocal wrap " Remettre le wrap
-autocmd BufEnter *.otl setlocal linebreak " Remettre le linebreak
-autocmd BufEnter *.otl setlocal listchars+=tab:\ \  " ne pas afficher les leading-tabs pour les fichiers OTL
-
-" Options spécifiques à vimdiff :
-" On colorie toutes les lignes de la même façon = MatchParen :
-highlight! link DiffAdd MatchParen
-highlight! link DiffDelete MatchParen
-highlight! link DiffChange MatchParen
-highlight! link DiffText Todo  " dans une ligne, la couleur Todo qui signale le changement
-
-" more visible left-column signs :
-highlight! FoldColumn ctermbg=250
-
-" (vimoutliner/vimdiff) }}}
-
-
-"# MES ALIAS (HORS PLUGINS)  {{{
+"# MES ALIAS HORS PLUGINS  {{{
 "########################################################################################################################
 
 " ATTENTION : les commandes Alt sont interceptées par tmux (et doivent être
@@ -304,53 +201,135 @@ noremap! <leader><leader>n <Esc>:set nu!<CR>:set nu?<CR>a
 noremap <leader><leader>syntax :syntax sync fromstart<CR>
 noremap! <leader><leader>syntax <Esc>:syntax sync fromstart<CR>a
 
- " (mes alias hors plugins) }}}
+ " (MES ALIAS HORS PLUGINS) }}}
 
+"========================================================================================================================
+" ^ ci-dessus, la config en vimscript
+"
+" v ci-dessous, la config en lua
+"========================================================================================================================
 
-"# LUACONFIG {{{
-"########################################################################################################################
 
 if has("nvim")
-
 lua << EOF
+--  cf. https://neovim.io/doc/user/lua-guide.html
 
 
--- Je préfère ces couleurs pour les diagnostics LSP :
--- :hi pour voir les highlights actuels (avec exemples)
--- pour info, valeurs par défaut :
--- DiagnosticError xxx ctermfg=1 guifg=Red
--- DiagnosticWarn xxx ctermfg=3 guifg=Orange
--- DiagnosticInfo xxx ctermfg=4 guifg=LightBlue
--- DiagnosticHint xxx ctermfg=7 guifg=LightGrey
--- NDM : vim.cmd() permet de passer des commandes vimscript
-vim.cmd("hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red")
-vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
-vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
-vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
+--# VIMOUTLINER+VIMDIFF {{{
+--########################################################################################################################
 
--- for vim-markdown-plugin : folding a level 1 title should also fold all its children :
-vim.api.nvim_create_autocmd({"FileType"}, {
-    pattern = "markdown",
+-- more visible left-column signs :
+vim.cmd.highlight({"FoldColumn", "ctermbg=250"})
+
+-- options spécifiques à VimOutliner :
+vim.api.nvim_create_autocmd({"BufEnter"}, {
+    pattern = {"*.otl"},
     callback = function (opts)
         -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
-        -- vim.opt: behaves like :set
-        vim.opt.foldexpr = "NestedMarkdownFolds()"
+        -- vim.opt_local: behaves like :setlocal
+        vim.opt_local.wrap = true
+        vim.opt_local.linebreak = true
+        vim.opt_local.listchars:append({ tab = "  " })
     end,
 })
 
--- disabling polyglot ftdetect, in order for OTL files to properly be detected :
--- also disabling it for markdown (I cannot get polyglot's markdown to work with
--- vim-markdown-folding, and I value markdown folding more than markdown
--- highlighting...) :
-vim.g.polyglot_disabled = {'ftdetect', 'markdown'}  -- must be set BEFORE polyglot is loaded
+-- (VIMOUTLINER+VIMDIFF) }}}
 
--- strict équivalent de :  let g:vim_search_pulse_color_list = [22, 28, 34, 40, 46]
-vim.g.vim_search_pulse_color_list = {22, 28, 34, 40, 46}
 
--- nvim-tree recommande de disabler netrw, cf. :help nvim-tree-netrw
-vim.g.loaded_netrw       = 1
-vim.g.loaded_netrwPlugin = 1
+--# CODE SETTINGS {{{
+--########################################################################################################################
 
+-- settings spécifiques aux buffers contenant du code :
+vim.api.nvim_create_autocmd({"BufEnter"}, {
+    pattern = {
+        '*.html',
+        '*.css',
+        '*.py',
+        '*.js',
+        '*.json',
+        '*.ts',
+        '*.c',
+        '*.cpp',
+        '*.h',
+        '*.hpp',
+        '*.rb',
+        '*.sh',
+        '*.Jenkinsfile',
+        '*.rs'
+    },
+    callback = function ()
+        -- limites verticales à 120 caractères :
+        vim.opt.colorcolumn = {100, 120}
+        vim.cmd.highlight({"ColorColumn", "ctermbg=LightRed", "ctermfg=Black"})
+
+        -- position du curseur :
+        vim.opt.cursorline = true
+        vim.opt.cursorcolumn = true
+        vim.cmd.highlight({"CursorColumn", "ctermbg=250"})
+        vim.cmd.highlight({"CursorLine", "ctermbg=250"})
+        -- cf. https://smarttech101.com/how-to-configure-colorscheme-in-vim-neovim
+        -- cf. https://gist.github.com/vivkin/567896630dbc588ad470b8196c601ad1#file-256-color-table-sh
+
+        -- trailing whitespaces + nbsp + tabulations :
+        vim.cmd.highlight({"TrailingWhitespace", "ctermbg=red"})
+        vim.cmd.match({"TrailingWhitespace", [[/\s\+$/]]})
+        vim.cmd.highlight({"nbspColor", "ctermbg=red"})
+        vim.fn.matchadd("nbspColor", " ")
+        vim.cmd.highlight({"TabulationsColor", "ctermbg=red"})
+        vim.fn.matchadd("TabulationsColor", "	")
+
+        -- numéros de lignes :
+        vim.opt.nu = true;
+    end,
+})
+
+-- coloration des type-infos par rust-tools à la fin de la ligne :
+vim.cmd.highlight({"RustToolsTypeInfo", "cterm=bold"})
+
+-- Compatibilité tmux (cf. https://sunaku.github.io/vim-256color-bce.html), qui nécessite côté tmux :
+-- set-window-option -g xterm-keys on
+-- set -g default-terminal "screen-256color"
+vim.cmd([[set t_ut=]])
+vim.cmd([[redraw]])
+
+-- configs spécifiques à certains fichiers :
+
+-- les jenkinsfiles sont à interpréter en groovy :
+vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "*.Jenkinsfile", callback = function () vim.opt_local.filetype = "groovy" end })
+
+-- fichier de config typescript sont à interpréter en javascrip :
+vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "tsconfig.json", callback = function () vim.opt_local.filetype = "javascript" end })
+
+-- folding json :
+local json_group = vim.api.nvim_create_augroup('json', { clear = false })
+vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "json", group = 'json', callback = function () vim.opt_local.foldmethod = "syntax" end })
+
+-- folding avec les brackets triples {{{ }}} pour l'édition des fichiers vim (y compris le présent fichier) :
+local vim_group = vim.api.nvim_create_augroup('vim', { clear = true })
+vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "vim", group = 'vim', callback = function ()
+  vim.opt_local.foldmethod = "marker"
+  vim.opt_local.foldlevel = 0  -- on veut les folds pliés quand on ouvre le fichier
+end })
+
+-- Par défaut, on recherche 'tags' jusqu'à la racine :
+vim.opt.tags="tags;/"
+
+-- Augmenter la taille de la QuickfixList (et la réduire si inutile) :
+-- cf. http://vim.wikia.com/wiki/Automatically_fitting_a_quickfix_window_height
+vim.cmd([[
+function! AdjustWindowHeight(minheight, maxheight)
+  exe max([min([line("$"), a:maxheight]), a:minheight]) . "wincmd _"
+endfunction
+autocmd FileType qf call AdjustWindowHeight(3, 40)
+]])
+
+-- (CODE SETTINGS) }}}
+
+
+--# PLUGINS {{{
+--########################################################################################################################
+
+-- lancement de lazy.nvim :
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 if not vim.loop.fs_stat(lazypath) then
   vim.fn.system({
@@ -365,21 +344,6 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 
-
--- F8 = ouvrir nvim-tree sur le fichier courant :
-vim.keymap.set({'n', 'i', 'v'}, '<F8>', ':NvimTreeFindFileToggle<CR>', { noremap = true })
-
--- S-F8 = ouvrir nvim-tree sur le git-root :
-local function get_git_root()
-    local dot_git_path = vim.fn.finddir(".git", ".;")
-    return vim.fn.fnamemodify(dot_git_path, ":h")
-end
--- attention, sous neovim, pour qu'un shortcut S-Fxx marche, il faut utiliser F(xx+12) :
-vim.keymap.set({'n', 'i', 'v'}, '<F20>', ':NvimTreeToggle ' .. get_git_root() .. '<CR>', { noremap = true })
-
--- Ctrl+T pour tabularize :
-vim.keymap.set({'v',}, '<C-T>', ':Tabularize /', { noremap = true })
-
 local plugins = {
     {
         -- vim-outliner colors + foldings :
@@ -388,13 +352,17 @@ local plugins = {
     },
     -- file browser :
     {
-        "nvim-tree/nvim-tree.lua",
+        "https://github.com/nvim-tree/nvim-tree.lua",
         version = "*",
         lazy = false,
         dependencies = {
             "nvim-tree/nvim-web-devicons",
             },
         config = function()
+            -- nvim-tree recommande de disabler netrw, cf. :help nvim-tree-netrw
+            vim.g.loaded_netrw       = 1
+            vim.g.loaded_netrwPlugin = 1
+
             require("nvim-tree").setup {
                 actions = {
                     open_file = {
@@ -412,12 +380,22 @@ local plugins = {
                     dotfiles = true,
                 },
             }
+            -- F8 = ouvrir nvim-tree sur le fichier courant :
+            vim.keymap.set({'n', 'i', 'v'}, '<F8>', ':NvimTreeFindFileToggle<CR>', { noremap = true })
+
+            -- S-F8 = ouvrir nvim-tree sur le git-root :
+            -- attention, sous neovim, pour qu'un shortcut S-Fxx marche, il faut utiliser F(xx+12) :
+            local function get_git_root()
+                local dot_git_path = vim.fn.finddir(".git", ".;")
+                return vim.fn.fnamemodify(dot_git_path, ":h")
+            end
+            vim.keymap.set({'n', 'i', 'v'}, '<F20>', ':NvimTreeToggle ' .. get_git_root() .. '<CR>', { noremap = true })
         end,
     },
 
     -- " fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
     {
-        'nvim-telescope/telescope.nvim',
+        'https://github.com/nvim-telescope/telescope.nvim',
         tag = '0.1.4',
         dependencies = { 'nvim-lua/plenary.nvim' },
     },
@@ -429,15 +407,21 @@ local plugins = {
 
     -- ChatGPT :
     {
-        "jackMort/ChatGPT.nvim",
-        event = "VeryLazy",
+        "https://github.com/jackMort/ChatGPT.nvim",
+        -- event = "VeryLazy",
         config = function()
             require("chatgpt").setup()
         end,
+        cmd = {
+            "ChatGPT",
+            "ChatGPTActAs",
+            "ChatGPTEditWithInstructions",
+            "ChatGPTRun",
+        },
         dependencies = {
             "MunifTanjim/nui.nvim",
-            "nvim-lua/plenary.nvim",
-            "nvim-telescope/telescope.nvim"
+            -- "nvim-lua/plenary.nvim",  -- already installed
+            -- "nvim-telescope/telescope.nvim"  -- already installed
         }
     },
 
@@ -445,6 +429,10 @@ local plugins = {
     {
         "https://github.com/godlygeek/tabular.git",
         cmd = "Tabularize",
+        init = function()
+            -- Ctrl+T pour tabularize :
+            vim.keymap.set({'v',}, '<C-T>', ':Tabularize /', { noremap = true })
+        end,
     },
 
     -- surround :
@@ -459,7 +447,7 @@ local plugins = {
 
     -- comment :
     {
-        'numToStr/Comment.nvim',
+        'https://github.com/numToStr/Comment.nvim',
         config = function()
             require('Comment').setup()
         end,
@@ -468,16 +456,24 @@ local plugins = {
     -- language pack :
     {
         'https://github.com/sheerun/vim-polyglot',
+        init = function()
+            -- disabling polyglot ftdetect, in order for OTL files to properly be detected :
+            -- also disabling it for markdown (I cannot get polyglot's markdown to work with
+            -- vim-markdown-folding, and I value markdown folding more than markdown
+            -- highlighting...) :
+            vim.g.polyglot_disabled = {'ftdetect', 'markdown'}  -- must be set BEFORE polyglot is loaded
+        end,
     },
 
-    -- indentline :
+    -- visualiser les indentations :
     {
-        "lukas-reineke/indent-blankline.nvim",
+        "https://github.com/lukas-reineke/indent-blankline.nvim",
         main = "ibl",
         opts = {},
         config = function()
+            vim.cmd.highlight({"IndentLine", "ctermfg=grey"})
             require("ibl").setup {
-                indent = { highlight = { "Normal" } },
+                indent = { highlight = { "IndentLine" } },
                 whitespace = { highlight = { "Normal" } },
             }
         end,
@@ -486,11 +482,26 @@ local plugins = {
     -- markdown-folding :
     {
         "https://github.com/masukomi/vim-markdown-folding",
+        config = function()
+            -- for vim-markdown-plugin : folding a level 1 title should also fold all its children :
+            vim.api.nvim_create_autocmd({"FileType"}, {
+                pattern = "markdown",
+                callback = function (opts)
+                    -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
+                    -- vim.opt: behaves like :set
+                    vim.opt.foldexpr = "NestedMarkdownFolds()"
+                end,
+            })
+        end,
     },
 
     -- make searched line pulse briefly to ease visualization
     {
         "https://github.com/inside/vim-search-pulse",
+        config = function()
+            -- strict équivalent de :  let g:vim_search_pulse_color_list = [22, 28, 34, 40, 46]
+            vim.g.vim_search_pulse_color_list = {22, 28, 34, 40, 46}
+        end,
     },
 
     -- smooth scrolling (to ease visualizing Ctrl-down/Ctrl-up)
@@ -521,7 +532,7 @@ local plugins = {
     -- note : pour visualiser dynamiquement les highlights groups :
     --   :so $VIMRUNTIME/syntax/hitest.vim
     {
-        'tzachar/local-highlight.nvim',
+        'https://github.com/tzachar/local-highlight.nvim',
         config = function()
             require('local-highlight').setup({
                 file_types = {'python', 'cpp', 'rust'},
@@ -533,7 +544,7 @@ local plugins = {
 
     -- auto cd to git root dir :
     {
-        "ahmedkhalf/project.nvim",
+        "https://github.com/ahmedkhalf/project.nvim",
         config = function()
             require('project_nvim').setup {}
         end,
@@ -543,29 +554,42 @@ local plugins = {
     {
         "https://github.com/NoahTheDuke/vim-just",
     },
+
+    -- debugger = DAP-client :
+    {
+        "https://github.com/puremourning/vimspector",
+        config = function()
+            -- démarrer / arrêter le débugging d'un programme :
+            vim.keymap.set('n', '<leader><F5>', '<Plug>VimspectorContinue', { noremap = true })
+            vim.keymap.set('n', '<leader><F3>', '<Plug>VimspectorStop', { noremap = true })
+            vim.keymap.set('n', '<leader><F4>', '<Plug>VimspectorRestart', { noremap = true })
+            vim.keymap.set('n', '<leader><F6>', '<Plug>VimspectorPause', { noremap = true })
+            vim.keymap.set('n', '<leader><F9>', '<Plug>VimspectorToggleBreakpoint', { noremap = true })
+            vim.keymap.set('n', '<leader><F8>', '<Plug>VimspectorRunToCursor', { noremap = true })
+            -- piloter l'avancée du programme en cours d'exécution :
+            vim.keymap.set('n', 'gn', '<Plug>VimspectorStepOver', { noremap = true })
+            vim.keymap.set('n', 'gs', '<Plug>VimspectorStepInto', { noremap = true })
+            vim.keymap.set('n', 'go', '<Plug>VimspectorStepOut', { noremap = true })
+            -- fermer la fenêtre vimspector :
+            vim.keymap.set('n', '<leader>q', ':VimspectorReset<CR>', { noremap = true })
+        end,
+    },
 }
 
 require("lazy").setup(plugins, opts)
 
+-- (PLUGINS) }}}
 
--- if needed, see https://github.com/nanotee/nvim-lua-guide
--- (notably : each :lua command has its own scope)
 
--- -- plugin init :
--- require('nvim_comment').setup{}
--- require("project_nvim").setup{}
-
+--# LSP-RELATED {{{
+--########################################################################################################################
 
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
--- native LSP client
-
-local opts = { noremap=true, silent=true }
-vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, opts)
-vim.keymap.set('n', '<A-j>', vim.diagnostic.goto_next, opts)
 
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
-local on_attach = function(client, bufnr)
+local on_lsp_attach = function(client, bufnr)
+
   -- Enable completion triggered by <c-x><c-o>
   vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
 
@@ -582,6 +606,10 @@ local on_attach = function(client, bufnr)
   vim.keymap.set('n', '==', vim.lsp.buf.format, bufopts)
   vim.keymap.set('v', '=', vim.lsp.buf.format, bufopts)  -- range format
 
+  -- naviguer entre les erreurs :
+  vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, { noremap=true, silent=true})
+  vim.keymap.set('n', '<A-j>', vim.diagnostic.goto_next, { noremap=true, silent=true})
+
 
   -- NdM : rename = besoin suffisamment rare pour ne pas ajouter de mapping :
   -- un alias me permettra de compléter la commande plus facilement
@@ -595,9 +623,6 @@ local on_attach = function(client, bufnr)
   lsp_definition = vim.lsp.buf.definition
   lsp_hover = vim.lsp.buf.hover
   lsp_formatting = vim.lsp.buf.hover
-
-  -- NdM : pas encore essayé :
-  -- vim.keymap.set('n', '<space>ca', vim.lsp.buf.code_action, bufopts)
 
   -- NdM : moins utile que 'definition' :
   -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.declaration, bufopts)
@@ -623,22 +648,34 @@ local on_attach = function(client, bufnr)
   -- gt sert normalement à switcher de tab, mais je n'utilise pas -> g[T]oggle :
   vim.keymap.set({'n', 'v'}, 'gt', _G.toggle_diagnostics, bufopts)
 
+  -- Je préfère ces couleurs pour les diagnostics LSP :
+  -- :hi pour voir les highlights actuels (avec exemples)
+  -- pour info, valeurs par défaut :
+  -- DiagnosticError xxx ctermfg=1 guifg=Red
+  -- DiagnosticWarn xxx ctermfg=3 guifg=Orange
+  -- DiagnosticInfo xxx ctermfg=4 guifg=LightBlue
+  -- DiagnosticHint xxx ctermfg=7 guifg=LightGrey
+  -- NDM : vim.cmd() permet de passer des commandes vimscript
+  vim.cmd("hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red")
+  vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
+  vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
+  vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
 end
 
 require('lspconfig')['pyright'].setup{
-    on_attach = on_attach,
+    on_attach = on_lsp_attach,
     flags = lsp_flags,
 }
 require('lspconfig')['clangd'].setup{
-    on_attach = on_attach,
+    on_attach = on_lsp_attach,
     flags = lsp_flags,
 }
 require('lspconfig')['tsserver'].setup{
-    on_attach = on_attach,
+    on_attach = on_lsp_attach,
     flags = lsp_flags,
 }
 require('rust-tools').setup{
-    server = {on_attach = on_attach},
+    server = {on_attach = on_lsp_attach},
     flags = lsp_flags,
     tools = {inlay_hints = {
         max_len_align = true,
@@ -669,280 +706,131 @@ vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_gre
 -- always show error columns :
 vim.api.nvim_set_option('signcolumn', 'auto:1-3')
 
+-- (LSP-RELATED) }}}
+
+
+--# MY CHEATSHEET {{{
+--########################################################################################################################
+
+-- FIXME : ceci pourrait plutôt être un fichier OTL, et la fonction se contenterait de le charger dans un tab
+--         (un OTL sera plus facile à écrire, maintenir et même consulter)
+function display_mycheatsheet_in_tab()
+    local mycheatsheet_str = [=[
+Pour afficher cette cheatsheet :   CTRL+h  /  :Cheat  /  :call CheatsheetFunction()
+ 
+======= SEARCH :
+    :copen / :ccl[ose]     ouvrir / fermer la quickfix list
+    F8                     ouvrir nvim-tree sur le répertoire courant
+    S-F8                   ouvrir nvim-tree sur le git-root
+      ├─ g?                 afficher les commandes
+      ├─ q                  fermer nvim-tree
+      ├─ Entrée             ouvrir le fichier sélectionné dans le buffer courant
+      ├─ C-t / C-x / C-h    ouvrir le fichier sélectionné dans un nouveau tab / vsplit / hsplit
+      ├─ o                  ouvrir/fermer un répertoire
+      ├─ H                  toggle l'affichage des fichiers cachés
+      ├─ a / r / d          ajouter / renommer / supprimer un fichier
+      ├─ y  /  gy           copier le nom / le chemin complet du fichier
+      └─ -  /  P            remonter d'un cran dans la hiérarchie / se déplacer sur le répertoire parent
+ 
+======= LAZY.NVIM :
+    https://github.com/folke/lazy.nvim
+      └─ :Lazy check        afficher l'UI de gestion de lazy.nvim (qui donne accès à toutes les commandes)
+ 
+======= DEV :
+    CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur
+    :help tags
+      ├─build tags :
+      │   apt install exuberant-ctags
+      │   ctags --recurse --c++-kinds=+p --fields=+iaS --extras=+q .
+      ├─CTRL+]              jumper à la définition du tag
+      ├─CTRL+t              revenir à l'emplacement précédent
+      ├─g puis CTRL+]       choisir la destination du jump dans une liste
+      └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'
+    LSP
+      ├─ F12                 go to definition
+      ├─ Shift+F12           see references
+      ├─ gh                  infos sur le symbole courant dans une bulle hover
+      ├─ Alt+j / Alt+k       go to next/previous error
+      ├─ :LspStop/Start      (dés)activer le LSP client (semble mal marcher avec null-ls...)
+      ├─ :LspInfo            des infos sur la config des LSP (e.g. quels linters sont actifs)
+      ├─ gt                  toggle les diagnostics LSP
+      └─ CTRL+x CTRL+o       complétion intelligente respectant le contexte via LSP
+    CTRL+n                 complétion 'dumb'
+    Telescope
+      ├─ CTRL-n / CTRL-p     naviguer dans les matchs en mode insertion
+      ├─ Entrée / CTRL-t     ouvrir le match dans l'onglet courant / un nouvel onglet
+      ├─ CTRL+/  ou  ?       aide sur les shortcuts de telescope (insert-mode ou normal-mode)
+      ├─ CTRL+ALT+g          live_grep dans le répertoire courant
+      ├─ CTRL+ALT+t          rechercher des noms de symboles dans l'index LSP
+      └─ CTRL+p              fuzzy search files by name (telescope)
+    Alt-o                  alterner entre .h / .cpp
+    :AT                    alterner entre .h / .cpp dans un nouvel onglet
+    CTRL-y + ,             lancer emmet (pour tags HTML faciles)
+    CTRL-t + <sep>         (visual) tabularize avec des colonnes séparées par <sep>
+    :IndentLinesToggle     toggle le marqueur des indentations python
+    :gJ  /  gS             split/join les arguments d'une fonction, placer curseur sur parenthèse ouvrante
+    == / (visual)=         reformatter tout le fichier (ou uniquement la sélection visuelle)
+ 
+======= MES ALIAS PERSOS (hors plugins) :
+    CTRL-HAUT/BAS          scroller une ligne vers le bas/haut
+    ALT-DROITE/GAUCHE      :tabNext / :tabPrev  (EDIT : également commandes natives : gt/gT)
+    ççh                    toggle hlsearch
+    ççi                    toggle ignorecase
+    ççn                    toggle line numbers
+    ççsyntax               refresh la syntaxe
+    |                      ouvrir le tag dans un onglet (ou sinon : C-w + C-]  puis C-w + S-T)
+ 
+======= OTHER CORE VIM FEATURES :
+    :help fold
+      ├─:set foldlevel=3    setter le foldlevel
+      ├─zO / zC             ouvrir/fermer le fold actuel et tous ses fils
+      ├─zr / zm             ouvrir/fermer un niveau de fold supplémentaire
+      └─zR / zM             ouvrir/fermer TOUS les folds du fichier (utile dans vimdiff)
+    vimdiff file1 file2
+      ├─dp                  [P]ut the diff to other file
+      ├─do                  [O]btain the diff from other file
+      ├─:diffupdate         refresh diff
+      ├─CTRL-w + w          mettre le curseur sur l'autre fichier
+      └─zR / zM             afficher/masquer les portions identiques du fichier
+    :help split
+      ├─CTRL-w + _          maximiser le split courant
+      ├─CTRL-w + =          égaliser les splits
+      ├─:res[ize] 15        setter la taille du split à 15
+      ├─:res[ize] +3        augmenter la taille du split de 3 (également CTRL-w - 3+)
+      ├─CTRL-w + w          déplacer le focus sur un autre split
+      └─CTRL-w + CTRL-r     swapper les splits
+    :help C-r
+      ├─CTRL-r + REG        insère le contenu du registre REG (\" pour le registre anonyme)
+      ├─CTRL-r + /          insère le pattern de recherche
+      └─CTRL-r + CTRL-w     insère le mot sous le curseur
+    :norm! @a              applique la macro 'a' (à utiliser sur un groupe de lignes)
+    :set conceallevel=0    ne pas masquer de texte (e.g. markdown)
+    :echo mapleader        afficher le <leader> actuel
+    :map STRING            afficher les mappings commençant par STRING -> doc de mes raccourcis !
+    :map <leader>          afficher les mappings commençant par <leader> (marche aussi avec p.ex. <F5>)
+    ma / 'a                définir la / sauter vers la marque <a>
+    ''                     après avoir sauté vers une marque, '' permet de revenir là où on était
+ 
+    ... to be continued ...
+]=]
+    vim.cmd("tabnew MYCHEATSHEET")
+
+    -- convert single string into table of lines :
+    local lines = {}
+    for s in mycheatsheet_str:gmatch("[^\r\n]+") do
+        table.insert(lines, s)
+    end
+
+    vim.fn.append(0, lines)
+    vim.fn.cursor(1, 1)
+end
+
+-- how to display my sheatsheet :
+vim.api.nvim_create_user_command('Cheat', display_mycheatsheet_in_tab, {})
+vim.api.nvim_create_user_command('Cheatsheet', display_mycheatsheet_in_tab, {})
+vim.keymap.set({'n', 'i', 'v'}, '<C-h>',display_mycheatsheet_in_tab, { noremap = true })
+
+-- (MY CHEATSHEET) }}}
 
 EOF
-
 endif  " has("nvim")
-
-" (luaconfig) }}}
-
-
-"# DEPRECATED {{{
-"########################################################################################################################
-
-" plugins un jour utilisés, aujourd'hui abandonnés :
-" https://github.com/elzr/vim-json
-" " Ne pas masquer les guillemets en json :
-" let g:vim_json_syntax_conceal = 0
-" https://github.com/LucHermitte/local_vimrc
-" https://github.com/LucHermitte/lh-vim-lib
-" https://github.com/tmhedberg/SimpylFold
-" https://github.com/jlanzarotta/bufexplorer
-" Plug 'https://github.com/rking/ag.vim'
-" Plug 'https://github.com/airblade/vim-rooter'
-" Plug 'https://github.com/integralist/vim-mypy', {'for': 'python' }
-" Plug 'https://github.com/chr4/nginx.vim'
-" Plug 'https://github.com/plasticboy/vim-markdown', {'for': 'markdown'}
-" Plug 'https://github.com/habamax/vim-asciidoctor', {'for': 'asciidoc'}
-" Plug 'https://github.com/tpope/vim-commentary.git'
-
-
-" flake8 est dorénavant directement utilisé via ALE
-" Plug 'https://github.com/nvie/vim-flake8', {'for': 'python' }
-" let g:flake8_quickfix_height=3
-" let g:flake8_show_quickfix=0
-" let g:flake8_show_in_file=1
-" let g:flake8_show_in_gutter=1
-" autocmd BufWritePost *.py call Flake8()  " lancement automatique au save de fichiers python
-" " effacer les marqueurs flake8 avec F11:
-" noremap <F11>             :call flake8#Flake8UnplaceMarkers()<CR>
-" noremap! <F11>       <Esc>:call flake8#Flake8UnplaceMarkers()<CR>
-" vnoremap <F11>  <Esc><Esc>:call flake8#Flake8UnplaceMarkers()<CR>
-
-
-" J'ai remplacé ALE par le client LSP natif à neovim :
-" " LSP client
-" Plug 'https://github.com/dense-analysis/ale'
-" let g:ale_default_navigation = 'tab'
-" let g:ale_completion_enabled = 1
-" " NOTE : pour les shortcuts, autant que possible, j'ai repris ceux de vscode :
-" " https://code.visualstudio.com/docs/editor/editingevolved
-" " https://marketplace.visualstudio.com/items?itemName=ryzngard.vscode-header-source
-" noremap gh                :ALEHover<CR>
-
-" noremap <F12>             :ALEGoToDefinition<CR>
-" noremap! <F12>       <Esc>:ALEGoToDefinition<CR>
-" vnoremap <F12>  <Esc><Esc>:ALEGoToDefinition<CR>
-
-" noremap  <A-j>            :ALENextWrap<CR>
-" noremap! <A-j>       <Esc>:ALENextWrap<CR>a
-" vnoremap <A-j>  <Esc><Esc>:ALENextWrap<CR>
-
-" noremap  <A-k>            :ALEPreviousWrap<CR>
-" noremap! <A-k>       <Esc>:ALEPreviousWrap<CR>a
-" vnoremap <A-k>  <Esc><Esc>:ALEPreviousWrap<CR>
-
-" if has("nvim")
-"     " to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
-"     noremap <F24>               :ALEFindReferences<CR>
-"     noremap! <F24>         <Esc>:ALEFindReferences<CR>
-"     vnoremap <F24>    <Esc><Esc>:ALEFindReferences<CR>
-" else
-"     noremap <S-F12>               :ALEFindReferences<CR>
-"     noremap! <S-F12>         <Esc>:ALEFindReferences<CR>
-"     vnoremap <S-F12>    <Esc><Esc>:ALEFindReferences<CR>
-" endif
-
-" " Quelques commandes non-mappées car trop peu souvent utiles :
-" " :ALESymbolSearch
-" " :ALEInfo
-" " :ALEDetail
-
-" clang-format semble maintenant appliqué par clangd :
-" " use clang-format to format code
-" Plug 'https://github.com/kana/vim-operator-user', {'for': 'cpp'}  " pour utiliser vim-clang-format avec '='
-" Plug 'https://github.com/rhysd/vim-clang-format', {'for': 'cpp'}
-" " (note : ça ne marche pas avec splitjoin, qui semble utiliser le formattage C++ par défaut)
-" " (contournement = réappliquer manuellement l'opérateur '=' après avoir utilisé splitjoin)
-" autocmd FileType c,cpp map <buffer> = <Plug>(operator-clang-format)
-" let g:clang_format#command = 'clang-format-11'
-
-
-" " fuzzy file opener (NdM : remplacé par telescope)
-" Plug 'https://github.com/kien/ctrlp.vim'
-" " :help ctrlp-options
-" let g:ctrlp_show_hidden = 0  " notably, ignore hidden dirs such as .tox or .clangd
-" let g:ctrlp_custom_ignore = '\vNOGIT|__pycache__'
-
-
-" " no need for a plugin to fold markdown :
-" " (EDIT : actually, it is confused by comments in code blocks...)
-" let g:markdown_folding = 1
-
-
-
-" " récupérer facilement le répertoire racine d'un éventuel projet git :
-" " cf. https://github.com/mileszs/ack.vim/issues/188#issuecomment-417939294
-" function! Git_root()
-"   return system('git rev-parse --show-toplevel 2> /dev/null')[:-2]
-" endfunction
-"
-" function! Cat_to_git_root(file)
-"     " note : a final space is added to facilitate the append of the next text
-"     return Git_root() . '/' . a:file . ' '
-" endfunction
-"
-" " exécution de ctags :
-" noremap  <F5>              :execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
-" noremap! <F5>         <Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
-" vnoremap <F5>    <Esc><Esc>:execute '!ctags -R --exclude=.tox --exclude=.git -f ' . Cat_to_git_root('/tags') . Git_root()<CR>
-" " NOTE : exemples de commandes de génération de tags :
-" "     apt-get install exuberant-ctags 
-" "     ctags -R --exclude='.git' --languages=python
-" "     ctags -R --exclude='.git' --languages=python,js
-" "     ctags -R --exclude='.git' --languages=python,js -f myspecifictagfile
-
-" " integration with ack (or actually ag)
-" Plug 'https://github.com/mileszs/ack.vim'
-" let g:ackprg = 'ag --vimgrep --smart-case'
-" " recherche dans tout le projet git :
-" command! -nargs=1 Ag execute "Ack! <args> " . Git_root()
-" " recherche dans le même répertoire que le fichier courant :
-" command! -nargs=1 AgLocal  execute "Ack! <args> " . expand("%:p:h")
-" cnoreabbrev Agl AgLocal
-" " TODO : permettre une recherche case-sensitive / case-insensitive ?
-
-
-" Ctrl+r prépare à insérer le contenu de... quelque chose (registre, mot sous le curseur, etc.) :
-" :help C-r
-"
-" Ctrl+r suivi de " insère le registre anonyme
-" peut-être utilisé dans un mapping, permettant par exemple en visualmode de récupérer la sélection avec :
-" vnoremap <leader>echoselection  y:echo '<C-R>"'<CR>
-" EXPLICATION :
-"    le "y" yanke la sélection (et le place donc dans le registre anonyme ")
-"    le <C-R>"  utilise le contenu du registre anonyme
-"
-" Ctrl+r suivi de <C-w> insère le mot sous le curseur :
-"    noremap <leader>pouet  y:echo '<C-R>"'<CR>
-" c'est très pratique même manuellement : pour rechercher le mot sous le curseur, je peux taper moi-même :
-"     :Ag <C-r> <C-w>
-" <cword> est une variable qui représente le word sous le curseur :-o
-
-" indenter la sélection visuelle conserve celle-ci (au lieu de la déselectionner) :
-" EDIT 2021-12-02 : finalement, je préfère le comportement normal -> je
-" commente en attendant de confirmer, et je supprimerai si besoin...
-" vnoremap < <gv
-" vnoremap > >gv
-" vnoremap = =gv
-
-" (deprecated) }}}
-
-
-function CheatsheetFunction()
-    let mycheatsheet  = [
-        \ "",
-        \ "Pour afficher cette cheatsheet :   CTRL+h  /  :Cheat  /  :call CheatsheetFunction()",
-        \ "",
-        \ "======= SEARCH :",
-        \ "    :copen / :ccl[ose]     ouvrir / fermer la quickfix list",
-        \ "    F8                     ouvrir nvim-tree sur le répertoire courant",
-        \ "    S-F8                   ouvrir nvim-tree sur le git-root",
-        \ "      ├─ g?                 afficher les commandes",
-        \ "      ├─ q                  fermer nvim-tree",
-        \ "      ├─ Entrée             ouvrir le fichier sélectionné dans le buffer courant",
-        \ "      ├─ C-t / C-x / C-h    ouvrir le fichier sélectionné dans un nouveau tab / vsplit / hsplit",
-        \ "      ├─ o                  ouvrir/fermer un répertoire",
-        \ "      ├─ H                  toggle l'affichage des fichiers cachés",
-        \ "      ├─ a / r / d          ajouter / renommer / supprimer un fichier",
-        \ "      ├─ y  /  gy           copier le nom / le chemin complet du fichier",
-        \ "      └─ -  /  P            remonter d'un cran dans la hiérarchie / se déplacer sur le répertoire parent",
-        \ "    F9                     ouvrir la tagbar du fichier courant",
-        \ "      ├─ q                  fermer la tagbar",
-        \ "      ├─ o                  plier/déplier un folding de la tagbar",
-        \ "      ├─ Entrée             sauter sur le tag, et fermer la tagbar",
-        \ "      └─ p                  afficher le tag, mais garder le curseur sur la tagbar",
-        \ "",
-        \ "======= LAZY.NVIM :",
-        \ "    https://github.com/folke/lazy.nvim",
-        \ "      └─ :Lazy check        afficher l'UI de gestion de lazy.nvim (qui donne accès à toutes les commandes)",
-        \ "",
-        \ "======= DEV :",
-        \ "    CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur",
-        \ "    :help tags",
-        \ "      ├─build tags :",
-        \ "      │   apt install exuberant-ctags",
-        \ "      │   ctags --recurse --c++-kinds=+p --fields=+iaS --extras=+q .",
-        \ "      ├─CTRL+]              jumper à la définition du tag",
-        \ "      ├─CTRL+t              revenir à l'emplacement précédent",
-        \ "      ├─g puis CTRL+]       choisir la destination du jump dans une liste",
-        \ "      └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'",
-        \ "    LSP",
-        \ "      ├─ F12                 go to definition",
-        \ "      ├─ Shift+F12           see references",
-        \ "      ├─ gh                  infos sur le symbole courant dans une bulle hover",
-        \ "      ├─ Alt+j / Alt+k       go to next/previous error",
-        \ "      ├─ :LspStop/Start      (dés)activer le LSP client (semble mal marcher avec null-ls...)",
-        \ "      ├─ :LspInfo            des infos sur la config des LSP (e.g. quels linters sont actifs)",
-        \ "      ├─ gt                  toggle les diagnostics LSP",
-        \ "      └─ CTRL+x CTRL+o       complétion intelligente respectant le contexte via LSP",
-        \ "    CTRL+n                 complétion 'dumb'",
-        \ "    Telescope",
-        \ "      ├─ CTRL-n / CTRL-p     naviguer dans les matchs en mode insertion",
-        \ "      ├─ Entrée / CTRL-t     ouvrir le match dans l'onglet courant / un nouvel onglet",
-        \ "      ├─ CTRL+/  ou  ?       aide sur les shortcuts de telescope (insert-mode ou normal-mode)",
-        \ "      ├─ CTRL+ALT+g          live_grep dans le répertoire courant",
-        \ "      ├─ CTRL+ALT+t          rechercher des noms de symboles dans l'index LSP",
-        \ "      └─ CTRL+p              fuzzy search files by name (telescope)",
-        \ "    Alt-o                  alterner entre .h / .cpp",
-        \ "    :AT                    alterner entre .h / .cpp dans un nouvel onglet",
-        \ "    CTRL-y + ,             lancer emmet (pour tags HTML faciles)",
-        \ "    CTRL-t + <sep>         (visual) tabularize avec des colonnes séparées par <sep>",
-        \ "    :IndentLinesToggle     toggle le marqueur des indentations python",
-        \ "    :gJ  /  gS             split/join les arguments d'une fonction, placer curseur sur parenthèse ouvrante",
-        \ "    == / (visual)=         reformatter tout le fichier (ou uniquement la sélection visuelle)",
-        \ "",
-        \ "======= MES ALIAS PERSOS (hors plugins) :",
-        \ "    CTRL-HAUT/BAS          scroller une ligne vers le bas/haut",
-        \ "    ALT-DROITE/GAUCHE      :tabNext / :tabPrev  (EDIT : également commandes natives : gt/gT)",
-        \ "    ççh                    toggle hlsearch",
-        \ "    ççi                    toggle ignorecase",
-        \ "    ççn                    toggle line numbers",
-        \ "    ççsyntax               refresh la syntaxe",
-        \ "    F5                     lancement de ctags sur le git-root-dir",
-        \ "    |                      ouvrir le tag dans un onglet (ou sinon : C-w + C-]  puis C-w + S-T)",
-        \ "",
-        \ "======= OTHER CORE VIM FEATURES :",
-        \ "    :help fold",
-        \ "      ├─:set foldlevel=3    setter le foldlevel",
-        \ "      ├─zO / zC             ouvrir/fermer le fold actuel et tous ses fils",
-        \ "      ├─zr / zm             ouvrir/fermer un niveau de fold supplémentaire",
-        \ "      └─zR / zM             ouvrir/fermer TOUS les folds du fichier (utile dans vimdiff)",
-        \ "    vimdiff file1 file2",
-        \ "      ├─dp                  [P]ut the diff to other file",
-        \ "      ├─do                  [O]btain the diff from other file",
-        \ "      ├─:diffupdate         refresh diff",
-        \ "      ├─CTRL-w + w          mettre le curseur sur l'autre fichier",
-        \ "      └─zR / zM             afficher/masquer les portions identiques du fichier",
-        \ "    :help split",
-        \ "      ├─CTRL-w + _          maximiser le split courant",
-        \ "      ├─CTRL-w + =          égaliser les splits",
-        \ "      ├─:res[ize] 15        setter la taille du split à 15",
-        \ "      ├─:res[ize] +3        augmenter la taille du split de 3 (également CTRL-w - 3+)",
-        \ "      ├─CTRL-w + w          déplacer le focus sur un autre split",
-        \ "      └─CTRL-w + CTRL-r     swapper les splits",
-        \ "    :help C-r",
-        \ "      ├─CTRL-r + REG        insère le contenu du registre REG (\" pour le registre anonyme)",
-        \ "      ├─CTRL-r + /          insère le pattern de recherche",
-        \ "      └─CTRL-r + CTRL-w     insère le mot sous le curseur",
-        \ "    :norm! @a              applique la macro 'a' (à utiliser sur un groupe de lignes)",
-        \ "    :set conceallevel=0    ne pas masquer de texte (e.g. markdown)",
-        \ "    :echo mapleader        afficher le <leader> actuel",
-        \ "    :map STRING            afficher les mappings commençant par STRING -> doc de mes raccourcis !",
-        \ "    :map <leader>          afficher les mappings commençant par <leader> (marche aussi avec p.ex. <F5>)",
-        \ "    ma / 'a                définir la / sauter vers la marque <a>",
-        \ "    ''                     après avoir sauté vers une marque, '' permet de revenir là où on était",
-        \ "",
-        \ "    ... to be continued ...",
-        \ "",
-        \ ]
-    tabnew mycheatsheet
-    call append(0, mycheatsheet)
-    call cursor(1, 1)
-endfunction
-
-command Cheat call CheatsheetFunction()
-command Cheatsheet call CheatsheetFunction()
-noremap <C-h>             :Cheat<CR>
-noremap! <C-h>       <Esc>:Cheat<CR>
-vnoremap <C-h>  <Esc><Esc>:Cheat<CR>
