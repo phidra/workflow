@@ -586,9 +586,17 @@ require("lazy").setup(plugins, opts)
 
 -- See `:help vim.diagnostic.*` for documentation on any of the below functions
 
+
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
 local on_lsp_attach = function(client, bufnr)
+
+  -- weirdly, lsp highlights overwrite polyglot (and are awful), better to disable them :
+  -- see https://neovim.io/doc/user/lsp.html#lsp-semantic-highlight
+  -- see https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
+  for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
+    vim.api.nvim_set_hl(0, group, {})
+  end
 
   -- Enable completion triggered by <c-x><c-o>
   vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
@@ -660,7 +668,7 @@ local on_lsp_attach = function(client, bufnr)
   vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
   vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
   vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
-end
+end  -- on_lsp_attach
 
 require('lspconfig')['pyright'].setup{
     on_attach = on_lsp_attach,
