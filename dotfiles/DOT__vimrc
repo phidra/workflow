@@ -398,6 +398,12 @@ local plugins = {
         'https://github.com/nvim-telescope/telescope.nvim',
         tag = '0.1.4',
         dependencies = { 'nvim-lua/plenary.nvim' },
+        config= function()
+          require('telescope').setup{
+          defaults = {
+          },
+        }
+        end,
     },
 
     -- enhances ga to display info on a character, including its digraph code
@@ -605,18 +611,26 @@ local on_lsp_attach = function(client, bufnr)
   -- See `:help vim.lsp.*` for documentation on any of the below functions
   local bufopts = { noremap=true, silent=true, buffer=bufnr }
 
+  -- naviguer entre les erreurs LSP :
+  vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, { noremap=true, silent=true})
+  vim.keymap.set('n', '<A-j>', vim.diagnostic.goto_next, { noremap=true, silent=true})
+
+  -- native LSP-client :
   vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.definition, bufopts)  -- F12 = go to definition in the same tab
   vim.keymap.set({'n', 'i', 'v'}, 'g<F12>', '<ESC><cmd>tab split<CR><cmd>lua vim.lsp.buf.definition()<CR>', bufopts)  -- g-F12 = go to definition in a new tab
-  -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
-  vim.keymap.set({'n', 'i', 'v'}, '<F24>', vim.lsp.buf.references, bufopts)  -- Shift-F12 = who uses this symbol ?
   vim.keymap.set({'n', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
-  vim.keymap.set({'n', 'v'}, 'gb', vim.lsp.buf.code_action, bufopts)  -- gc (pour [C]ode-actions) et ga (pour code-[A]ctions) sont déjà pris...
+  vim.keymap.set({'n', 'v'}, 'gb', vim.lsp.buf.code_action, bufopts)  -- "gb" car le C (pour [C]ode-actions) et le A (pour code-[A]ctions) sont déjà pris...
   vim.keymap.set('n', '==', vim.lsp.buf.format, bufopts)
   vim.keymap.set('v', '=', vim.lsp.buf.format, bufopts)  -- range format
 
-  -- naviguer entre les erreurs :
-  vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, { noremap=true, silent=true})
-  vim.keymap.set('n', '<A-j>', vim.diagnostic.goto_next, { noremap=true, silent=true})
+  -- telescope + LSP = <3
+  -- vscode shortcut to search symbols is C-t ; as it's not available in vim, I use C-A-t :
+  vim.keymap.set({'n', 'i', 'v'}, '<C-A-t>', require('telescope.builtin').lsp_dynamic_workspace_symbols, bufopts)
+  -- https://code.visualstudio.com/docs/editor/codebasics#_search-across-files
+  -- vscode shortcut to search text is C-S-f ; as it's not available in vim, I use C-A-g :
+  vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
+  -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
+  vim.keymap.set({'n', 'i', 'v'}, '<F24>', function() require('telescope.builtin').lsp_references({path_display={"tail"}}) end, bufopts)  -- S-F12 = who uses this symbol ?
 
 
   -- NdM : rename = besoin suffisamment rare pour ne pas ajouter de mapping :
@@ -627,10 +641,6 @@ local on_lsp_attach = function(client, bufnr)
   --      :lua lsp_rename()
   --
   lsp_rename = vim.lsp.buf.rename
-  lsp_references = vim.lsp.buf.references
-  lsp_definition = vim.lsp.buf.definition
-  lsp_hover = vim.lsp.buf.hover
-  lsp_formatting = vim.lsp.buf.hover
 
   -- NdM : moins utile que 'definition' :
   -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.declaration, bufopts)
@@ -700,19 +710,11 @@ local sources = {
 null_ls.setup({ sources = sources })
 
 
-
--- telescope :
--- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
-vim.keymap.set({'n', 'i', 'v'}, '<C-p>', require('telescope.builtin').find_files, bufopts)
--- vscode shortcut to search symbols is C-t ; as it's not available in vim, I use C-A-t :
-vim.keymap.set({'n', 'i', 'v'}, '<C-A-t>', require('telescope.builtin').lsp_dynamic_workspace_symbols, bufopts)
--- https://code.visualstudio.com/docs/editor/codebasics#_search-across-files
--- vscode shortcut to search text is C-S-f ; as it's not available in vim, I use C-A-g :
-vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
-
-
 -- always show error columns :
 vim.api.nvim_set_option('signcolumn', 'auto:1-3')
+
+-- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
+vim.keymap.set({'n', 'i', 'v'}, '<C-p>', function() require('telescope.builtin').find_files({path_display={"truncate"}}) end, bufopts)
 
 -- (LSP-RELATED) }}}
 
