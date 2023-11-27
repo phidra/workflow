@@ -293,23 +293,28 @@ vim.cmd([[set t_ut=]])
 vim.cmd([[redraw]])
 
 -- configs spécifiques à certains fichiers :
+local config_for_specific_files = function()
+  -- les jenkinsfiles sont à interpréter en groovy :
+  vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "*.Jenkinsfile", callback = function () vim.opt_local.filetype = "groovy" end })
 
--- les jenkinsfiles sont à interpréter en groovy :
-vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "*.Jenkinsfile", callback = function () vim.opt_local.filetype = "groovy" end })
+  -- les fichiers NOGIT_justfile sont à interpréter comme des justfiles :
+  vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "NOGIT_justfile", callback = function () vim.opt_local.filetype = "just" end })
 
--- fichier de config typescript sont à interpréter en javascrip :
-vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "tsconfig.json", callback = function () vim.opt_local.filetype = "javascript" end })
+  -- fichier de config typescript sont à interpréter en javascrip :
+  vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "tsconfig.json", callback = function () vim.opt_local.filetype = "javascript" end })
 
--- folding json :
-local json_group = vim.api.nvim_create_augroup('json', { clear = false })
-vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "json", group = 'json', callback = function () vim.opt_local.foldmethod = "syntax" end })
+  -- folding json :
+  local json_group = vim.api.nvim_create_augroup('json', { clear = false })
+  vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "json", group = 'json', callback = function () vim.opt_local.foldmethod = "syntax" end })
 
--- folding avec les brackets triples {{{ }}} pour l'édition des fichiers vim (y compris le présent fichier) :
-local vim_group = vim.api.nvim_create_augroup('vim', { clear = true })
-vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "vim", group = 'vim', callback = function ()
-  vim.opt_local.foldmethod = "marker"
-  vim.opt_local.foldlevel = 0  -- on veut les folds pliés quand on ouvre le fichier
-end })
+  -- folding avec les brackets triples {{{ }}} pour l'édition des fichiers vim (y compris le présent fichier) :
+  local vim_group = vim.api.nvim_create_augroup('vim', { clear = true })
+  vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "vim", group = 'vim', callback = function ()
+    vim.opt_local.foldmethod = "marker"
+    vim.opt_local.foldlevel = 0  -- on veut les folds pliés quand on ouvre le fichier
+  end })
+end -- config_for_specific_files
+config_for_specific_files()
 
 -- Par défaut, on recherche 'tags' jusqu'à la racine :
 vim.opt.tags="tags;/"
@@ -401,6 +406,7 @@ local plugins = {
         config= function()
           require('telescope').setup{
           defaults = {
+            dynamic_preview_title = true,
           },
         }
         end,
@@ -636,12 +642,13 @@ local on_lsp_attach = function(client, bufnr)
 
 
   -- NdM : rename = besoin suffisamment rare pour ne pas ajouter de mapping :
-  -- un alias me permettra de compléter la commande plus facilement
-  -- (et par cohérence, j'ajoute les autres alias) :
-  -- Exemple d'utilisation (il va demander le nouveau nom) :
+  -- un alias me permet de compléter la commande plus facilement (il va demander le nouveau nom) :
   --
   --      :lua lsp_rename()
   --
+  -- attention : des buffers peuvent être modifiés par le renommage sans être directement visibles !
+  -- contournement 1 = les consulter (:Telescope buffers)
+  -- contournement 2 = tout enregistrer avec :wa (= :writeall)
   lsp_rename = vim.lsp.buf.rename
 
   -- NdM : moins utile que 'definition' :
@@ -714,10 +721,22 @@ null_ls.setup({ sources = sources })
 
 -- always show error columns :
 vim.api.nvim_set_option('signcolumn', 'auto:1-3')
-vim.cmd.highlight({"SignColumn", "ctermbg=LightGrey"})
+vim.cmd.highlight({"SignColumn", "ctermbg=Grey"})
 
--- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
-vim.keymap.set({'n', 'i', 'v'}, '<C-p>', function() require('telescope.builtin').find_files({path_display={"truncate"}}) end, bufopts)
+
+-- use of telescope for non-LSP things :
+local telescope_non_lsp = function()
+  -- parcourir l'aide vim avec telescope (Ctrl+T pour ouvrir l'aide dans un nouveau tab)
+  vim.keymap.set({'n', 'i', 'v'}, '<C-h>', require('telescope.builtin').help_tags, { noremap = true })
+
+  -- visualiser les buffers (:help buffers pour avoir la signification des caractères) :
+  vim.keymap.set({'n', 'i', 'v'}, '<C-b>', function() require('telescope.builtin').buffers() end, { noremap = true })
+
+  -- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
+  vim.keymap.set({'n', 'i', 'v'}, '<C-p>', function() require('telescope.builtin').find_files({path_display={"truncate"}}) end, { noremap = true })
+end  -- telescope_non_lsp
+telescope_non_lsp()
+
 
 -- (LSP-RELATED) }}}
 
@@ -843,9 +862,6 @@ end
 -- how to display my sheatsheet :
 vim.api.nvim_create_user_command('Cheat', display_mycheatsheet_in_tab, {})
 vim.api.nvim_create_user_command('Cheatsheet', display_mycheatsheet_in_tab, {})
-
--- telescope help_tags :
-vim.keymap.set({'n', 'i', 'v'}, '<C-h>', require('telescope.builtin').help_tags, { noremap = true })
 
 -- (MY CHEATSHEET) }}}
 
