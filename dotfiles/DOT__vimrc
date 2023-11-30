@@ -81,9 +81,7 @@ function CustomFoldText()
     return line . expansionString . foldSizeStr . foldPercentage . foldLevelStr
 endf
 
-" for whatever reasons, foldtext must be manually set for each buffer instead of globally...
-autocmd BufEnter *.otl setlocal foldtext=CustomFoldText()
-autocmd BufEnter *.md setlocal foldtext=CustomFoldText()
+autocmd BufEnter * setlocal foldtext=CustomFoldText()
 
 " (généralités) }}}
 
@@ -303,6 +301,11 @@ local config_for_specific_files = function()
   -- fichier de config typescript sont à interpréter en javascrip :
   vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "tsconfig.json", callback = function () vim.opt_local.filetype = "javascript" end })
 
+  -- à placer avant les autres fold commands :
+  vim.opt.foldmethod = "expr"
+  vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+  vim.opt.foldlevel = 99
+
   -- folding json :
   local json_group = vim.api.nvim_create_augroup('json', { clear = false })
   vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "json", group = 'json', callback = function () vim.opt_local.foldmethod = "syntax" end })
@@ -465,29 +468,98 @@ local plugins = {
         end,
     },
 
-    -- language pack :
+    -- -- language pack :
+    -- {
+    --     'https://github.com/sheerun/vim-polyglot',
+    --     init = function()
+    --         -- disabling polyglot ftdetect, in order for OTL files to properly be detected :
+    --         -- also disabling it for markdown (I cannot get polyglot's markdown to work with
+    --         -- vim-markdown-folding, and I value markdown folding more than markdown
+    --         -- highlighting...) :
+    --         vim.g.polyglot_disabled = {'ftdetect', 'markdown'}  -- must be set BEFORE polyglot is loaded
+    --     end,
+    -- },
+
+
+    -- languages parsing :
     {
-        'https://github.com/sheerun/vim-polyglot',
-        init = function()
-            -- disabling polyglot ftdetect, in order for OTL files to properly be detected :
-            -- also disabling it for markdown (I cannot get polyglot's markdown to work with
-            -- vim-markdown-folding, and I value markdown folding more than markdown
-            -- highlighting...) :
-            vim.g.polyglot_disabled = {'ftdetect', 'markdown'}  -- must be set BEFORE polyglot is loaded
+        "https://github.com/nvim-treesitter/nvim-treesitter",
+        build = function()
+          require("nvim-treesitter.install").update({ with_sync = true })()
+        end,
+        config = function ()
+          local configs = require("nvim-treesitter.configs")
+          configs.setup({
+            -- les parsers sont installés dans :
+            --      ~/.local/share/nvim/lazy/nvim-treesitter/parser
+            -- ne pas hésiter à supprimer manuellement ceux dont je ne veux plus
+            ensure_installed = {
+              "bash",
+              "c",
+              "cmake",
+              "cpp",
+              "css",
+              "diff",
+              "dockerfile",
+              "dot",
+              "doxygen",
+              "git_config",
+              "git_rebase",
+              "gitcommit",
+              "gitignore",
+              "go",
+              "groovy",
+              "html",
+              "htmldjango",
+              "http",
+              "javascript",
+              "jq",
+              "jsdoc",
+              "lua",
+              "luadoc",
+              "make",
+              -- "markdown",  -- volontairement commenté, cf. ci-dessous
+              "markdown_inline",
+              "mermaid",
+              "meson",
+              "ninja",
+              "po",
+              "python",
+              "regex",
+              "rust",
+              "sql",
+              "ssh_config",
+              "toml",
+              "typescript",
+              "vim",
+              "vimdoc",
+              "vue",
+              "yaml",
+              },
+            sync_install = true,  -- installer les parsers de façon synchrone
+            auto_install = false,  -- ne pas installer un parser automatiquement à l'entrée dans un buffer
+            ignore_install = { "markdown" },  -- markdown volontairement désactivé :
+              -- disabling treesitter for markdown (I cannot get treesitter's markdown to work with
+              -- vim-markdown-folding, and I value markdown folding more than markdown highlighting...)
+            highlight = { enable = true },
+            indent = { enable = false },
+          })
         end,
     },
 
     -- visualiser les indentations :
     {
-        "https://github.com/lukas-reineke/indent-blankline.nvim",
-        main = "ibl",
-        opts = {},
+        "https://github.com/nvimdev/indentmini.nvim",
+        event = 'BufEnter',
         config = function()
-            vim.cmd.highlight({"IndentLine", "ctermfg=grey"})
-            require("ibl").setup {
-                indent = { highlight = { "IndentLine" } },
-                whitespace = { highlight = { "Normal" } },
-            }
+            require("indentmini").setup({
+                char = "│",
+                exclude = {
+                    "markdown",
+                }
+            })
+            -- use comment color
+            vim.cmd.highlight("default link IndentLine Comment")
         end,
     },
 
@@ -589,6 +661,7 @@ local plugins = {
 }
 
 require("lazy").setup(plugins, opts)
+
 
 -- (PLUGINS) }}}
 
