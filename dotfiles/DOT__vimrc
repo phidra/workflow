@@ -278,6 +278,10 @@ vim.api.nvim_create_autocmd({"BufEnter"}, {
 
         -- numéros de lignes :
         vim.opt.nu = true;
+
+        -- on force un `edit` sur les buffers de code pour contourner le bug treesitter en triggant
+        -- manuellement le déclenchement des clients LSP (cf. mes notes dans le plugin treesitter)
+        vim.cmd.edit()
     end,
 })
 
@@ -468,19 +472,6 @@ local plugins = {
         end,
     },
 
-    -- -- language pack :
-    -- {
-    --     'https://github.com/sheerun/vim-polyglot',
-    --     init = function()
-    --         -- disabling polyglot ftdetect, in order for OTL files to properly be detected :
-    --         -- also disabling it for markdown (I cannot get polyglot's markdown to work with
-    --         -- vim-markdown-folding, and I value markdown folding more than markdown
-    --         -- highlighting...) :
-    --         vim.g.polyglot_disabled = {'ftdetect', 'markdown'}  -- must be set BEFORE polyglot is loaded
-    --     end,
-    -- },
-
-
     -- languages parsing :
     {
         "https://github.com/nvim-treesitter/nvim-treesitter",
@@ -544,6 +535,8 @@ local plugins = {
             highlight = { enable = true },
             indent = { enable = false },
           })
+          -- NOTE : il y a un bug que je n'explique pas avec nvim-treesitter : il empêche le démarrage automatiuqe des clients LSP.
+          --        Pour contourner, il suffit d'éditer le fichier `:e`, ce qui trigge le démarrage du client LSP.
         end,
     },
 
