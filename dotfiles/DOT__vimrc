@@ -662,6 +662,17 @@ local plugins = {
             require('hardline').setup{}
         end,
     },
+
+    -- Alternate source/header cpp :
+    {
+        "https://github.com/ton/vim-alternate",
+        config = function()
+          vim.g.AlternatePaths = {'.', '../public/*/', '../../impl'} -- j'aurais aimé définir ../public/COMPONENT/ mais ça n'est pas possible...
+          vim.keymap.set('n', '<A-o>', '<cmd>Alternate<CR>', { noremap=true, silent=true})
+          vim.keymap.set('i', '<A-o>', '<ESC><cmd>Alternate<CR>', { noremap=true, silent=true})
+          vim.keymap.set('v', '<A-o>', '<ESC><ESC><cmd>Alternate<CR>', { noremap=true, silent=true})
+        end,
+    },
 }
 
 require("lazy").setup(plugins, opts)
