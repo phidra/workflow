@@ -90,24 +90,26 @@ autocmd BufEnter * setlocal foldtext=CustomFoldText()
 "########################################################################################################################
 
 " Barre de statut (cf. :help statusline) :
-set laststatus=2
-if has("statusline")
-  set statusline=%m       " flag de modification : [+]
-  set statusline=\ %F     " chemin du fichier édité
-  set statusline+=%r%h%w  " flags RO / help / preview
-  set statusline+=%=      " passe de l'autre côté de la ligne
-  set statusline+=FT=%y   " filetype
-  set statusline+=\ \|\ EOL=%{&fileformat}           " fileformat (ex: python, ou vo_base)
-  set statusline+=\ \|\ %{(&fenc==\"\"?&enc:&fenc)}  " encoding
-  set statusline+=\ \|\ C=%v                         " colonne actuelle
-  set statusline+=\ \|\ L=%l/%L                      " ligne actuelle / lignes totales
-endif
+if ! has("nvim")  " sous neovim, on laisse les plugins gérer la statusline
+    set laststatus=2
+    if has("statusline")
+      set statusline=%m       " flag de modification : [+]
+      set statusline=\ %F     " chemin du fichier édité
+      set statusline+=%r%h%w  " flags RO / help / preview
+      set statusline+=%=      " passe de l'autre côté de la ligne
+      set statusline+=FT=%y   " filetype
+      set statusline+=\ \|\ EOL=%{&fileformat}           " fileformat (ex: python, ou vo_base)
+      set statusline+=\ \|\ %{(&fenc==\"\"?&enc:&fenc)}  " encoding
+      set statusline+=\ \|\ C=%v                         " colonne actuelle
+      set statusline+=\ \|\ L=%l/%L                      " ligne actuelle / lignes totales
+    endif
 
-" Changement de couleur en mode insertion (help ctermbg) :
-if version >= 700
-  autocmd InsertEnter * hi StatusLine term=reverse ctermfg=1
-  autocmd InsertLeave * hi StatusLine term=reverse ctermfg=0 ctermbg=7
-endif
+    " Changement de couleur en mode insertion (help ctermbg) :
+    if version >= 700
+      autocmd InsertEnter * hi StatusLine term=reverse ctermfg=1
+      autocmd InsertLeave * hi StatusLine term=reverse ctermfg=0 ctermbg=7
+    endif
+endif  " has("nvim")
 
 " Ligne des tabs (cf. :help setting-tabline)
 highlight UnsavedTabLine term=underline cterm=underline ctermfg=1 ctermbg=7 gui=underline guibg=LightGrey
@@ -305,10 +307,10 @@ local config_for_specific_files = function()
   -- fichier de config typescript sont à interpréter en javascrip :
   vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "tsconfig.json", callback = function () vim.opt_local.filetype = "javascript" end })
 
-  -- à placer avant les autres fold commands :
+  -- à placer AVANT les autres fold commands (donc avant l'exécution de treesitter) :
   vim.opt.foldmethod = "expr"
   vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-  vim.opt.foldlevel = 99
+  vim.opt.foldlevel = 99  -- pour corriger le comportement par défaut de treesitter, qui commence avec les foldings repliés
 
   -- folding json :
   local json_group = vim.api.nvim_create_augroup('json', { clear = false })
@@ -473,6 +475,7 @@ local plugins = {
     },
 
     -- languages parsing :
+    -- après avoir testé polyglot, je choisis treesitter qui vient avec une killer feature = le folding de code
     {
         "https://github.com/nvim-treesitter/nvim-treesitter",
         build = function()
@@ -649,6 +652,14 @@ local plugins = {
             vim.keymap.set('n', 'go', '<Plug>VimspectorStepOut', { noremap = true })
             -- fermer la fenêtre vimspector :
             vim.keymap.set('n', '<leader>q', ':VimspectorReset<CR>', { noremap = true })
+        end,
+    },
+
+    -- statusline :
+    {
+        'https://github.com/ojroques/nvim-hardline',
+        config = function()
+            require('hardline').setup{}
         end,
     },
 }
