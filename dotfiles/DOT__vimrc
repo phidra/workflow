@@ -53,7 +53,6 @@ if ! &diff
     filetype plugin indent on  " À placer APRÈS la ligne syntax
 endif
 
-colorscheme morning
 " set Search highlight-group to IncSearch (which I prefer) :
 hi! link Search IncSearch
 
@@ -229,7 +228,84 @@ vim.api.nvim_create_autocmd({"BufEnter"}, {
         -- vim.opt_local: behaves like :setlocal
         vim.opt_local.wrap = true
         vim.opt_local.linebreak = true
+        vim.opt_local.termguicolors = false  -- if set at true by colorschemes, this messes up with my vimoutliner colors
+        vim.cmd([[
+            " on part d'une base colorscheme :
+            colorscheme morning
+
+            " overriding default colors (cf. :help cterm-colors) :
+            hi OL1 ctermfg=Black
+            hi OL2 ctermfg=DarkRed
+            hi OL3 ctermfg=DarkBlue
+            hi OL4 ctermfg=DarkYellow
+            hi OL5 ctermfg=DarkMagenta
+            hi OL6 ctermfg=DarkCyan
+            hi OL7 ctermfg=DarkGreen
+            hi OL8 ctermfg=Grey
+
+            hi Folded ctermfg=DarkGray ctermbg=Gray
+
+
+            " I prefer a large outline lindewidth :
+            set tw=120
+
+            " a convenient localleader for me ("ç" instead of ",") :
+            let maplocalleader = "çç"
+
+            " color for body text
+            hi BT1 guifg=black	ctermfg=black
+            hi BT2 guifg=black	ctermfg=black
+            hi BT3 guifg=black	ctermfg=black
+            hi BT4 guifg=black	ctermfg=black
+            hi BT5 guifg=black	ctermfg=black
+            hi BT6 guifg=black	ctermfg=black
+            hi BT7 guifg=black	ctermfg=black
+            hi BT8 guifg=black	ctermfg=black
+            hi BT9 guifg=black	ctermfg=black
+
+            " color for pre-formatted text
+            hi PT1 guifg=black	ctermfg=black
+            hi PT2 guifg=black	ctermfg=black
+            hi PT3 guifg=black	ctermfg=black
+            hi PT4 guifg=black	ctermfg=black
+            hi PT5 guifg=black	ctermfg=black
+            hi PT6 guifg=black	ctermfg=black
+            hi PT7 guifg=black	ctermfg=black
+            hi PT8 guifg=black	ctermfg=black
+            hi PT9 guifg=black	ctermfg=black
+
+            " color for user text (wrapping)
+            hi UT1 guifg=black	ctermfg=black
+            hi UT2 guifg=black	ctermfg=black
+            hi UT3 guifg=black	ctermfg=black
+            hi UT4 guifg=black	ctermfg=black
+            hi UT5 guifg=black	ctermfg=black
+            hi UT6 guifg=black	ctermfg=black
+            hi UT7 guifg=black	ctermfg=black
+            hi UT8 guifg=black	ctermfg=black
+            hi UT9 guifg=black	ctermfg=black
+
+            " color for user text (non-wrapping)
+            hi UB1 guifg=black	ctermfg=black
+            hi UB2 guifg=black	ctermfg=black
+            hi UB3 guifg=black	ctermfg=black
+            hi UB4 guifg=black	ctermfg=black
+            hi UB5 guifg=black	ctermfg=black
+            hi UB6 guifg=black	ctermfg=black
+            hi UB7 guifg=black	ctermfg=black
+            hi UB8 guifg=black	ctermfg=black
+            hi UB9 guifg=black	ctermfg=black
+        ]])
+        -- vim.cmd.highlight({"Search", "cterm=reverse"})
+        -- vim.cmd.highlight({"IncSearch", "cterm=reverse"})
+        vim.cmd.highlight({"CurSearch", "ctermbg=LightGray"})
+
+        -- les leading tabulations (importantes en OTL) sont coloriées en Whitespace, qui est un lien vers NonText
+        -- je les veux sans coloration particulières (elles partagent ce groupe avec les trailing whitespace, qui perdront aussi leur background)
+        vim.opt_local.list = true
+        vim.cmd([[set listchars=trail:●,nbsp:␣,precedes:←,extends:→]])
         vim.opt_local.listchars:append({ tab = "  " })
+        vim.cmd.highlight({"NonText", "NONE"})
     end,
 })
 
@@ -359,11 +435,6 @@ vim.opt.rtp:prepend(lazypath)
 
 
 local plugins = {
-    {
-        -- vim-outliner colors + foldings :
-        "https://github.com/vimoutliner/vimoutliner.git",
-        ft = 'votl',
-    },
     -- file browser :
     {
         "https://github.com/nvim-tree/nvim-tree.lua",
@@ -655,6 +726,29 @@ local plugins = {
         end,
     },
 
+    -- outline des structures LSP du buffer courant :
+    {
+        "https://github.com/hedyhli/outline.nvim",
+        lazy = true,
+        cmd = { "Outline", "OutlineOpen" },
+        keys = {
+            { "<F9>", "<cmd>Outline<CR>", desc = "Toggle outline" },
+        },
+            -- par défaut, le folding n'est ouvert que pour la ligne actuelle (les autres sont repliés)
+            -- ? pour lister les shortcuts
+            -- q ou <Esc> pour quitter
+            -- <Tab> pour fold/unfold la ligne actuelle
+            -- <Shift-Tab> pour fold/unfold tous les items
+            -- R pour reset le folding à la ligne actuelle
+            -- <CTRL-j/k> pour naviguer de tag en tag, tout en déplaçant le buffer (et Ctrl+flêches ne fonctionne pas...)
+
+        config = function()
+            require("outline").setup {
+            -- Your setup opts here (leave empty to use defaults)
+            }
+        end,
+    },
+
     -- statusline :
     {
         'https://github.com/ojroques/nvim-hardline',
@@ -671,6 +765,30 @@ local plugins = {
           vim.keymap.set('n', '<A-o>', '<cmd>Alternate<CR>', { noremap=true, silent=true})
           vim.keymap.set('i', '<A-o>', '<ESC><cmd>Alternate<CR>', { noremap=true, silent=true})
           vim.keymap.set('v', '<A-o>', '<ESC><ESC><cmd>Alternate<CR>', { noremap=true, silent=true})
+        end,
+    },
+
+    -- vim-outliner colors + foldings :
+    {
+        "https://github.com/vimoutliner/vimoutliner.git",
+        ft = 'votl',
+    },
+
+    -- colorscheme :
+    {
+        -- je galère à trouver un colorscheme potable... je finis sur celui-ci :
+        'https://github.com/Mofiqul/vscode.nvim',
+        lazy = false,
+        priority = 1000,
+        config = function()
+            require('vscode').setup({
+                style = 'light',
+                group_overrides = {
+                    Comment = {  fg = "DarkGray"},
+                    ["@comment"] = {  fg ="DarkGray"},
+                },
+            })
+            vim.cmd [[colorscheme vscode]]
         end,
     },
 }
@@ -691,7 +809,7 @@ require("lazy").setup(plugins, opts)
 -- after the language server attaches to the current buffer
 local on_lsp_attach = function(client, bufnr)
 
-  -- weirdly, lsp highlights overwrite polyglot (and are awful), better to disable them :
+  -- weirdly, lsp highlights overwrite polyglot (and are awful + laggy), better to disable them :
   -- see https://neovim.io/doc/user/lsp.html#lsp-semantic-highlight
   -- see https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
   for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
@@ -720,11 +838,7 @@ local on_lsp_attach = function(client, bufnr)
   vim.keymap.set('v', '=', vim.lsp.buf.format, bufopts)  -- range format
 
   -- telescope + LSP = <3
-  -- vscode shortcut to search symbols is C-t ; as it's not available in vim, I use C-A-t :
   vim.keymap.set({'n', 'i', 'v'}, '<C-A-t>', require('telescope.builtin').lsp_dynamic_workspace_symbols, bufopts)
-  -- https://code.visualstudio.com/docs/editor/codebasics#_search-across-files
-  -- vscode shortcut to search text is C-S-f ; as it's not available in vim, I use C-A-g :
-  vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
   -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
   vim.keymap.set({'n', 'i', 'v'}, '<F24>', function() require('telescope.builtin').lsp_references({path_display={"tail"}}) end, bufopts)  -- S-F12 = who uses this symbol ?
 
@@ -822,6 +936,9 @@ local telescope_non_lsp = function()
 
   -- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
   vim.keymap.set({'n', 'i', 'v'}, '<C-p>', function() require('telescope.builtin').find_files({path_display={"truncate"}}) end, { noremap = true })
+
+  -- grepper le répertoire courant avec telescope :
+  vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
 end  -- telescope_non_lsp
 telescope_non_lsp()
 
