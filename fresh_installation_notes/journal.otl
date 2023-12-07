@@ -37,7 +37,11 @@ PHASE 1 = les étapes à faire en priorité sont celles facilitant la suite de l
 			cd .. ; rm -rf neovim  # cleaning
 		Téléchargé mes fichiers  + installé dans le home
 			wget --output-document ~/.vimrc https://github.com/phidra/workflow/raw/main/dotfiles/DOT__vimrc
-			wget --output-document ~/.vimoutlinerrc https://github.com/phidra/workflow/raw/main/dotfiles/DOT__vimoutlinerrc
+			EDIT : en décembre 2023, j'ai inliné dans ma config neovim ce qui était jusqu'ici dans ~/.vimoutlinerrc ; la ligne suivante est donc devenue inutile :
+				INUTILE
+				   |
+				   v
+				wget --output-document ~/.vimoutlinerrc https://github.com/phidra/workflow/raw/main/dotfiles/DOT__vimoutlinerrc
 		Faire en sorte que neovim charge le vimrc = éditer ~/.config/nvim/init.vim
 			set runtimepath^=~/.vim runtimepath+=~/.vim/after
 			let &packpath = &runtimepath
