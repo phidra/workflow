@@ -751,9 +751,80 @@ local plugins = {
 
     -- statusline :
     {
-        'https://github.com/ojroques/nvim-hardline',
+        'https://github.com/nvim-lualine/lualine.nvim',
+        dependencies = {
+            "nvim-tree/nvim-web-devicons",
+            },
         config = function()
-            require('hardline').setup{}
+
+            local function get_total_lines()
+              local total_lines = vim.api.nvim_buf_line_count(vim.api.nvim_get_current_buf())
+              return string.format("%s lines", total_lines)
+            end
+            require('lualine').setup{
+                  options = {
+                    icons_enabled = true,
+                    theme = 'nord',
+                    component_separators = { left = '|', right = '|'},
+                    section_separators = { left = '', right = ''},
+                    always_divide_middle = false,
+                  },
+                  sections = {
+                    lualine_a = {
+                        {
+                            'mode',
+                            fmt = function(mode)
+                                return string.format("%-8s", mode)  -- le mode doit toujours occuper la même largeur
+                            end
+                        },
+                    },
+                    lualine_b = {'branch', 'diff', 'diagnostics'},
+                    lualine_c = {
+                        {
+                            'filename',
+                            path = 1,
+                            symbols = {
+                                        modified = '[●●●●●●●●●●●●●●●●●●●●●● MODIFIED ●●●●●●●●●●●●●●●●●●●●●●]',
+                                        readonly = '[READONLY§-]',      -- Text to show when the file is non-modifiable or readonly.
+                                        unnamed = '[No Name]', -- Text to show for unnamed buffers.
+                                        newfile = '[New]',     -- Text to show for newly created file before first write
+                                        directory =  '',     -- Text to show when the buffer is a directory
+                              },
+                        },
+                    },
+                    lualine_x = {'progress'},
+                    lualine_y = {
+                        {'encoding'},
+                        {
+                          'fileformat',
+                          symbols = {
+                            unix = ' EOL=unix ',
+                            dos = ' EOL=windows ',
+                            mac = ' EOL=mac ',
+                          },
+                        },
+                        {
+                            'filetype',
+                            icon = { align = 'right' },
+                        },
+                    },
+                    lualine_z = {'location', get_total_lines}
+                  },
+
+                  -- NDM : inactive p.ex. parce qu'on est sur un autre vsplit
+                  inactive_sections = {
+                    lualine_a = {},
+                    lualine_b = {},
+                    lualine_c = {'filename'},
+                    lualine_x = {},
+                    lualine_y = {},
+                    lualine_z = {}
+                  },
+                  tabline = {},
+                  winbar = {},
+                  inactive_winbar = {},
+                  extensions = {'quickfix', 'nvim-tree', },  -- plus tard : nvim-dap-ui ? symbols-outline ?
+            }
         end,
     },
 
