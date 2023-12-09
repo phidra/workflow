@@ -1,5 +1,6 @@
 "########################################################################################################################
 "# zR / zM  = déplier / replier tous les folds
+"# :set foldlevel=1
 "########################################################################################################################
 
 " READING GUIDELINE : la config est splittée en deux sections :
@@ -9,114 +10,113 @@
 " L'idée est que la config lua a vocation à n'être utilisée qu'avec neovim sur mes postes de travail,
 " alors que la config vimscript peut être utilisée avec un vim vanilla, depuis n'importe où.
 
+if 1  " pour homogénéiser les foldings entre les deux sections
 
-"# GÉNÉRALITÉS : {{{
-"########################################################################################################################
+function VIM_SECTION_GENERAL()
 
-set tabstop=4         " largeur d'affichage des tabulations
-set shiftwidth=4      " nombre d'espaces à insérer quand on indente
-set expandtab         " forcer l'utilisation des espaces au lieu de tabulations
-set textwidth=0       " désactiver la coupure automatique d'une ligne
-set mouse=a           " activer la souris (par contre on ne peut-plus copier-coller une sélection à la souris depuis une autre application)
-set incsearch         " surbrillance en cours de tapage d'une recherche
-set hlsearch          " surbrillance des résultats d'une recherche
-set noignorecase      " ignorer la casse dans les recherches :
-set tabpagemax=30     " pas plus de tant d'onglets
-set bufhidden=delete  " suppression d'un buffer lorsqu'il devient caché :
-set breakat=" "       " seuls les espaces 'cassent' des lignes (e.g. pour ne pas splitter une URL)
-set foldlevelstart=99 " Tous les folds automatiques sont ouverts par défaut :
-set whichwrap=b,s,<,>,[,],h,l  " pouvoir se déplacer d'une ligne à l'autre avec ces touches
-set wrap
-set backspace=indent,eol,start  " cf. https://vi.stackexchange.com/questions/2162/why-doesnt-the-backspace-key-work-in-insert-mode
-set splitbelow
-set splitright
-set title
-set list
-set showbreak=↪
-set listchars=tab:▶\ ,trail:●,nbsp:␣,precedes:←,extends:→
-set redrawtime=10000  " autorise le chargement de syntaxe à prendre plus de temps que les 2s par défaut
-set wildignore+=*/tmp/*,*.so,*.o,*.swp,*.zip,*.pyc
-set nocompatible
-set switchbuf+=usetab,newtab
+    set tabstop=4         " largeur d'affichage des tabulations
+    set shiftwidth=4      " nombre d'espaces à insérer quand on indente
+    set expandtab         " forcer l'utilisation des espaces au lieu de tabulations
+    set textwidth=0       " désactiver la coupure automatique d'une ligne
+    set mouse=a           " activer la souris (par contre on ne peut-plus copier-coller une sélection à la souris depuis une autre application)
+    set incsearch         " surbrillance en cours de tapage d'une recherche
+    set hlsearch          " surbrillance des résultats d'une recherche
+    set noignorecase      " ignorer la casse dans les recherches :
+    set tabpagemax=30     " pas plus de tant d'onglets
+    set bufhidden=delete  " suppression d'un buffer lorsqu'il devient caché :
+    set breakat=" "       " seuls les espaces 'cassent' des lignes (e.g. pour ne pas splitter une URL)
+    set foldlevelstart=99 " Tous les folds automatiques sont ouverts par défaut :
+    set whichwrap=b,s,<,>,[,],h,l  " pouvoir se déplacer d'une ligne à l'autre avec ces touches
+    set wrap
+    set backspace=indent,eol,start  " cf. https://vi.stackexchange.com/questions/2162/why-doesnt-the-backspace-key-work-in-insert-mode
+    set splitbelow
+    set splitright
+    set title
+    set list
+    set showbreak=↪
+    set listchars=tab:▶\ ,trail:●,nbsp:␣,precedes:←,extends:→
+    set redrawtime=10000  " autorise le chargement de syntaxe à prendre plus de temps que les 2s par défaut
+    set wildignore+=*/tmp/*,*.so,*.o,*.swp,*.zip,*.pyc
+    set nocompatible
+    set switchbuf+=usetab,newtab
 
 
-" Par défaut, on désactive les pair-match facilities, (à réactiver pour les buffers de code).
-" (en effet, hors du code, c'est relou de voir se colorer une parenthèse quand je survole sa parente)
-let g:loaded_matchparen = 0
-set noshowmatch
+    " Par défaut, on désactive les pair-match facilities, (à réactiver pour les buffers de code).
+    " (en effet, hors du code, c'est relou de voir se colorer une parenthèse quand je survole sa parente)
+    let g:loaded_matchparen = 0
+    set noshowmatch
 
-let g:mapleader = "ç"
+    let g:mapleader = "ç"
 
-" Coloration syntaxique (désactivé pour le mode vimdiff, pour bien voir tous les caractères)
-if ! &diff
-    syntax on                  " À placer AVANT la ligne filetype
-    filetype plugin indent on  " À placer APRÈS la ligne syntax
-endif
-
-" set Search highlight-group to IncSearch (which I prefer) :
-hi! link Search IncSearch
-
-" Better foldline :
-" Copied from http://gregsexton.org/2011/03/27/improving-the-text-displayed-in-a-vim-fold.html
-" The goal is to see a bigger part of a folded line (particularly useful on OTL files)
-function CustomFoldText()
-    "get first non-blank line
-    let fs = v:foldstart
-    while getline(fs) =~ '^\s*$' | let fs = nextnonblank(fs + 1)
-    endwhile
-    if fs > v:foldend
-        let line = getline(v:foldstart)
-    else
-        let line = substitute(getline(fs), '\t', repeat(' ', &tabstop), 'g')
+    " Coloration syntaxique (désactivé pour le mode vimdiff, pour bien voir tous les caractères)
+    if ! &diff
+        syntax on                  " À placer AVANT la ligne filetype
+        filetype plugin indent on  " À placer APRÈS la ligne syntax
     endif
 
-    let w = winwidth(0) - &foldcolumn - (&number ? 8 : 0)
-    let foldSize = 1 + v:foldend - v:foldstart
-    let foldSizeStr = " " . foldSize . " lines "
-    let foldLevelStr = repeat("+--", v:foldlevel)
-    let lineCount = line("$")
-    let foldPercentage = printf("[%.1f", (foldSize*1.0)/lineCount*100) . "%] "
-    let expansionString = repeat(".", w - strwidth(foldSizeStr.line.foldLevelStr.foldPercentage))
-    return line . expansionString . foldSizeStr . foldPercentage . foldLevelStr
-endf
+    " set Search highlight-group to IncSearch (which I prefer) :
+    hi! link Search IncSearch
 
-autocmd BufEnter * setlocal foldtext=CustomFoldText()
+    " Better foldline :
+    " Copied from http://gregsexton.org/2011/03/27/improving-the-text-displayed-in-a-vim-fold.html
+    " The goal is to see a bigger part of a folded line (particularly useful on OTL files)
+    function CustomFoldText()
+        "get first non-blank line
+        let fs = v:foldstart
+        while getline(fs) =~ '^\s*$' | let fs = nextnonblank(fs + 1)
+        endwhile
+        if fs > v:foldend
+            let line = getline(v:foldstart)
+        else
+            let line = substitute(getline(fs), '\t', repeat(' ', &tabstop), 'g')
+        endif
 
-" (généralités) }}}
+        let w = winwidth(0) - &foldcolumn - (&number ? 8 : 0)
+        let foldSize = 1 + v:foldend - v:foldstart
+        let foldSizeStr = " " . foldSize . " lines "
+        let foldLevelStr = repeat("+--", v:foldlevel)
+        let lineCount = line("$")
+        let foldPercentage = printf("[%.1f", (foldSize*1.0)/lineCount*100) . "%] "
+        let expansionString = repeat(".", w - strwidth(foldSizeStr.line.foldLevelStr.foldPercentage))
+        return line . expansionString . foldSizeStr . foldPercentage . foldLevelStr
+    endf  " CustomFoldText
+
+    autocmd BufEnter * setlocal foldtext=CustomFoldText()
+
+endf  " VIM_SECTION_GENERAL
+call VIM_SECTION_GENERAL()
 
 
-"# TABS AND STATUSLINE {{{
-"########################################################################################################################
+function VIM_SECTION_TABS_AND_STATUSLINE()
+    " Barre de statut (cf. :help statusline) :
+    if ! has("nvim")  " sous neovim, on laisse les plugins gérer la statusline
+        set laststatus=2
+        if has("statusline")
+          set statusline=%m       " flag de modification : [+]
+          set statusline=\ %F     " chemin du fichier édité
+          set statusline+=%r%h%w  " flags RO / help / preview
+          set statusline+=%=      " passe de l'autre côté de la ligne
+          set statusline+=FT=%y   " filetype
+          set statusline+=\ \|\ EOL=%{&fileformat}           " fileformat (ex: python, ou vo_base)
+          set statusline+=\ \|\ %{(&fenc==\"\"?&enc:&fenc)}  " encoding
+          set statusline+=\ \|\ C=%v                         " colonne actuelle
+          set statusline+=\ \|\ L=%l/%L                      " ligne actuelle / lignes totales
+        endif
 
-" Barre de statut (cf. :help statusline) :
-if ! has("nvim")  " sous neovim, on laisse les plugins gérer la statusline
-    set laststatus=2
-    if has("statusline")
-      set statusline=%m       " flag de modification : [+]
-      set statusline=\ %F     " chemin du fichier édité
-      set statusline+=%r%h%w  " flags RO / help / preview
-      set statusline+=%=      " passe de l'autre côté de la ligne
-      set statusline+=FT=%y   " filetype
-      set statusline+=\ \|\ EOL=%{&fileformat}           " fileformat (ex: python, ou vo_base)
-      set statusline+=\ \|\ %{(&fenc==\"\"?&enc:&fenc)}  " encoding
-      set statusline+=\ \|\ C=%v                         " colonne actuelle
-      set statusline+=\ \|\ L=%l/%L                      " ligne actuelle / lignes totales
-    endif
+        " Changement de couleur en mode insertion (help ctermbg) :
+        if version >= 700
+          autocmd InsertEnter * hi StatusLine term=reverse ctermfg=1
+          autocmd InsertLeave * hi StatusLine term=reverse ctermfg=0 ctermbg=7
+        endif
+    endif  " has("nvim")
 
-    " Changement de couleur en mode insertion (help ctermbg) :
-    if version >= 700
-      autocmd InsertEnter * hi StatusLine term=reverse ctermfg=1
-      autocmd InsertLeave * hi StatusLine term=reverse ctermfg=0 ctermbg=7
-    endif
-endif  " has("nvim")
+    " Ligne des tabs (cf. :help setting-tabline)
+    highlight UnsavedTabLine term=underline cterm=underline ctermfg=1 ctermbg=7 gui=underline guibg=LightGrey
+    highlight UnsavedTabLineSel ctermfg=1 term=bold cterm=bold gui=bold " Copie modifiée de TabLineSel
 
-" Ligne des tabs (cf. :help setting-tabline)
-highlight UnsavedTabLine term=underline cterm=underline ctermfg=1 ctermbg=7 gui=underline guibg=LightGrey
-highlight UnsavedTabLineSel ctermfg=1 term=bold cterm=bold gui=bold " Copie modifiée de TabLineSel
-
-function MyTabLine()
-    let return_string = ''
-    for fake_tab_number in range(tabpagenr('$'))
+    function MyTabLine()
+        let return_string = ''
+        for fake_tab_number in range(tabpagenr('$'))
         " Initialisation des variables :
         let tab_number = fake_tab_number + 1
         let buflist = tabpagebuflist(tab_number)
@@ -148,59 +148,60 @@ function MyTabLine()
             let tab_name = "*EMPTY*"
         endif
         let return_string .= ' ' . tab_name . ' '
-    endfor
+        endfor
 
-    " Complétion de la ligne avec TabLineFill, et reset du tab page number :
-    let return_string .= '%#TabLineFill#%T'
+        " Complétion de la ligne avec TabLineFill, et reset du tab page number :
+        let return_string .= '%#TabLineFill#%T'
 
-    " Ajout du symbole de fermeture, aligné à droite :
-    let close_symbol = 'X'
-    if tabpagenr('$') > 1
-        let return_string .= '%=%#TabLine#%999X' . close_symbol
-    endif
+        " Ajout du symbole de fermeture, aligné à droite :
+        let close_symbol = 'X'
+        if tabpagenr('$') > 1
+            let return_string .= '%=%#TabLine#%999X' . close_symbol
+        endif
 
-    return return_string
-endfunction
+        return return_string
+    endfunction
 
-set tabline=%!MyTabLine()
+    set tabline=%!MyTabLine()
+endf  " VIM_SECTION_TABS_AND_STATUSLINE
+call VIM_SECTION_TABS_AND_STATUSLINE()
 
-" (tabs and statusline) }}}
 
 
-"# MES ALIAS HORS PLUGINS  {{{
-"########################################################################################################################
+function VIM_MES_ALIAS_HORS_PLUGINS()
+    " ATTENTION : les commandes Alt sont interceptées par tmux (et doivent être
+    " forwardées avec send-keys dans la config tmux).
 
-" ATTENTION : les commandes Alt sont interceptées par tmux (et doivent être
-" forwardées avec send-keys dans la config tmux).
+    " Navigation dans les onglets avec ALT + gauche/droite (EDIT : fonctionne aussi avec gt/gT)
+    noremap  <A-Right>        :tabn<CR>
+    inoremap <A-Right>   <Esc>:tabn<CR>
+    noremap  <A-Left>         :tabp<CR>
+    inoremap <A-Left>    <Esc>:tabp<CR>
 
-" Navigation dans les onglets avec ALT + gauche/droite (EDIT : fonctionne aussi avec gt/gT)
-noremap  <A-Right>        :tabn<CR>
-inoremap <A-Right>   <Esc>:tabn<CR>
-noremap  <A-Left>         :tabp<CR>
-inoremap <A-Left>    <Esc>:tabp<CR>
+    " Défiler l'écran (sans bouger le curseur) avec CTRL + haut/bas
+    noremap   <C-Down> <C-E>
+    inoremap  <C-Down> <C-E>
+    noremap!  <C-Down> <C-X><C-E>
+    " NOTE : pour C-Y, je dois désactiver le timeout pour ne pas interférer avec emmet.
+    noremap   <C-Up>   :set notimeout nottimeout<CR><C-Y>:set timeout ttimeout<CR>
+    inoremap  <C-Up>   <Esc>:set notimeout nottimeout<CR><C-Y>:set timeout ttimeout<CR>i
+    noremap!  <C-Up>   <C-X><C-Y>
 
-" Défiler l'écran (sans bouger le curseur) avec CTRL + haut/bas
-noremap   <C-Down> <C-E>
-inoremap  <C-Down> <C-E>
-noremap!  <C-Down> <C-X><C-E>
-" NOTE : pour C-Y, je dois désactiver le timeout pour ne pas interférer avec emmet.
-noremap   <C-Up>   :set notimeout nottimeout<CR><C-Y>:set timeout ttimeout<CR>
-inoremap  <C-Up>   <Esc>:set notimeout nottimeout<CR><C-Y>:set timeout ttimeout<CR>i
-noremap!  <C-Up>   <C-X><C-Y>
+    " Toggle d'options utiles :
+    noremap <leader><leader>h :set hlsearch!<CR>:set hlsearch?<CR>
+    noremap <leader><leader>i :set ignorecase!<CR>:set ignorecase?<CR>
+    noremap <leader><leader>n :set nu!<CR>:set nu?<CR>
+    noremap! <leader><leader>h <Esc>:set hlsearch!<CR>:set hlsearch?<CR>a
+    noremap! <leader><leader>i <Esc>:set ignorecase!<CR>:set ignorecase?<CR>a
+    noremap! <leader><leader>n <Esc>:set nu!<CR>:set nu?<CR>a
 
-" Toggle d'options utiles :
-noremap <leader><leader>h :set hlsearch!<CR>:set hlsearch?<CR>
-noremap <leader><leader>i :set ignorecase!<CR>:set ignorecase?<CR>
-noremap <leader><leader>n :set nu!<CR>:set nu?<CR>
-noremap! <leader><leader>h <Esc>:set hlsearch!<CR>:set hlsearch?<CR>a
-noremap! <leader><leader>i <Esc>:set ignorecase!<CR>:set ignorecase?<CR>a
-noremap! <leader><leader>n <Esc>:set nu!<CR>:set nu?<CR>a
+    " Refresh de la syntaxe :
+    noremap <leader><leader>syntax :syntax sync fromstart<CR>
+    noremap! <leader><leader>syntax <Esc>:syntax sync fromstart<CR>a
+endf  " VIM_MES_ALIAS_HORS_PLUGINS
+call VIM_MES_ALIAS_HORS_PLUGINS()
 
-" Refresh de la syntaxe :
-noremap <leader><leader>syntax :syntax sync fromstart<CR>
-noremap! <leader><leader>syntax <Esc>:syntax sync fromstart<CR>a
-
- " (MES ALIAS HORS PLUGINS) }}}
+endif  " if 1
 
 "========================================================================================================================
 " ^ ci-dessus, la config en vimscript
@@ -214,948 +215,936 @@ lua << EOF
 --  cf. https://neovim.io/doc/user/lua-guide.html
 
 
---# VIMOUTLINER+VIMDIFF {{{
---########################################################################################################################
+function NVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
+    -- more visible left-column signs :
+    vim.cmd.highlight({"FoldColumn", "ctermbg=250"})
 
--- more visible left-column signs :
-vim.cmd.highlight({"FoldColumn", "ctermbg=250"})
+    -- options spécifiques à VimOutliner :
+    vim.api.nvim_create_autocmd({"BufEnter"}, {
+        pattern = {"*.otl"},
+        callback = function (opts)
 
--- options spécifiques à VimOutliner :
-vim.api.nvim_create_autocmd({"BufEnter"}, {
-    pattern = {"*.otl"},
-    callback = function (opts)
+            -- without termguicolors, lualine doesn't render properly -> OTL files do not need lualine anyway :
+            require('lualine').hide()
 
-        -- without termguicolors, lualine doesn't render properly -> OTL files do not need lualine anyway :
-        require('lualine').hide()
+            -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
+            -- vim.opt_local: behaves like :setlocal
+            vim.opt_local.wrap = true
+            vim.opt_local.linebreak = true
+            vim.opt_local.termguicolors = false  -- if set at true by colorschemes, this messes up with my vimoutliner colors
+            vim.cmd([[
+                " on part d'une base colorscheme :
+                colorscheme morning
 
-        -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
-        -- vim.opt_local: behaves like :setlocal
-        vim.opt_local.wrap = true
-        vim.opt_local.linebreak = true
-        vim.opt_local.termguicolors = false  -- if set at true by colorschemes, this messes up with my vimoutliner colors
-        vim.cmd([[
-            " on part d'une base colorscheme :
-            colorscheme morning
+                " overriding default colors (cf. :help cterm-colors) :
+                hi OL1 ctermfg=Black
+                hi OL2 ctermfg=DarkRed
+                hi OL3 ctermfg=DarkBlue
+                hi OL4 ctermfg=DarkYellow
+                hi OL5 ctermfg=DarkMagenta
+                hi OL6 ctermfg=DarkCyan
+                hi OL7 ctermfg=DarkGreen
+                hi OL8 ctermfg=Grey
 
-            " overriding default colors (cf. :help cterm-colors) :
-            hi OL1 ctermfg=Black
-            hi OL2 ctermfg=DarkRed
-            hi OL3 ctermfg=DarkBlue
-            hi OL4 ctermfg=DarkYellow
-            hi OL5 ctermfg=DarkMagenta
-            hi OL6 ctermfg=DarkCyan
-            hi OL7 ctermfg=DarkGreen
-            hi OL8 ctermfg=Grey
-
-            hi Folded ctermfg=DarkGray ctermbg=Gray
+                hi Folded ctermfg=DarkGray ctermbg=Gray
 
 
-            " I prefer a large outline lindewidth :
-            set tw=120
+                " I prefer a large outline lindewidth :
+                set tw=120
 
-            " a convenient localleader for me ("ç" instead of ",") :
-            let maplocalleader = "çç"
+                " a convenient localleader for me ("ç" instead of ",") :
+                let maplocalleader = "çç"
 
-            " color for body text
-            hi BT1 guifg=black	ctermfg=black
-            hi BT2 guifg=black	ctermfg=black
-            hi BT3 guifg=black	ctermfg=black
-            hi BT4 guifg=black	ctermfg=black
-            hi BT5 guifg=black	ctermfg=black
-            hi BT6 guifg=black	ctermfg=black
-            hi BT7 guifg=black	ctermfg=black
-            hi BT8 guifg=black	ctermfg=black
-            hi BT9 guifg=black	ctermfg=black
+                " color for body text
+                hi BT1 guifg=black	ctermfg=black
+                hi BT2 guifg=black	ctermfg=black
+                hi BT3 guifg=black	ctermfg=black
+                hi BT4 guifg=black	ctermfg=black
+                hi BT5 guifg=black	ctermfg=black
+                hi BT6 guifg=black	ctermfg=black
+                hi BT7 guifg=black	ctermfg=black
+                hi BT8 guifg=black	ctermfg=black
+                hi BT9 guifg=black	ctermfg=black
 
-            " color for pre-formatted text
-            hi PT1 guifg=black	ctermfg=black
-            hi PT2 guifg=black	ctermfg=black
-            hi PT3 guifg=black	ctermfg=black
-            hi PT4 guifg=black	ctermfg=black
-            hi PT5 guifg=black	ctermfg=black
-            hi PT6 guifg=black	ctermfg=black
-            hi PT7 guifg=black	ctermfg=black
-            hi PT8 guifg=black	ctermfg=black
-            hi PT9 guifg=black	ctermfg=black
+                " color for pre-formatted text
+                hi PT1 guifg=black	ctermfg=black
+                hi PT2 guifg=black	ctermfg=black
+                hi PT3 guifg=black	ctermfg=black
+                hi PT4 guifg=black	ctermfg=black
+                hi PT5 guifg=black	ctermfg=black
+                hi PT6 guifg=black	ctermfg=black
+                hi PT7 guifg=black	ctermfg=black
+                hi PT8 guifg=black	ctermfg=black
+                hi PT9 guifg=black	ctermfg=black
 
-            " color for user text (wrapping)
-            hi UT1 guifg=black	ctermfg=black
-            hi UT2 guifg=black	ctermfg=black
-            hi UT3 guifg=black	ctermfg=black
-            hi UT4 guifg=black	ctermfg=black
-            hi UT5 guifg=black	ctermfg=black
-            hi UT6 guifg=black	ctermfg=black
-            hi UT7 guifg=black	ctermfg=black
-            hi UT8 guifg=black	ctermfg=black
-            hi UT9 guifg=black	ctermfg=black
+                " color for user text (wrapping)
+                hi UT1 guifg=black	ctermfg=black
+                hi UT2 guifg=black	ctermfg=black
+                hi UT3 guifg=black	ctermfg=black
+                hi UT4 guifg=black	ctermfg=black
+                hi UT5 guifg=black	ctermfg=black
+                hi UT6 guifg=black	ctermfg=black
+                hi UT7 guifg=black	ctermfg=black
+                hi UT8 guifg=black	ctermfg=black
+                hi UT9 guifg=black	ctermfg=black
 
-            " color for user text (non-wrapping)
-            hi UB1 guifg=black	ctermfg=black
-            hi UB2 guifg=black	ctermfg=black
-            hi UB3 guifg=black	ctermfg=black
-            hi UB4 guifg=black	ctermfg=black
-            hi UB5 guifg=black	ctermfg=black
-            hi UB6 guifg=black	ctermfg=black
-            hi UB7 guifg=black	ctermfg=black
-            hi UB8 guifg=black	ctermfg=black
-            hi UB9 guifg=black	ctermfg=black
-        ]])
-        -- vim.cmd.highlight({"Search", "cterm=reverse"})
-        -- vim.cmd.highlight({"IncSearch", "cterm=reverse"})
-        vim.cmd.highlight({"CurSearch", "ctermbg=LightGray"})
+                " color for user text (non-wrapping)
+                hi UB1 guifg=black	ctermfg=black
+                hi UB2 guifg=black	ctermfg=black
+                hi UB3 guifg=black	ctermfg=black
+                hi UB4 guifg=black	ctermfg=black
+                hi UB5 guifg=black	ctermfg=black
+                hi UB6 guifg=black	ctermfg=black
+                hi UB7 guifg=black	ctermfg=black
+                hi UB8 guifg=black	ctermfg=black
+                hi UB9 guifg=black	ctermfg=black
+            ]])
+            -- vim.cmd.highlight({"Search", "cterm=reverse"})
+            -- vim.cmd.highlight({"IncSearch", "cterm=reverse"})
+            vim.cmd.highlight({"CurSearch", "ctermbg=LightGray"})
 
-        -- les leading tabulations (importantes en OTL) sont coloriées en Whitespace, qui est un lien vers NonText
-        -- je les veux sans coloration particulières (elles partagent ce groupe avec les trailing whitespace, qui perdront aussi leur background)
-        vim.opt_local.list = true
-        vim.cmd([[set listchars=trail:●,nbsp:␣,precedes:←,extends:→]])
-        vim.opt_local.listchars:append({ tab = "  " })
-        vim.cmd.highlight({"NonText", "NONE"})
-    end,
-})
-
--- (VIMOUTLINER+VIMDIFF) }}}
-
-
---# CODE SETTINGS {{{
---########################################################################################################################
-
--- settings spécifiques aux buffers contenant du code :
-vim.api.nvim_create_autocmd({"BufEnter"}, {
-    pattern = {
-        '*.html',
-        '*.css',
-        '*.py',
-        '*.js',
-        '*.json',
-        '*.ts',
-        '*.c',
-        '*.cpp',
-        '*.h',
-        '*.hpp',
-        '*.rb',
-        '*.sh',
-        '*.Jenkinsfile',
-        '*.rs'
-    },
-    callback = function ()
-        -- limites verticales à 120 caractères :
-        vim.opt.colorcolumn = {100, 120}
-        vim.cmd.highlight({"ColorColumn", "ctermbg=LightRed", "ctermfg=Black"})
-
-        -- position du curseur :
-        vim.opt.cursorline = true
-        vim.opt.cursorcolumn = true
-        vim.cmd.highlight({"CursorColumn", "ctermbg=250"})
-        vim.cmd.highlight({"CursorLine", "ctermbg=250"})
-        -- cf. https://smarttech101.com/how-to-configure-colorscheme-in-vim-neovim
-        -- cf. https://gist.github.com/vivkin/567896630dbc588ad470b8196c601ad1#file-256-color-table-sh
-
-        -- trailing whitespaces + nbsp + tabulations :
-        vim.cmd.highlight({"TrailingWhitespace", "ctermbg=red"})
-        vim.cmd.match({"TrailingWhitespace", [[/\s\+$/]]})
-        vim.cmd.highlight({"nbspColor", "ctermbg=red"})
-        vim.fn.matchadd("nbspColor", " ")
-        vim.cmd.highlight({"TabulationsColor", "ctermbg=red"})
-        vim.fn.matchadd("TabulationsColor", "	")
-
-        -- numéros de lignes :
-        vim.opt.nu = true;
-
-        -- on force un `edit` sur les buffers de code pour contourner le bug treesitter en triggant
-        -- manuellement le déclenchement des clients LSP (cf. mes notes dans le plugin treesitter)
-        vim.cmd.edit()
-    end,
-})
-
--- coloration des type-infos par rust-tools à la fin de la ligne :
-vim.cmd.highlight({"RustToolsTypeInfo", "cterm=bold"})
-
--- Compatibilité tmux (cf. https://sunaku.github.io/vim-256color-bce.html), qui nécessite côté tmux :
--- set-window-option -g xterm-keys on
--- set -g default-terminal "screen-256color"
-vim.cmd([[set t_ut=]])
-vim.cmd([[redraw]])
-
--- configs spécifiques à certains fichiers :
-local config_for_specific_files = function()
-  -- les jenkinsfiles sont à interpréter en groovy :
-  vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "*.Jenkinsfile", callback = function () vim.opt_local.filetype = "groovy" end })
-
-  -- les fichiers NOGIT_justfile sont à interpréter comme des justfiles :
-  vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "NOGIT_justfile", callback = function () vim.opt_local.filetype = "just" end })
-
-  -- fichier de config typescript sont à interpréter en javascrip :
-  vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "tsconfig.json", callback = function () vim.opt_local.filetype = "javascript" end })
-
-  -- à placer AVANT les autres fold commands (donc avant l'exécution de treesitter) :
-  vim.opt.foldmethod = "expr"
-  vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
-  vim.opt.foldlevel = 99  -- pour corriger le comportement par défaut de treesitter, qui commence avec les foldings repliés
-
-  -- folding json :
-  local json_group = vim.api.nvim_create_augroup('json', { clear = false })
-  vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "json", group = 'json', callback = function () vim.opt_local.foldmethod = "syntax" end })
-
-  -- folding avec les brackets triples {{{ }}} pour l'édition des fichiers vim (y compris le présent fichier) :
-  local vim_group = vim.api.nvim_create_augroup('vim', { clear = true })
-  vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "vim", group = 'vim', callback = function ()
-    vim.opt_local.foldmethod = "marker"
-    vim.opt_local.foldlevel = 0  -- on veut les folds pliés quand on ouvre le fichier
-  end })
-end -- config_for_specific_files
-config_for_specific_files()
-
--- Par défaut, on recherche 'tags' jusqu'à la racine :
-vim.opt.tags="tags;/"
-
--- Augmenter la taille de la QuickfixList (et la réduire si inutile) :
--- cf. http://vim.wikia.com/wiki/Automatically_fitting_a_quickfix_window_height
-vim.cmd([[
-function! AdjustWindowHeight(minheight, maxheight)
-  exe max([min([line("$"), a:maxheight]), a:minheight]) . "wincmd _"
-endfunction
-autocmd FileType qf call AdjustWindowHeight(3, 40)
-]])
-
--- (CODE SETTINGS) }}}
-
-
---# PLUGINS {{{
---########################################################################################################################
-
--- lancement de lazy.nvim :
-local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
-    "git",
-    "clone",
-    "--filter=blob:none",
-    "https://github.com/folke/lazy.nvim.git",
-    "--branch=stable", -- latest stable release
-    lazypath,
-  })
-end
-vim.opt.rtp:prepend(lazypath)
-
-
-local plugins = {
-    -- file browser :
-    {
-        "https://github.com/nvim-tree/nvim-tree.lua",
-        version = "*",
-        lazy = false,
-        dependencies = {
-            "nvim-tree/nvim-web-devicons",
-            },
-        config = function()
-            -- nvim-tree recommande de disabler netrw, cf. :help nvim-tree-netrw
-            vim.g.loaded_netrw       = 1
-            vim.g.loaded_netrwPlugin = 1
-
-            require("nvim-tree").setup {
-                actions = {
-                    open_file = {
-                        quit_on_open = true,
-                    },
-                },
-                sort_by = "case_sensitive",
-                view = {
-                    width = 60,
-                },
-                renderer = {
-                    group_empty = true,
-                },
-                filters = {
-                    dotfiles = true,
-                },
-            }
-            -- F8 = ouvrir nvim-tree sur le fichier courant :
-            vim.keymap.set({'n', 'i', 'v'}, '<F8>', ':NvimTreeFindFileToggle<CR>', { noremap = true })
-
-            -- S-F8 = ouvrir nvim-tree sur le git-root :
-            -- attention, sous neovim, pour qu'un shortcut S-Fxx marche, il faut utiliser F(xx+12) :
-            local function get_git_root()
-                local dot_git_path = vim.fn.finddir(".git", ".;")
-                return vim.fn.fnamemodify(dot_git_path, ":h")
-            end
-            vim.keymap.set({'n', 'i', 'v'}, '<F20>', ':NvimTreeToggle ' .. get_git_root() .. '<CR>', { noremap = true })
+            -- les leading tabulations (importantes en OTL) sont coloriées en Whitespace, qui est un lien vers NonText
+            -- je les veux sans coloration particulières (elles partagent ce groupe avec les trailing whitespace, qui perdront aussi leur background)
+            vim.opt_local.list = true
+            vim.cmd([[set listchars=trail:●,nbsp:␣,precedes:←,extends:→]])
+            vim.opt_local.listchars:append({ tab = "  " })
+            vim.cmd.highlight({"NonText", "NONE"})
         end,
-    },
+    })
+end -- NVIM_SECTION_VIMOUTLINER_AND_VIMDIFF
+NVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
 
-    -- " fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
-    {
-        'https://github.com/nvim-telescope/telescope.nvim',
-        tag = '0.1.4',
-        dependencies = { 'nvim-lua/plenary.nvim' },
-        config= function()
-          require('telescope').setup{
-          defaults = {
-            dynamic_preview_title = true,
-          },
-        }
-        end,
-    },
 
-    -- enhances ga to display info on a character, including its digraph code
-    {
-        'https://github.com/tpope/vim-characterize'
-    },
-
-    -- ChatGPT :
-    {
-        "https://github.com/jackMort/ChatGPT.nvim",
-        -- event = "VeryLazy",
-        config = function()
-            require("chatgpt").setup()
-        end,
-        cmd = {
-            "ChatGPT",
-            "ChatGPTActAs",
-            "ChatGPTEditWithInstructions",
-            "ChatGPTRun",
+function NVIM_SECTION_CODE_SETTINGS()
+    -- settings spécifiques aux buffers contenant du code :
+    vim.api.nvim_create_autocmd({"BufEnter"}, {
+        pattern = {
+            '*.html',
+            '*.css',
+            '*.py',
+            '*.js',
+            '*.json',
+            '*.ts',
+            '*.c',
+            '*.cpp',
+            '*.h',
+            '*.hpp',
+            '*.rb',
+            '*.sh',
+            '*.Jenkinsfile',
+            '*.rs'
         },
-        dependencies = {
-            "MunifTanjim/nui.nvim",
-            -- "nvim-lua/plenary.nvim",  -- already installed
-            -- "nvim-telescope/telescope.nvim"  -- already installed
-        }
-    },
+        callback = function ()
+            -- limites verticales à 120 caractères :
+            vim.opt.colorcolumn = {100, 120}
+            vim.cmd.highlight({"ColorColumn", "ctermbg=LightRed", "ctermfg=Black"})
 
-    -- align tokens of a line according to a separator :
-    {
-        "https://github.com/godlygeek/tabular.git",
-        cmd = "Tabularize",
-        init = function()
-            -- Ctrl+T pour tabularize :
-            vim.keymap.set({'v',}, '<C-T>', ':Tabularize /', { noremap = true })
+            -- position du curseur :
+            vim.opt.cursorline = true
+            vim.opt.cursorcolumn = true
+            vim.cmd.highlight({"CursorColumn", "ctermbg=250"})
+            vim.cmd.highlight({"CursorLine", "ctermbg=250"})
+            -- cf. https://smarttech101.com/how-to-configure-colorscheme-in-vim-neovim
+            -- cf. https://gist.github.com/vivkin/567896630dbc588ad470b8196c601ad1#file-256-color-table-sh
+
+            -- trailing whitespaces + nbsp + tabulations :
+            vim.cmd.highlight({"TrailingWhitespace", "ctermbg=red"})
+            vim.cmd.match({"TrailingWhitespace", [[/\s\+$/]]})
+            vim.cmd.highlight({"nbspColor", "ctermbg=red"})
+            vim.fn.matchadd("nbspColor", " ")
+            vim.cmd.highlight({"TabulationsColor", "ctermbg=red"})
+            vim.fn.matchadd("TabulationsColor", "	")
+
+            -- numéros de lignes :
+            vim.opt.nu = true;
+
+            -- on force un `edit` sur les buffers de code pour contourner le bug treesitter en triggant
+            -- manuellement le déclenchement des clients LSP (cf. mes notes dans le plugin treesitter)
+            vim.cmd.edit()
         end,
-    },
+    })
 
-    -- surround :
-    {
-        "https://github.com/tpope/vim-surround.git",
-    },
+    -- coloration des type-infos par rust-tools à la fin de la ligne :
+    vim.cmd.highlight({"RustToolsTypeInfo", "cterm=bold"})
 
-    -- repeat a surrounding command
-    {
-        "https://github.com/tpope/vim-repeat",
-    },
+    -- Compatibilité tmux (cf. https://sunaku.github.io/vim-256color-bce.html), qui nécessite côté tmux :
+    -- set-window-option -g xterm-keys on
+    -- set -g default-terminal "screen-256color"
+    vim.cmd([[set t_ut=]])
+    vim.cmd([[redraw]])
 
-    -- comment :
-    {
-        'https://github.com/numToStr/Comment.nvim',
-        config = function()
-            require('Comment').setup()
-        end,
-    },
+    -- configs spécifiques à certains fichiers :
+    local config_for_specific_files = function()
+      -- les jenkinsfiles sont à interpréter en groovy :
+      vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "*.Jenkinsfile", callback = function () vim.opt_local.filetype = "groovy" end })
 
-    -- languages parsing :
-    -- après avoir testé polyglot, je choisis treesitter qui vient avec une killer feature = le folding de code
-    {
-        "https://github.com/nvim-treesitter/nvim-treesitter",
-        build = function()
-          require("nvim-treesitter.install").update({ with_sync = true })()
-        end,
-        config = function ()
-          local configs = require("nvim-treesitter.configs")
-          configs.setup({
-            -- les parsers sont installés dans :
-            --      ~/.local/share/nvim/lazy/nvim-treesitter/parser
-            -- ne pas hésiter à supprimer manuellement ceux dont je ne veux plus
-            ensure_installed = {
-              "bash",
-              "c",
-              "cmake",
-              "cpp",
-              "css",
-              "diff",
-              "dockerfile",
-              "dot",
-              "doxygen",
-              "git_config",
-              "git_rebase",
-              "gitcommit",
-              "gitignore",
-              "go",
-              "groovy",
-              "html",
-              "htmldjango",
-              "http",
-              "javascript",
-              "jq",
-              "jsdoc",
-              "lua",
-              "luadoc",
-              "make",
-              -- "markdown",  -- volontairement commenté, cf. ci-dessous
-              "markdown_inline",
-              "mermaid",
-              "meson",
-              "ninja",
-              "po",
-              "python",
-              "regex",
-              "rust",
-              "sql",
-              "ssh_config",
-              "toml",
-              "typescript",
-              "vim",
-              "vimdoc",
-              "vue",
-              "yaml",
-              },
-            sync_install = true,  -- installer les parsers de façon synchrone
-            auto_install = false,  -- ne pas installer un parser automatiquement à l'entrée dans un buffer
-            ignore_install = { "markdown" },  -- markdown volontairement désactivé :
-              -- disabling treesitter for markdown (I cannot get treesitter's markdown to work with
-              -- vim-markdown-folding, and I value markdown folding more than markdown highlighting...)
-            highlight = { enable = true },
-            indent = { enable = false },
-          })
-          -- NOTE : il y a un bug que je n'explique pas avec nvim-treesitter : il empêche le démarrage automatiuqe des clients LSP.
-          --        Pour contourner, il suffit d'éditer le fichier `:e`, ce qui trigge le démarrage du client LSP.
-        end,
-    },
+      -- les fichiers NOGIT_justfile sont à interpréter comme des justfiles :
+      vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "NOGIT_justfile", callback = function () vim.opt_local.filetype = "just" end })
 
-    -- visualiser les indentations :
-    {
-        "https://github.com/nvimdev/indentmini.nvim",
-        event = 'BufEnter',
-        config = function()
-            require("indentmini").setup({
-                char = "│",
-                exclude = {
-                    "markdown",
+      -- fichier de config typescript sont à interpréter en javascrip :
+      vim.api.nvim_create_autocmd( {"BufEnter"}, { pattern = "tsconfig.json", callback = function () vim.opt_local.filetype = "javascript" end })
+
+      -- à placer AVANT les autres fold commands (donc avant l'exécution de treesitter) :
+      vim.opt.foldmethod = "expr"
+      vim.opt.foldexpr = "nvim_treesitter#foldexpr()"
+      vim.opt.foldlevel = 99  -- pour corriger le comportement par défaut de treesitter, qui commence avec les foldings repliés
+
+      -- folding json :
+      local json_group = vim.api.nvim_create_augroup('json', { clear = false })
+      vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "json", group = 'json', callback = function () vim.opt_local.foldmethod = "syntax" end })
+
+      -- folding avec les brackets triples {{{ }}} pour l'édition des fichiers vim (y compris le présent fichier) :
+      local vim_group = vim.api.nvim_create_augroup('vim', { clear = true })
+      vim.api.nvim_create_autocmd( {"FileType"}, { pattern = "vim", group = 'vim', callback = function ()
+        vim.opt_local.foldlevel = 1  -- je veux les folds quasi-pliés quand j'ouvre mon fichier vimrc
+      end })
+    end -- config_for_specific_files
+    config_for_specific_files()
+
+    -- Par défaut, on recherche 'tags' jusqu'à la racine :
+    vim.opt.tags="tags;/"
+
+    -- Augmenter la taille de la QuickfixList (et la réduire si inutile) :
+    -- cf. http://vim.wikia.com/wiki/Automatically_fitting_a_quickfix_window_height
+    vim.cmd([[
+    function! AdjustWindowHeight(minheight, maxheight)
+      exe max([min([line("$"), a:maxheight]), a:minheight]) . "wincmd _"
+    endfunction
+    autocmd FileType qf call AdjustWindowHeight(3, 40)
+    ]])
+end -- NVIM_SECTION_CODE_SETTINGS
+NVIM_SECTION_CODE_SETTINGS()
+
+
+function NVIM_SECTION_PLUGINS()
+    -- lancement de lazy.nvim :
+    local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+    if not vim.loop.fs_stat(lazypath) then
+      vim.fn.system({
+        "git",
+        "clone",
+        "--filter=blob:none",
+        "https://github.com/folke/lazy.nvim.git",
+        "--branch=stable", -- latest stable release
+        lazypath,
+      })
+    end
+    vim.opt.rtp:prepend(lazypath)
+
+
+    local plugins = {
+        -- file browser :
+        {
+            "https://github.com/nvim-tree/nvim-tree.lua",
+            version = "*",
+            lazy = false,
+            dependencies = {
+                "nvim-tree/nvim-web-devicons",
+                },
+            config = function()
+                -- nvim-tree recommande de disabler netrw, cf. :help nvim-tree-netrw
+                vim.g.loaded_netrw       = 1
+                vim.g.loaded_netrwPlugin = 1
+
+                require("nvim-tree").setup {
+                    actions = {
+                        open_file = {
+                            quit_on_open = true,
+                        },
+                    },
+                    sort_by = "case_sensitive",
+                    view = {
+                        width = 60,
+                    },
+                    renderer = {
+                        group_empty = true,
+                    },
+                    filters = {
+                        dotfiles = true,
+                    },
                 }
-            })
-            -- use comment color
-            vim.cmd.highlight("default link IndentLine Comment")
-        end,
-    },
+                -- F8 = ouvrir nvim-tree sur le fichier courant :
+                vim.keymap.set({'n', 'i', 'v'}, '<F8>', ':NvimTreeFindFileToggle<CR>', { noremap = true })
 
-    -- markdown-folding :
-    {
-        "https://github.com/masukomi/vim-markdown-folding",
-        config = function()
-            -- for vim-markdown-plugin : folding a level 1 title should also fold all its children :
-            vim.api.nvim_create_autocmd({"FileType"}, {
-                pattern = "markdown",
-                callback = function (opts)
-                    -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
-                    -- vim.opt: behaves like :set
-                    vim.opt.foldexpr = "NestedMarkdownFolds()"
-                end,
-            })
-        end,
-    },
-
-    -- make searched line pulse briefly to ease visualization
-    {
-        "https://github.com/inside/vim-search-pulse",
-        config = function()
-            -- strict équivalent de :  let g:vim_search_pulse_color_list = [22, 28, 34, 40, 46]
-            vim.g.vim_search_pulse_color_list = {22, 28, 34, 40, 46}
-        end,
-    },
-
-    -- smooth scrolling (to ease visualizing Ctrl-down/Ctrl-up)
-    {
-        "karb94/neoscroll.nvim",
-      config = function ()
-          require('neoscroll').setup {}
-      end
-    },
-
-    -- nvim LSP config :
-    {
-        "https://github.com/neovim/nvim-lspconfig",
-    },
-
-    -- running generic tools as LSP servers
-    {
-        "https://github.com/jose-elias-alvarez/null-ls.nvim",
-    },
-
-    -- rust-tools :
-    {
-        "https://github.com/simrat39/rust-tools.nvim",
-    },
-
-
-    -- highlight same words as the one under cursor
-    -- note : pour visualiser dynamiquement les highlights groups :
-    --   :so $VIMRUNTIME/syntax/hitest.vim
-    {
-        'https://github.com/tzachar/local-highlight.nvim',
-        config = function()
-            require('local-highlight').setup({
-                file_types = {'python', 'cpp', 'rust'},
-                hlgroup = 'CursorColumn',
-                insert_mode = false,
-            })
-        end
-    },
-
-    -- auto cd to git root dir :
-    {
-        "https://github.com/ahmedkhalf/project.nvim",
-        config = function()
-            require('project_nvim').setup {}
-        end,
-    },
-
-    -- justfile syntax
-    {
-        "https://github.com/NoahTheDuke/vim-just",
-    },
-
-    -- debugger = DAP-client :
-    {
-        "https://github.com/puremourning/vimspector",
-        config = function()
-            -- démarrer / arrêter le débugging d'un programme :
-            vim.keymap.set('n', '<leader><F5>', '<Plug>VimspectorContinue', { noremap = true })
-            vim.keymap.set('n', '<leader><F3>', '<Plug>VimspectorStop', { noremap = true })
-            vim.keymap.set('n', '<leader><F4>', '<Plug>VimspectorRestart', { noremap = true })
-            vim.keymap.set('n', '<leader><F6>', '<Plug>VimspectorPause', { noremap = true })
-            vim.keymap.set('n', '<leader><F9>', '<Plug>VimspectorToggleBreakpoint', { noremap = true })
-            vim.keymap.set('n', '<leader><F8>', '<Plug>VimspectorRunToCursor', { noremap = true })
-            -- piloter l'avancée du programme en cours d'exécution :
-            vim.keymap.set('n', 'gn', '<Plug>VimspectorStepOver', { noremap = true })
-            vim.keymap.set('n', 'gs', '<Plug>VimspectorStepInto', { noremap = true })
-            vim.keymap.set('n', 'go', '<Plug>VimspectorStepOut', { noremap = true })
-            -- fermer la fenêtre vimspector :
-            vim.keymap.set('n', '<leader>q', ':VimspectorReset<CR>', { noremap = true })
-        end,
-    },
-
-    -- outline des structures LSP du buffer courant :
-    {
-        "https://github.com/hedyhli/outline.nvim",
-        lazy = true,
-        cmd = { "Outline", "OutlineOpen" },
-        keys = {
-            { "<F9>", "<cmd>Outline<CR>", desc = "Toggle outline" },
+                -- S-F8 = ouvrir nvim-tree sur le git-root :
+                -- attention, sous neovim, pour qu'un shortcut S-Fxx marche, il faut utiliser F(xx+12) :
+                local function get_git_root()
+                    local dot_git_path = vim.fn.finddir(".git", ".;")
+                    return vim.fn.fnamemodify(dot_git_path, ":h")
+                end
+                vim.keymap.set({'n', 'i', 'v'}, '<F20>', ':NvimTreeToggle ' .. get_git_root() .. '<CR>', { noremap = true })
+            end,
         },
-            -- par défaut, le folding n'est ouvert que pour la ligne actuelle (les autres sont repliés)
-            -- ? pour lister les shortcuts
-            -- q ou <Esc> pour quitter
-            -- <Tab> pour fold/unfold la ligne actuelle
-            -- <Shift-Tab> pour fold/unfold tous les items
-            -- R pour reset le folding à la ligne actuelle
-            -- <CTRL-j/k> pour naviguer de tag en tag, tout en déplaçant le buffer (et Ctrl+flêches ne fonctionne pas...)
 
-        config = function()
-            require("outline").setup {
-            -- Your setup opts here (leave empty to use defaults)
+        -- " fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
+        {
+            'https://github.com/nvim-telescope/telescope.nvim',
+            tag = '0.1.4',
+            dependencies = { 'nvim-lua/plenary.nvim' },
+            config= function()
+              require('telescope').setup{
+              defaults = {
+                dynamic_preview_title = true,
+              },
             }
-        end,
-    },
+            end,
+        },
 
-    -- statusline :
-    {
-        'https://github.com/nvim-lualine/lualine.nvim',
-        dependencies = {
-            "nvim-tree/nvim-web-devicons",
+        -- enhances ga to display info on a character, including its digraph code
+        {
+            'https://github.com/tpope/vim-characterize'
+        },
+
+        -- ChatGPT :
+        {
+            "https://github.com/jackMort/ChatGPT.nvim",
+            -- event = "VeryLazy",
+            config = function()
+                require("chatgpt").setup()
+            end,
+            cmd = {
+                "ChatGPT",
+                "ChatGPTActAs",
+                "ChatGPTEditWithInstructions",
+                "ChatGPTRun",
             },
-        config = function()
-
-            local function get_total_lines()
-              local total_lines = vim.api.nvim_buf_line_count(vim.api.nvim_get_current_buf())
-              return string.format("%s lines", total_lines)
-            end
-            require('lualine').setup{
-                  options = {
-                    icons_enabled = true,
-                    theme = 'nord',
-                    component_separators = { left = '|', right = '|'},
-                    section_separators = { left = '', right = ''},
-                    always_divide_middle = false,
-                  },
-                  sections = {
-                    lualine_a = {
-                        {
-                            'mode',
-                            fmt = function(mode)
-                                return string.format("%-8s", mode)  -- le mode doit toujours occuper la même largeur
-                            end
-                        },
-                    },
-                    lualine_b = {'branch', 'diff', 'diagnostics'},
-                    lualine_c = {
-                        {
-                            'filename',
-                            path = 1,
-                            symbols = {
-                                        modified = '[●●●●●●●●●●●●●●●●●●●●●● MODIFIED ●●●●●●●●●●●●●●●●●●●●●●]',
-                                        readonly = '[READONLY§-]',      -- Text to show when the file is non-modifiable or readonly.
-                                        unnamed = '[No Name]', -- Text to show for unnamed buffers.
-                                        newfile = '[New]',     -- Text to show for newly created file before first write
-                                        directory =  '',     -- Text to show when the buffer is a directory
-                              },
-                        },
-                    },
-                    lualine_x = {'progress'},
-                    lualine_y = {
-                        {'encoding'},
-                        {
-                          'fileformat',
-                          symbols = {
-                            unix = ' EOL=unix ',
-                            dos = ' EOL=windows ',
-                            mac = ' EOL=mac ',
-                          },
-                        },
-                        {
-                            'filetype',
-                            icon = { align = 'right' },
-                        },
-                    },
-                    lualine_z = {'location', get_total_lines}
-                  },
-
-                  -- NDM : inactive p.ex. parce qu'on est sur un autre vsplit
-                  inactive_sections = {
-                    lualine_a = {},
-                    lualine_b = {},
-                    lualine_c = {'filename'},
-                    lualine_x = {},
-                    lualine_y = {},
-                    lualine_z = {}
-                  },
-                  tabline = {},
-                  winbar = {},
-                  inactive_winbar = {},
-                  extensions = {'quickfix', 'nvim-tree', },  -- plus tard : nvim-dap-ui ? symbols-outline ?
+            dependencies = {
+                "MunifTanjim/nui.nvim",
+                -- "nvim-lua/plenary.nvim",  -- already installed
+                -- "nvim-telescope/telescope.nvim"  -- already installed
             }
-        end,
-    },
+        },
 
-    -- Alternate source/header cpp :
-    {
-        "https://github.com/ton/vim-alternate",
-        config = function()
-          vim.g.AlternatePaths = {'.', '../public/*/', '../../impl'} -- j'aurais aimé définir ../public/COMPONENT/ mais ça n'est pas possible...
-          vim.keymap.set('n', '<A-o>', '<cmd>Alternate<CR>', { noremap=true, silent=true})
-          vim.keymap.set('i', '<A-o>', '<ESC><cmd>Alternate<CR>', { noremap=true, silent=true})
-          vim.keymap.set('v', '<A-o>', '<ESC><ESC><cmd>Alternate<CR>', { noremap=true, silent=true})
-        end,
-    },
+        -- align tokens of a line according to a separator :
+        {
+            "https://github.com/godlygeek/tabular.git",
+            cmd = "Tabularize",
+            init = function()
+                -- Ctrl+T pour tabularize :
+                vim.keymap.set({'v',}, '<C-T>', ':Tabularize /', { noremap = true })
+            end,
+        },
 
-    -- vim-outliner colors + foldings :
-    {
-        "https://github.com/vimoutliner/vimoutliner.git",
-        ft = 'votl',
-    },
+        -- surround :
+        {
+            "https://github.com/tpope/vim-surround.git",
+        },
 
-    -- colorscheme :
-    {
-        -- je galère à trouver un colorscheme potable... je finis sur celui-ci :
-        'https://github.com/Mofiqul/vscode.nvim',
-        lazy = false,
-        priority = 1000,
-        config = function()
-            require('vscode').setup({
-                style = 'light',
-                group_overrides = {
-                    Comment = {  fg = "DarkGray"},
-                    ["@comment"] = {  fg ="DarkGray"},
+        -- repeat a surrounding command
+        {
+            "https://github.com/tpope/vim-repeat",
+        },
+
+        -- comment :
+        {
+            'https://github.com/numToStr/Comment.nvim',
+            config = function()
+                require('Comment').setup()
+            end,
+        },
+
+        -- languages parsing :
+        -- après avoir testé polyglot, je choisis treesitter qui vient avec une killer feature = le folding de code
+        {
+            "https://github.com/nvim-treesitter/nvim-treesitter",
+            build = function()
+              require("nvim-treesitter.install").update({ with_sync = true })()
+            end,
+            config = function ()
+              local configs = require("nvim-treesitter.configs")
+              configs.setup({
+                -- les parsers sont installés dans :
+                --      ~/.local/share/nvim/lazy/nvim-treesitter/parser
+                -- ne pas hésiter à supprimer manuellement ceux dont je ne veux plus
+                ensure_installed = {
+                  "bash",
+                  "c",
+                  "cmake",
+                  "cpp",
+                  "css",
+                  "diff",
+                  "dockerfile",
+                  "dot",
+                  "doxygen",
+                  "git_config",
+                  "git_rebase",
+                  "gitcommit",
+                  "gitignore",
+                  "go",
+                  "groovy",
+                  "html",
+                  "htmldjango",
+                  "http",
+                  "javascript",
+                  "jq",
+                  "jsdoc",
+                  "lua",
+                  "luadoc",
+                  "make",
+                  -- "markdown",  -- volontairement commenté, cf. ci-dessous
+                  "markdown_inline",
+                  "mermaid",
+                  "meson",
+                  "ninja",
+                  "po",
+                  "python",
+                  "regex",
+                  "rust",
+                  "sql",
+                  "ssh_config",
+                  "toml",
+                  "typescript",
+                  "vim",
+                  "vimdoc",
+                  "vue",
+                  "yaml",
+                  },
+                sync_install = true,  -- installer les parsers de façon synchrone
+                auto_install = false,  -- ne pas installer un parser automatiquement à l'entrée dans un buffer
+                ignore_install = { "markdown" },  -- markdown volontairement désactivé :
+                  -- disabling treesitter for markdown (I cannot get treesitter's markdown to work with
+                  -- vim-markdown-folding, and I value markdown folding more than markdown highlighting...)
+                highlight = { enable = true },
+                indent = { enable = false },
+              })
+              -- NOTE : il y a un bug que je n'explique pas avec nvim-treesitter : il empêche le démarrage automatiuqe des clients LSP.
+              --        Pour contourner, il suffit d'éditer le fichier `:e`, ce qui trigge le démarrage du client LSP.
+            end,
+        },
+
+        -- visualiser les indentations :
+        {
+            "https://github.com/nvimdev/indentmini.nvim",
+            event = 'BufEnter',
+            config = function()
+                require("indentmini").setup({
+                    char = "│",
+                    exclude = {
+                        "markdown",
+                    }
+                })
+                -- use comment color
+                vim.cmd.highlight("default link IndentLine Comment")
+            end,
+        },
+
+        -- markdown-folding :
+        {
+            "https://github.com/masukomi/vim-markdown-folding",
+            config = function()
+                -- for vim-markdown-plugin : folding a level 1 title should also fold all its children :
+                vim.api.nvim_create_autocmd({"FileType"}, {
+                    pattern = "markdown",
+                    callback = function (opts)
+                        -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
+                        -- vim.opt: behaves like :set
+                        vim.opt.foldexpr = "NestedMarkdownFolds()"
+                    end,
+                })
+            end,
+        },
+
+        -- make searched line pulse briefly to ease visualization
+        {
+            "https://github.com/inside/vim-search-pulse",
+            config = function()
+                -- strict équivalent de :  let g:vim_search_pulse_color_list = [22, 28, 34, 40, 46]
+                vim.g.vim_search_pulse_color_list = {22, 28, 34, 40, 46}
+            end,
+        },
+
+        -- smooth scrolling (to ease visualizing Ctrl-down/Ctrl-up)
+        {
+            "karb94/neoscroll.nvim",
+          config = function ()
+              require('neoscroll').setup {}
+          end
+        },
+
+        -- nvim LSP config :
+        {
+            "https://github.com/neovim/nvim-lspconfig",
+        },
+
+        -- running generic tools as LSP servers
+        {
+            "https://github.com/jose-elias-alvarez/null-ls.nvim",
+        },
+
+        -- rust-tools :
+        {
+            "https://github.com/simrat39/rust-tools.nvim",
+        },
+
+
+        -- highlight same words as the one under cursor
+        -- note : pour visualiser dynamiquement les highlights groups :
+        --   :so $VIMRUNTIME/syntax/hitest.vim
+        {
+            'https://github.com/tzachar/local-highlight.nvim',
+            config = function()
+                require('local-highlight').setup({
+                    file_types = {'python', 'cpp', 'rust'},
+                    hlgroup = 'CursorColumn',
+                    insert_mode = false,
+                })
+            end
+        },
+
+        -- auto cd to git root dir :
+        {
+            "https://github.com/ahmedkhalf/project.nvim",
+            config = function()
+                require('project_nvim').setup {}
+            end,
+        },
+
+        -- justfile syntax
+        {
+            "https://github.com/NoahTheDuke/vim-just",
+        },
+
+        -- debugger = DAP-client :
+        {
+            "https://github.com/puremourning/vimspector",
+            config = function()
+                -- démarrer / arrêter le débugging d'un programme :
+                vim.keymap.set('n', '<leader><F5>', '<Plug>VimspectorContinue', { noremap = true })
+                vim.keymap.set('n', '<leader><F3>', '<Plug>VimspectorStop', { noremap = true })
+                vim.keymap.set('n', '<leader><F4>', '<Plug>VimspectorRestart', { noremap = true })
+                vim.keymap.set('n', '<leader><F6>', '<Plug>VimspectorPause', { noremap = true })
+                vim.keymap.set('n', '<leader><F9>', '<Plug>VimspectorToggleBreakpoint', { noremap = true })
+                vim.keymap.set('n', '<leader><F8>', '<Plug>VimspectorRunToCursor', { noremap = true })
+                -- piloter l'avancée du programme en cours d'exécution :
+                vim.keymap.set('n', 'gn', '<Plug>VimspectorStepOver', { noremap = true })
+                vim.keymap.set('n', 'gs', '<Plug>VimspectorStepInto', { noremap = true })
+                vim.keymap.set('n', 'go', '<Plug>VimspectorStepOut', { noremap = true })
+                -- fermer la fenêtre vimspector :
+                vim.keymap.set('n', '<leader>q', ':VimspectorReset<CR>', { noremap = true })
+            end,
+        },
+
+        -- outline des structures LSP du buffer courant :
+        {
+            "https://github.com/hedyhli/outline.nvim",
+            lazy = true,
+            cmd = { "Outline", "OutlineOpen" },
+            keys = {
+                { "<F9>", "<cmd>Outline<CR>", desc = "Toggle outline" },
+            },
+                -- par défaut, le folding n'est ouvert que pour la ligne actuelle (les autres sont repliés)
+                -- ? pour lister les shortcuts
+                -- q ou <Esc> pour quitter
+                -- <Tab> pour fold/unfold la ligne actuelle
+                -- <Shift-Tab> pour fold/unfold tous les items
+                -- R pour reset le folding à la ligne actuelle
+                -- <CTRL-j/k> pour naviguer de tag en tag, tout en déplaçant le buffer (et Ctrl+flêches ne fonctionne pas...)
+
+            config = function()
+                require("outline").setup {
+                -- Your setup opts here (leave empty to use defaults)
+                }
+            end,
+        },
+
+        -- statusline :
+        {
+            'https://github.com/nvim-lualine/lualine.nvim',
+            dependencies = {
+                "nvim-tree/nvim-web-devicons",
                 },
-            })
-            vim.cmd [[colorscheme vscode]]
-        end,
-    },
-}
+            config = function()
 
-require("lazy").setup(plugins, opts)
+                local function get_total_lines()
+                  local total_lines = vim.api.nvim_buf_line_count(vim.api.nvim_get_current_buf())
+                  return string.format("%s lines", total_lines)
+                end
+                require('lualine').setup{
+                      options = {
+                        icons_enabled = true,
+                        theme = 'nord',
+                        component_separators = { left = '|', right = '|'},
+                        section_separators = { left = '', right = ''},
+                        always_divide_middle = false,
+                      },
+                      sections = {
+                        lualine_a = {
+                            {
+                                'mode',
+                                fmt = function(mode)
+                                    return string.format("%-8s", mode)  -- le mode doit toujours occuper la même largeur
+                                end
+                            },
+                        },
+                        lualine_b = {'branch', 'diff', 'diagnostics'},
+                        lualine_c = {
+                            {
+                                'filename',
+                                path = 1,
+                                symbols = {
+                                            modified = '[●●●●●●●●●●●●●●●●●●●●●● MODIFIED ●●●●●●●●●●●●●●●●●●●●●●]',
+                                            readonly = '[READONLY§-]',      -- Text to show when the file is non-modifiable or readonly.
+                                            unnamed = '[No Name]', -- Text to show for unnamed buffers.
+                                            newfile = '[New]',     -- Text to show for newly created file before first write
+                                            directory =  '',     -- Text to show when the buffer is a directory
+                                  },
+                            },
+                        },
+                        lualine_x = {'progress'},
+                        lualine_y = {
+                            {'encoding'},
+                            {
+                              'fileformat',
+                              symbols = {
+                                unix = ' EOL=unix ',
+                                dos = ' EOL=windows ',
+                                mac = ' EOL=mac ',
+                              },
+                            },
+                            {
+                                'filetype',
+                                icon = { align = 'right' },
+                            },
+                        },
+                        lualine_z = {'location', get_total_lines}
+                      },
+
+                      -- NDM : inactive p.ex. parce qu'on est sur un autre vsplit
+                      inactive_sections = {
+                        lualine_a = {},
+                        lualine_b = {},
+                        lualine_c = {'filename'},
+                        lualine_x = {},
+                        lualine_y = {},
+                        lualine_z = {}
+                      },
+                      tabline = {},
+                      winbar = {},
+                      inactive_winbar = {},
+                      extensions = {'quickfix', 'nvim-tree', },  -- plus tard : nvim-dap-ui ? symbols-outline ?
+                }
+            end,
+        },
+
+        -- Alternate source/header cpp :
+        {
+            "https://github.com/ton/vim-alternate",
+            config = function()
+              vim.g.AlternatePaths = {'.', '../public/*/', '../../impl'} -- j'aurais aimé définir ../public/COMPONENT/ mais ça n'est pas possible...
+              vim.keymap.set('n', '<A-o>', '<cmd>Alternate<CR>', { noremap=true, silent=true})
+              vim.keymap.set('i', '<A-o>', '<ESC><cmd>Alternate<CR>', { noremap=true, silent=true})
+              vim.keymap.set('v', '<A-o>', '<ESC><ESC><cmd>Alternate<CR>', { noremap=true, silent=true})
+            end,
+        },
+
+        -- vim-outliner colors + foldings :
+        {
+            "https://github.com/vimoutliner/vimoutliner.git",
+            ft = 'votl',
+        },
+
+        -- colorscheme :
+        {
+            -- je galère à trouver un colorscheme potable... je finis sur celui-ci :
+            'https://github.com/Mofiqul/vscode.nvim',
+            lazy = false,
+            priority = 1000,
+            config = function()
+                require('vscode').setup({
+                    style = 'light',
+                    group_overrides = {
+                        Comment = {  fg = "DarkGray"},
+                        ["@comment"] = {  fg ="DarkGray"},
+                    },
+                })
+                vim.cmd [[colorscheme vscode]]
+            end,
+        },
+    }
+
+    require("lazy").setup(plugins, opts)
+end -- NVIM_SECTION_PLUGINS
+NVIM_SECTION_PLUGINS()
 
 
--- (PLUGINS) }}}
+function NVIM_SECTION_LSP_RELATED()
+    -- See `:help vim.diagnostic.*` for documentation on any of the below functions
 
 
---# LSP-RELATED {{{
---########################################################################################################################
+    -- Use an on_attach function to only map the following keys
+    -- after the language server attaches to the current buffer
+    local on_lsp_attach = function(client, bufnr)
 
--- See `:help vim.diagnostic.*` for documentation on any of the below functions
+      -- weirdly, lsp highlights overwrite polyglot (and are awful + laggy), better to disable them :
+      -- see https://neovim.io/doc/user/lsp.html#lsp-semantic-highlight
+      -- see https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
+      for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
+        vim.api.nvim_set_hl(0, group, {})
+      end
 
+      -- Enable completion triggered by <c-x><c-o> :
+      vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
+      -- fermer la preview window une fois qu'on a choisi l'automplétion :
+      vim.api.nvim_create_autocmd({"CompleteDone"}, { callback = function() vim.cmd.pclose() end})
 
--- Use an on_attach function to only map the following keys
--- after the language server attaches to the current buffer
-local on_lsp_attach = function(client, bufnr)
+      -- Mappings.
+      -- See `:help vim.lsp.*` for documentation on any of the below functions
+      local bufopts = { noremap=true, silent=true, buffer=bufnr }
 
-  -- weirdly, lsp highlights overwrite polyglot (and are awful + laggy), better to disable them :
-  -- see https://neovim.io/doc/user/lsp.html#lsp-semantic-highlight
-  -- see https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
-  for _, group in ipairs(vim.fn.getcompletion("@lsp", "highlight")) do
-    vim.api.nvim_set_hl(0, group, {})
-  end
+      -- naviguer entre les erreurs LSP :
+      vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, { noremap=true, silent=true})
+      vim.keymap.set('n', '<A-j>', vim.diagnostic.goto_next, { noremap=true, silent=true})
 
-  -- Enable completion triggered by <c-x><c-o> :
-  vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-  -- fermer la preview window une fois qu'on a choisi l'automplétion :
-  vim.api.nvim_create_autocmd({"CompleteDone"}, { callback = function() vim.cmd.pclose() end})
+      -- native LSP-client :
+      vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.definition, bufopts)  -- F12 = go to definition in the same tab
+      vim.keymap.set({'n', 'i', 'v'}, 'g<F12>', '<ESC><cmd>tab split<CR><cmd>lua vim.lsp.buf.definition()<CR>', bufopts)  -- g-F12 = go to definition in a new tab
+      vim.keymap.set({'n', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
+      vim.keymap.set({'n', 'v'}, 'gb', vim.lsp.buf.code_action, bufopts)  -- "gb" car le C (pour [C]ode-actions) et le A (pour code-[A]ctions) sont déjà pris...
+      vim.keymap.set('n', '==', vim.lsp.buf.format, bufopts)
+      vim.keymap.set('v', '=', vim.lsp.buf.format, bufopts)  -- range format
 
-  -- Mappings.
-  -- See `:help vim.lsp.*` for documentation on any of the below functions
-  local bufopts = { noremap=true, silent=true, buffer=bufnr }
-
-  -- naviguer entre les erreurs LSP :
-  vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, { noremap=true, silent=true})
-  vim.keymap.set('n', '<A-j>', vim.diagnostic.goto_next, { noremap=true, silent=true})
-
-  -- native LSP-client :
-  vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.definition, bufopts)  -- F12 = go to definition in the same tab
-  vim.keymap.set({'n', 'i', 'v'}, 'g<F12>', '<ESC><cmd>tab split<CR><cmd>lua vim.lsp.buf.definition()<CR>', bufopts)  -- g-F12 = go to definition in a new tab
-  vim.keymap.set({'n', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
-  vim.keymap.set({'n', 'v'}, 'gb', vim.lsp.buf.code_action, bufopts)  -- "gb" car le C (pour [C]ode-actions) et le A (pour code-[A]ctions) sont déjà pris...
-  vim.keymap.set('n', '==', vim.lsp.buf.format, bufopts)
-  vim.keymap.set('v', '=', vim.lsp.buf.format, bufopts)  -- range format
-
-  -- telescope + LSP = <3
-  vim.keymap.set({'n', 'i', 'v'}, '<C-A-t>', require('telescope.builtin').lsp_dynamic_workspace_symbols, bufopts)
-  -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
-  vim.keymap.set({'n', 'i', 'v'}, '<F24>', function() require('telescope.builtin').lsp_references({path_display={"tail"}}) end, bufopts)  -- S-F12 = who uses this symbol ?
+      -- telescope + LSP = <3
+      vim.keymap.set({'n', 'i', 'v'}, '<C-A-t>', require('telescope.builtin').lsp_dynamic_workspace_symbols, bufopts)
+      -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
+      vim.keymap.set({'n', 'i', 'v'}, '<F24>', function() require('telescope.builtin').lsp_references({path_display={"tail"}}) end, bufopts)  -- S-F12 = who uses this symbol ?
 
 
-  -- NdM : rename = besoin suffisamment rare pour ne pas ajouter de mapping :
-  -- un alias me permet de compléter la commande plus facilement (il va demander le nouveau nom) :
-  --
-  --      :lua lsp_rename()
-  --
-  -- attention : des buffers peuvent être modifiés par le renommage sans être directement visibles !
-  -- contournement 1 = les consulter (:Telescope buffers)
-  -- contournement 2 = tout enregistrer avec :wa (= :writeall)
-  lsp_rename = vim.lsp.buf.rename
+      -- NdM : rename = besoin suffisamment rare pour ne pas ajouter de mapping :
+      -- un alias me permet de compléter la commande plus facilement (il va demander le nouveau nom) :
+      --
+      --      :lua lsp_rename()
+      --
+      -- attention : des buffers peuvent être modifiés par le renommage sans être directement visibles !
+      -- contournement 1 = les consulter (:Telescope buffers)
+      -- contournement 2 = tout enregistrer avec :wa (= :writeall)
+      lsp_rename = vim.lsp.buf.rename
 
-  -- NdM : moins utile que 'definition' :
-  -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.declaration, bufopts)
+      -- NdM : moins utile que 'definition' :
+      -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.declaration, bufopts)
 
-  -- NdM : non-pris en charge par clangd et/ou pyright :
-  -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.type_definition, bufopts)
-  -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.implementation, bufopts)
+      -- NdM : non-pris en charge par clangd et/ou pyright :
+      -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.type_definition, bufopts)
+      -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.implementation, bufopts)
 
-  -- toggling diagnostics (there is no native function for that) :
-  -- inspired by https://www.reddit.com/r/neovim/comments/ng0dj0/lsp_diagnostics_query_is_there_an_way_to_toggle/
-  vim.g.diagnostics_active = true
-  function _G.toggle_diagnostics()
-    if vim.g.diagnostics_active then
-      print('disabling diagnostics...')
-      vim.g.diagnostics_active = false
-      vim.diagnostic.disable()
-    else
-      print('enabling diagnostics...')
+      -- toggling diagnostics (there is no native function for that) :
+      -- inspired by https://www.reddit.com/r/neovim/comments/ng0dj0/lsp_diagnostics_query_is_there_an_way_to_toggle/
       vim.g.diagnostics_active = true
-      vim.diagnostic.enable()
+      function _G.toggle_diagnostics()
+        if vim.g.diagnostics_active then
+          print('disabling diagnostics...')
+          vim.g.diagnostics_active = false
+          vim.diagnostic.disable()
+        else
+          print('enabling diagnostics...')
+          vim.g.diagnostics_active = true
+          vim.diagnostic.enable()
+        end
+      end
+      -- gt sert normalement à switcher de tab, mais je n'utilise pas -> g[T]oggle :
+      vim.keymap.set({'n', 'v'}, 'gt', _G.toggle_diagnostics, bufopts)
+
+      -- Je préfère ces couleurs pour les diagnostics LSP :
+      -- :hi pour voir les highlights actuels (avec exemples)
+      -- pour info, valeurs par défaut :
+      -- DiagnosticError xxx ctermfg=1 guifg=Red
+      -- DiagnosticWarn xxx ctermfg=3 guifg=Orange
+      -- DiagnosticInfo xxx ctermfg=4 guifg=LightBlue
+      -- DiagnosticHint xxx ctermfg=7 guifg=LightGrey
+      -- NDM : vim.cmd() permet de passer des commandes vimscript
+      vim.cmd("hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red")
+      vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
+      vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
+      vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
+    end  -- on_lsp_attach
+
+    require('lspconfig')['pyright'].setup{
+        on_attach = on_lsp_attach,
+        flags = lsp_flags,
+    }
+    require('lspconfig')['clangd'].setup{
+        on_attach = on_lsp_attach,
+        flags = lsp_flags,
+    }
+    require('lspconfig')['tsserver'].setup{
+        on_attach = on_lsp_attach,
+        flags = lsp_flags,
+    }
+    require('rust-tools').setup{
+        server = {on_attach = on_lsp_attach},
+        flags = lsp_flags,
+        tools = {inlay_hints = {
+            max_len_align = true,
+            highlight= "RustToolsTypeInfo",
+            }
+        },
+    }
+
+    -- null-lsp :
+    local null_ls = require("null-ls")
+    local sources = {
+        null_ls.builtins.diagnostics.flake8.with({extra_args = {"--max-line-length","120"}}),
+    }
+    null_ls.setup({ sources = sources })
+
+
+    -- always show error columns :
+    vim.api.nvim_set_option('signcolumn', 'auto:1-3')
+    vim.cmd.highlight({"SignColumn", "ctermbg=Grey"})
+
+
+    -- use of telescope for non-LSP things :
+    local telescope_non_lsp = function()
+      -- parcourir l'aide vim avec telescope (Ctrl+T pour ouvrir l'aide dans un nouveau tab)
+      vim.keymap.set({'n', 'i', 'v'}, '<C-h>', require('telescope.builtin').help_tags, { noremap = true })
+
+      -- visualiser les buffers (:help buffers pour avoir la signification des caractères) :
+      vim.keymap.set({'n', 'i', 'v'}, '<C-b>', function() require('telescope.builtin').buffers() end, { noremap = true })
+
+      -- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
+      vim.keymap.set({'n', 'i', 'v'}, '<C-p>', function() require('telescope.builtin').find_files({path_display={"truncate"}}) end, { noremap = true })
+
+      -- grepper le répertoire courant avec telescope :
+      vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
+
+
+      -- Chaque commande telescope est utilisable sous deux formes qui sont équivalentes :
+      -- :Telescope buffers
+      -- :lua require('telescope.builtin').buffers()
+
+      -- Quelques commandes telescope utiles :
+      -- :Telescope buffers
+      -- :Telescope highlights
+      -- :Telescope man_pages
+      -- :Telescope help_tags
+
+    end  -- telescope_non_lsp
+    telescope_non_lsp()
+end -- NVIM_SECTION_LSP_RELATED
+NVIM_SECTION_LSP_RELATED()
+
+
+function NVIM_SECTION_MY_CHEATSHEET()
+    -- FIXME : ceci pourrait plutôt être un fichier OTL, et la fonction se contenterait de le charger dans un tab
+    --         (un OTL sera plus facile à écrire, maintenir et même consulter)
+    function display_mycheatsheet_in_tab()
+        local mycheatsheet_str = [=[
+    Pour afficher cette cheatsheet :   :Cheat  /  :call CheatsheetFunction()
+     
+    Pour grepper l'help avec telescope : CTRL+h  /  :Telescope help_tags
+     
+    ======= SEARCH :
+        :copen / :ccl[ose]     ouvrir / fermer la quickfix list
+        F8                     ouvrir nvim-tree sur le répertoire courant
+        S-F8                   ouvrir nvim-tree sur le git-root
+          ├─ g?                 afficher les commandes
+          ├─ q                  fermer nvim-tree
+          ├─ Entrée             ouvrir le fichier sélectionné dans le buffer courant
+          ├─ C-t / C-x / C-h    ouvrir le fichier sélectionné dans un nouveau tab / vsplit / hsplit
+          ├─ o                  ouvrir/fermer un répertoire
+          ├─ H                  toggle l'affichage des fichiers cachés
+          ├─ a / r / d          ajouter / renommer / supprimer un fichier
+          ├─ y  /  gy           copier le nom / le chemin complet du fichier
+          └─ -  /  P            remonter d'un cran dans la hiérarchie / se déplacer sur le répertoire parent
+     
+    ======= LAZY.NVIM :
+        https://github.com/folke/lazy.nvim
+          └─ :Lazy check        afficher l'UI de gestion de lazy.nvim (qui donne accès à toutes les commandes)
+     
+    ======= DEV :
+        CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur
+        :help tags
+          ├─build tags :
+          │   apt install exuberant-ctags
+          │   ctags --recurse --c++-kinds=+p --fields=+iaS --extras=+q .
+          ├─CTRL+]              jumper à la définition du tag
+          ├─CTRL+t              revenir à l'emplacement précédent
+          ├─g puis CTRL+]       choisir la destination du jump dans une liste
+          └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'
+        LSP
+          ├─ F12                 go to definition
+          ├─ Shift+F12           see references
+          ├─ gh                  infos sur le symbole courant dans une bulle hover
+          ├─ Alt+j / Alt+k       go to next/previous error
+          ├─ :LspStop/Start      (dés)activer le LSP client (semble mal marcher avec null-ls...)
+          ├─ :LspInfo            des infos sur la config des LSP (e.g. quels linters sont actifs)
+          ├─ gt                  toggle les diagnostics LSP
+          └─ CTRL+x CTRL+o       complétion intelligente respectant le contexte via LSP
+        CTRL+n                 complétion 'dumb'
+        Telescope
+          ├─ CTRL-n / CTRL-p     naviguer dans les matchs en mode insertion
+          ├─ Entrée / CTRL-t     ouvrir le match dans l'onglet courant / un nouvel onglet
+          ├─ CTRL+/  ou  ?       aide sur les shortcuts de telescope (insert-mode ou normal-mode)
+          ├─ CTRL+ALT+g          live_grep dans le répertoire courant
+          ├─ CTRL+ALT+t          rechercher des noms de symboles dans l'index LSP
+          └─ CTRL+p              fuzzy search files by name (telescope)
+        Alt-o                  alterner entre .h / .cpp
+        :AT                    alterner entre .h / .cpp dans un nouvel onglet
+        CTRL-y + ,             lancer emmet (pour tags HTML faciles)
+        CTRL-t + <sep>         (visual) tabularize avec des colonnes séparées par <sep>
+        :IndentLinesToggle     toggle le marqueur des indentations python
+        :gJ  /  gS             split/join les arguments d'une fonction, placer curseur sur parenthèse ouvrante
+        == / (visual)=         reformatter tout le fichier (ou uniquement la sélection visuelle)
+     
+    ======= MES ALIAS PERSOS (hors plugins) :
+        CTRL-HAUT/BAS          scroller une ligne vers le bas/haut
+        ALT-DROITE/GAUCHE      :tabNext / :tabPrev  (EDIT : également commandes natives : gt/gT)
+        ççh                    toggle hlsearch
+        ççi                    toggle ignorecase
+        ççn                    toggle line numbers
+        ççsyntax               refresh la syntaxe
+        |                      ouvrir le tag dans un onglet (ou sinon : C-w + C-]  puis C-w + S-T)
+     
+    ======= OTHER CORE VIM FEATURES :
+        :help fold
+          ├─:set foldlevel=3    setter le foldlevel
+          ├─zO / zC             ouvrir/fermer le fold actuel et tous ses fils
+          ├─zr / zm             ouvrir/fermer un niveau de fold supplémentaire
+          └─zR / zM             ouvrir/fermer TOUS les folds du fichier (utile dans vimdiff)
+        vimdiff file1 file2
+          ├─dp                  [P]ut the diff to other file
+          ├─do                  [O]btain the diff from other file
+          ├─:diffupdate         refresh diff
+          ├─CTRL-w + w          mettre le curseur sur l'autre fichier
+          └─zR / zM             afficher/masquer les portions identiques du fichier
+        :help split
+          ├─CTRL-w + _          maximiser le split courant
+          ├─CTRL-w + =          égaliser les splits
+          ├─:res[ize] 15        setter la taille du split à 15
+          ├─:res[ize] +3        augmenter la taille du split de 3 (également CTRL-w - 3+)
+          ├─CTRL-w + w          déplacer le focus sur un autre split
+          └─CTRL-w + CTRL-r     swapper les splits
+        :help C-r
+          ├─CTRL-r + REG        insère le contenu du registre REG (\" pour le registre anonyme)
+          ├─CTRL-r + /          insère le pattern de recherche
+          └─CTRL-r + CTRL-w     insère le mot sous le curseur
+        :norm! @a              applique la macro 'a' (à utiliser sur un groupe de lignes)
+        :set conceallevel=0    ne pas masquer de texte (e.g. markdown)
+        :echo mapleader        afficher le <leader> actuel
+        :map STRING            afficher les mappings commençant par STRING -> doc de mes raccourcis !
+        :map <leader>          afficher les mappings commençant par <leader> (marche aussi avec p.ex. <F5>)
+        ma / 'a                définir la / sauter vers la marque <a>
+        ''                     après avoir sauté vers une marque, '' permet de revenir là où on était
+     
+        ... to be continued ...
+    ]=]
+        vim.cmd("tabnew MYCHEATSHEET")
+
+        -- convert single string into table of lines :
+        local lines = {}
+        for s in mycheatsheet_str:gmatch("[^\r\n]+") do
+            table.insert(lines, s)
+        end
+
+        vim.fn.append(0, lines)
+        vim.fn.cursor(1, 1)
     end
-  end
-  -- gt sert normalement à switcher de tab, mais je n'utilise pas -> g[T]oggle :
-  vim.keymap.set({'n', 'v'}, 'gt', _G.toggle_diagnostics, bufopts)
 
-  -- Je préfère ces couleurs pour les diagnostics LSP :
-  -- :hi pour voir les highlights actuels (avec exemples)
-  -- pour info, valeurs par défaut :
-  -- DiagnosticError xxx ctermfg=1 guifg=Red
-  -- DiagnosticWarn xxx ctermfg=3 guifg=Orange
-  -- DiagnosticInfo xxx ctermfg=4 guifg=LightBlue
-  -- DiagnosticHint xxx ctermfg=7 guifg=LightGrey
-  -- NDM : vim.cmd() permet de passer des commandes vimscript
-  vim.cmd("hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red")
-  vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
-  vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
-  vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
-end  -- on_lsp_attach
+    -- how to display my sheatsheet :
+    vim.api.nvim_create_user_command('Cheat', display_mycheatsheet_in_tab, {})
+    vim.api.nvim_create_user_command('Cheatsheet', display_mycheatsheet_in_tab, {})
+end -- NVIM_SECTION_MY_CHEATSHEET
+NVIM_SECTION_MY_CHEATSHEET()
 
-require('lspconfig')['pyright'].setup{
-    on_attach = on_lsp_attach,
-    flags = lsp_flags,
-}
-require('lspconfig')['clangd'].setup{
-    on_attach = on_lsp_attach,
-    flags = lsp_flags,
-}
-require('lspconfig')['tsserver'].setup{
-    on_attach = on_lsp_attach,
-    flags = lsp_flags,
-}
-require('rust-tools').setup{
-    server = {on_attach = on_lsp_attach},
-    flags = lsp_flags,
-    tools = {inlay_hints = {
-        max_len_align = true,
-        highlight= "RustToolsTypeInfo",
-        }
-    },
-}
-
--- null-lsp :
-local null_ls = require("null-ls")
-local sources = {
-    null_ls.builtins.diagnostics.flake8.with({extra_args = {"--max-line-length","120"}}),
-}
-null_ls.setup({ sources = sources })
-
-
--- always show error columns :
-vim.api.nvim_set_option('signcolumn', 'auto:1-3')
-vim.cmd.highlight({"SignColumn", "ctermbg=Grey"})
-
-
--- use of telescope for non-LSP things :
-local telescope_non_lsp = function()
-  -- parcourir l'aide vim avec telescope (Ctrl+T pour ouvrir l'aide dans un nouveau tab)
-  vim.keymap.set({'n', 'i', 'v'}, '<C-h>', require('telescope.builtin').help_tags, { noremap = true })
-
-  -- visualiser les buffers (:help buffers pour avoir la signification des caractères) :
-  vim.keymap.set({'n', 'i', 'v'}, '<C-b>', function() require('telescope.builtin').buffers() end, { noremap = true })
-
-  -- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
-  vim.keymap.set({'n', 'i', 'v'}, '<C-p>', function() require('telescope.builtin').find_files({path_display={"truncate"}}) end, { noremap = true })
-
-  -- grepper le répertoire courant avec telescope :
-  vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
-
-
-  -- Chaque commande telescope est utilisable sous deux formes qui sont équivalentes :
-  -- :Telescope buffers
-  -- :lua require('telescope.builtin').buffers()
-
-  -- Quelques commandes telescope utiles :
-  -- :Telescope buffers
-  -- :Telescope highlights
-  -- :Telescope man_pages
-  -- :Telescope help_tags
-
-end  -- telescope_non_lsp
-telescope_non_lsp()
-
-
--- (LSP-RELATED) }}}
-
-
---# MY CHEATSHEET {{{
---########################################################################################################################
-
--- FIXME : ceci pourrait plutôt être un fichier OTL, et la fonction se contenterait de le charger dans un tab
---         (un OTL sera plus facile à écrire, maintenir et même consulter)
-function display_mycheatsheet_in_tab()
-    local mycheatsheet_str = [=[
-Pour afficher cette cheatsheet :   :Cheat  /  :call CheatsheetFunction()
- 
-Pour grepper l'help avec telescope : CTRL+h  /  :Telescope help_tags
- 
-======= SEARCH :
-    :copen / :ccl[ose]     ouvrir / fermer la quickfix list
-    F8                     ouvrir nvim-tree sur le répertoire courant
-    S-F8                   ouvrir nvim-tree sur le git-root
-      ├─ g?                 afficher les commandes
-      ├─ q                  fermer nvim-tree
-      ├─ Entrée             ouvrir le fichier sélectionné dans le buffer courant
-      ├─ C-t / C-x / C-h    ouvrir le fichier sélectionné dans un nouveau tab / vsplit / hsplit
-      ├─ o                  ouvrir/fermer un répertoire
-      ├─ H                  toggle l'affichage des fichiers cachés
-      ├─ a / r / d          ajouter / renommer / supprimer un fichier
-      ├─ y  /  gy           copier le nom / le chemin complet du fichier
-      └─ -  /  P            remonter d'un cran dans la hiérarchie / se déplacer sur le répertoire parent
- 
-======= LAZY.NVIM :
-    https://github.com/folke/lazy.nvim
-      └─ :Lazy check        afficher l'UI de gestion de lazy.nvim (qui donne accès à toutes les commandes)
- 
-======= DEV :
-    CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur
-    :help tags
-      ├─build tags :
-      │   apt install exuberant-ctags
-      │   ctags --recurse --c++-kinds=+p --fields=+iaS --extras=+q .
-      ├─CTRL+]              jumper à la définition du tag
-      ├─CTRL+t              revenir à l'emplacement précédent
-      ├─g puis CTRL+]       choisir la destination du jump dans une liste
-      └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'
-    LSP
-      ├─ F12                 go to definition
-      ├─ Shift+F12           see references
-      ├─ gh                  infos sur le symbole courant dans une bulle hover
-      ├─ Alt+j / Alt+k       go to next/previous error
-      ├─ :LspStop/Start      (dés)activer le LSP client (semble mal marcher avec null-ls...)
-      ├─ :LspInfo            des infos sur la config des LSP (e.g. quels linters sont actifs)
-      ├─ gt                  toggle les diagnostics LSP
-      └─ CTRL+x CTRL+o       complétion intelligente respectant le contexte via LSP
-    CTRL+n                 complétion 'dumb'
-    Telescope
-      ├─ CTRL-n / CTRL-p     naviguer dans les matchs en mode insertion
-      ├─ Entrée / CTRL-t     ouvrir le match dans l'onglet courant / un nouvel onglet
-      ├─ CTRL+/  ou  ?       aide sur les shortcuts de telescope (insert-mode ou normal-mode)
-      ├─ CTRL+ALT+g          live_grep dans le répertoire courant
-      ├─ CTRL+ALT+t          rechercher des noms de symboles dans l'index LSP
-      └─ CTRL+p              fuzzy search files by name (telescope)
-    Alt-o                  alterner entre .h / .cpp
-    :AT                    alterner entre .h / .cpp dans un nouvel onglet
-    CTRL-y + ,             lancer emmet (pour tags HTML faciles)
-    CTRL-t + <sep>         (visual) tabularize avec des colonnes séparées par <sep>
-    :IndentLinesToggle     toggle le marqueur des indentations python
-    :gJ  /  gS             split/join les arguments d'une fonction, placer curseur sur parenthèse ouvrante
-    == / (visual)=         reformatter tout le fichier (ou uniquement la sélection visuelle)
- 
-======= MES ALIAS PERSOS (hors plugins) :
-    CTRL-HAUT/BAS          scroller une ligne vers le bas/haut
-    ALT-DROITE/GAUCHE      :tabNext / :tabPrev  (EDIT : également commandes natives : gt/gT)
-    ççh                    toggle hlsearch
-    ççi                    toggle ignorecase
-    ççn                    toggle line numbers
-    ççsyntax               refresh la syntaxe
-    |                      ouvrir le tag dans un onglet (ou sinon : C-w + C-]  puis C-w + S-T)
- 
-======= OTHER CORE VIM FEATURES :
-    :help fold
-      ├─:set foldlevel=3    setter le foldlevel
-      ├─zO / zC             ouvrir/fermer le fold actuel et tous ses fils
-      ├─zr / zm             ouvrir/fermer un niveau de fold supplémentaire
-      └─zR / zM             ouvrir/fermer TOUS les folds du fichier (utile dans vimdiff)
-    vimdiff file1 file2
-      ├─dp                  [P]ut the diff to other file
-      ├─do                  [O]btain the diff from other file
-      ├─:diffupdate         refresh diff
-      ├─CTRL-w + w          mettre le curseur sur l'autre fichier
-      └─zR / zM             afficher/masquer les portions identiques du fichier
-    :help split
-      ├─CTRL-w + _          maximiser le split courant
-      ├─CTRL-w + =          égaliser les splits
-      ├─:res[ize] 15        setter la taille du split à 15
-      ├─:res[ize] +3        augmenter la taille du split de 3 (également CTRL-w - 3+)
-      ├─CTRL-w + w          déplacer le focus sur un autre split
-      └─CTRL-w + CTRL-r     swapper les splits
-    :help C-r
-      ├─CTRL-r + REG        insère le contenu du registre REG (\" pour le registre anonyme)
-      ├─CTRL-r + /          insère le pattern de recherche
-      └─CTRL-r + CTRL-w     insère le mot sous le curseur
-    :norm! @a              applique la macro 'a' (à utiliser sur un groupe de lignes)
-    :set conceallevel=0    ne pas masquer de texte (e.g. markdown)
-    :echo mapleader        afficher le <leader> actuel
-    :map STRING            afficher les mappings commençant par STRING -> doc de mes raccourcis !
-    :map <leader>          afficher les mappings commençant par <leader> (marche aussi avec p.ex. <F5>)
-    ma / 'a                définir la / sauter vers la marque <a>
-    ''                     après avoir sauté vers une marque, '' permet de revenir là où on était
- 
-    ... to be continued ...
-]=]
-    vim.cmd("tabnew MYCHEATSHEET")
-
-    -- convert single string into table of lines :
-    local lines = {}
-    for s in mycheatsheet_str:gmatch("[^\r\n]+") do
-        table.insert(lines, s)
-    end
-
-    vim.fn.append(0, lines)
-    vim.fn.cursor(1, 1)
-end
-
--- how to display my sheatsheet :
-vim.api.nvim_create_user_command('Cheat', display_mycheatsheet_in_tab, {})
-vim.api.nvim_create_user_command('Cheatsheet', display_mycheatsheet_in_tab, {})
-
--- (MY CHEATSHEET) }}}
 
 EOF
 endif  " has("nvim")
