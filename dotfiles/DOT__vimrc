@@ -707,6 +707,12 @@ function NVIM_SECTION_PLUGINS()
         -- debugger = DAP-client :
         {
             "https://github.com/puremourning/vimspector",
+            keys = {
+                -- lazy-load on vimspector shortcuts (so that the 'g' shortcuts are available for other plugins) :
+                '<leader><F5>',
+                '<leader><F9>',
+                '<leader><F8>',
+            },
             config = function()
                 -- démarrer / arrêter le débugging d'un programme :
                 vim.keymap.set('n', '<leader><F5>', '<Plug>VimspectorContinue', { noremap = true })
@@ -859,6 +865,16 @@ function NVIM_SECTION_PLUGINS()
                 })
                 vim.cmd [[colorscheme vscode]]
             end,
+        },
+
+        -- split + join function arguments :
+        {
+          'https://github.com/Wansmer/treesj',
+          dependencies = { 'nvim-treesitter/nvim-treesitter' },
+          config = function()
+            require('treesj').setup({})
+            vim.keymap.set('n', 'gs', require('treesj').toggle, { noremap = true })
+          end,
         },
     }
 
