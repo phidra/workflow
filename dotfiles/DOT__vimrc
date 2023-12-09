@@ -1014,6 +1014,18 @@ local telescope_non_lsp = function()
 
   -- grepper le répertoire courant avec telescope :
   vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
+
+
+  -- Chaque commande telescope est utilisable sous deux formes qui sont équivalentes :
+  -- :Telescope buffers
+  -- :lua require('telescope.builtin').buffers()
+
+  -- Quelques commandes telescope utiles :
+  -- :Telescope buffers
+  -- :Telescope highlights
+  -- :Telescope man_pages
+  -- :Telescope help_tags
+
 end  -- telescope_non_lsp
 telescope_non_lsp()
 
