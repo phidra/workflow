@@ -898,6 +898,22 @@ function NVIM_SECTION_PLUGINS()
               -- une intégration plus poussée avec git est possible, mais pour le moment je me contente d'un simple indicateur dans la gutter column
           end,
         },
+
+        -- markdown previewer :
+        {
+            -- nécessite deno ; ce que j'ai fait pour l'installer (ça n'installe qu'un unique binaire) :
+            --     curl -fsSL https://deno.land/x/install/install.sh | sh
+            --     mv ~/.deno/bin/deno ~/.local/bin/
+            -- NDM : la fenêtre de preview se mets à jour dynamiquement avec les modifications du buffer \o/
+            "https://github.com/toppair/peek.nvim",
+            event = { "VeryLazy" },
+            build = "deno task --quiet build:fast",
+            config = function()
+                require("peek").setup()
+                vim.api.nvim_create_user_command("PeekOpen", require("peek").open, {})
+                vim.api.nvim_create_user_command("PeekClose", require("peek").close, {})
+            end,
+        },
     }
 
     require("lazy").setup(plugins, opts)
