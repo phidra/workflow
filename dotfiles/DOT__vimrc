@@ -889,6 +889,15 @@ function NVIM_SECTION_PLUGINS()
               vim.cmd([[hi TreesitterContextBottom gui=underline]])
           end,
         },
+
+        -- indications sur le status git des fichiers :
+        {
+          'https://github.com/lewis6991/gitsigns.nvim',
+          config = function()
+              require('gitsigns').setup()
+              -- une intégration plus poussée avec git est possible, mais pour le moment je me contente d'un simple indicateur dans la gutter column
+          end,
+        },
     }
 
     require("lazy").setup(plugins, opts)
