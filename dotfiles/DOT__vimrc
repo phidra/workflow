@@ -224,6 +224,10 @@ vim.cmd.highlight({"FoldColumn", "ctermbg=250"})
 vim.api.nvim_create_autocmd({"BufEnter"}, {
     pattern = {"*.otl"},
     callback = function (opts)
+
+        -- without termguicolors, lualine doesn't render properly -> OTL files do not need lualine anyway :
+        require('lualine').hide()
+
         -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
         -- vim.opt_local: behaves like :setlocal
         vim.opt_local.wrap = true
