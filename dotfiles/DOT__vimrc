@@ -876,6 +876,19 @@ function NVIM_SECTION_PLUGINS()
             vim.keymap.set('n', 'gs', require('treesj').toggle, { noremap = true })
           end,
         },
+
+        -- garder la fonction active visible sur la première ligne quand on scrolle sur une fonction qui dépasse un écran:
+        {
+          'https://github.com/nvim-treesitter/nvim-treesitter-context',
+          dependencies = { 'nvim-treesitter/nvim-treesitter' },
+          config = function()
+              require('treesitter-context').setup({
+              })
+              vim.cmd([[hi TreesitterContext gui=bold guibg=LightGrey]])
+              vim.cmd([[hi TreesitterContextSeparator gui=underline]])
+              vim.cmd([[hi TreesitterContextBottom gui=underline]])
+          end,
+        },
     }
 
     require("lazy").setup(plugins, opts)
