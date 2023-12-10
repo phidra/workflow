@@ -410,11 +410,15 @@ function NEOVIM_SECTION_PLUGINS()
               -- :Telescope buffers
               -- :lua require('telescope.builtin').buffers()
 
-              -- Quelques commandes telescope utiles :
+              -- Quelques commandes telescope qui peuvent être utiles :
               -- :Telescope buffers
               -- :Telescope highlights
               -- :Telescope man_pages
               -- :Telescope help_tags
+              -- :Telescope vim_options
+              -- :Telescope autocommands = lister les commandes automatiques
+              -- :Telescope keymaps      = lister les raccourcis définis
+              -- :Telescope builtin      = lister les builtin telescope
 
             end,
         },
