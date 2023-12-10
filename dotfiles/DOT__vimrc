@@ -215,107 +215,7 @@ lua << EOF
 --  cf. https://neovim.io/doc/user/lua-guide.html
 
 
-function NVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
-    -- more visible left-column signs :
-    vim.cmd.highlight({"FoldColumn", "ctermbg=250"})
-
-    -- options spécifiques à VimOutliner :
-    vim.api.nvim_create_autocmd({"BufEnter"}, {
-        pattern = {"*.otl"},
-        callback = function (opts)
-
-            -- without termguicolors, lualine doesn't render properly -> OTL files do not need lualine anyway :
-            require('lualine').hide()
-
-            -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
-            -- vim.opt_local: behaves like :setlocal
-            vim.opt_local.wrap = true
-            vim.opt_local.linebreak = true
-            vim.opt_local.termguicolors = false  -- if set at true by colorschemes, this messes up with my vimoutliner colors
-            vim.cmd([[
-                " on part d'une base colorscheme :
-                colorscheme morning
-
-                " overriding default colors (cf. :help cterm-colors) :
-                hi OL1 ctermfg=Black
-                hi OL2 ctermfg=DarkRed
-                hi OL3 ctermfg=DarkBlue
-                hi OL4 ctermfg=DarkYellow
-                hi OL5 ctermfg=DarkMagenta
-                hi OL6 ctermfg=DarkCyan
-                hi OL7 ctermfg=DarkGreen
-                hi OL8 ctermfg=Grey
-
-                hi Folded ctermfg=DarkGray ctermbg=Gray
-
-
-                " I prefer a large outline lindewidth :
-                set tw=120
-
-                " a convenient localleader for me ("ç" instead of ",") :
-                let maplocalleader = "çç"
-
-                " color for body text
-                hi BT1 guifg=black	ctermfg=black
-                hi BT2 guifg=black	ctermfg=black
-                hi BT3 guifg=black	ctermfg=black
-                hi BT4 guifg=black	ctermfg=black
-                hi BT5 guifg=black	ctermfg=black
-                hi BT6 guifg=black	ctermfg=black
-                hi BT7 guifg=black	ctermfg=black
-                hi BT8 guifg=black	ctermfg=black
-                hi BT9 guifg=black	ctermfg=black
-
-                " color for pre-formatted text
-                hi PT1 guifg=black	ctermfg=black
-                hi PT2 guifg=black	ctermfg=black
-                hi PT3 guifg=black	ctermfg=black
-                hi PT4 guifg=black	ctermfg=black
-                hi PT5 guifg=black	ctermfg=black
-                hi PT6 guifg=black	ctermfg=black
-                hi PT7 guifg=black	ctermfg=black
-                hi PT8 guifg=black	ctermfg=black
-                hi PT9 guifg=black	ctermfg=black
-
-                " color for user text (wrapping)
-                hi UT1 guifg=black	ctermfg=black
-                hi UT2 guifg=black	ctermfg=black
-                hi UT3 guifg=black	ctermfg=black
-                hi UT4 guifg=black	ctermfg=black
-                hi UT5 guifg=black	ctermfg=black
-                hi UT6 guifg=black	ctermfg=black
-                hi UT7 guifg=black	ctermfg=black
-                hi UT8 guifg=black	ctermfg=black
-                hi UT9 guifg=black	ctermfg=black
-
-                " color for user text (non-wrapping)
-                hi UB1 guifg=black	ctermfg=black
-                hi UB2 guifg=black	ctermfg=black
-                hi UB3 guifg=black	ctermfg=black
-                hi UB4 guifg=black	ctermfg=black
-                hi UB5 guifg=black	ctermfg=black
-                hi UB6 guifg=black	ctermfg=black
-                hi UB7 guifg=black	ctermfg=black
-                hi UB8 guifg=black	ctermfg=black
-                hi UB9 guifg=black	ctermfg=black
-            ]])
-            -- vim.cmd.highlight({"Search", "cterm=reverse"})
-            -- vim.cmd.highlight({"IncSearch", "cterm=reverse"})
-            vim.cmd.highlight({"CurSearch", "ctermbg=LightGray"})
-
-            -- les leading tabulations (importantes en OTL) sont coloriées en Whitespace, qui est un lien vers NonText
-            -- je les veux sans coloration particulières (elles partagent ce groupe avec les trailing whitespace, qui perdront aussi leur background)
-            vim.opt_local.list = true
-            vim.cmd([[set listchars=trail:●,nbsp:␣,precedes:←,extends:→]])
-            vim.opt_local.listchars:append({ tab = "  " })
-            vim.cmd.highlight({"NonText", "NONE"})
-        end,
-    })
-end -- NVIM_SECTION_VIMOUTLINER_AND_VIMDIFF
-NVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
-
-
-function NVIM_SECTION_CODE_SETTINGS()
+function NEOVIM_SECTION_CODE_SETTINGS()
     -- settings spécifiques aux buffers contenant du code :
     vim.api.nvim_create_autocmd({"BufEnter"}, {
         pattern = {
@@ -363,6 +263,10 @@ function NVIM_SECTION_CODE_SETTINGS()
             vim.cmd.edit()
         end,
     })
+
+    -- always show error columns :
+    vim.api.nvim_set_option('signcolumn', 'auto:1-3')
+    vim.cmd.highlight({"SignColumn", "ctermbg=Grey"})
 
     -- coloration des type-infos par rust-tools à la fin de la ligne :
     vim.cmd.highlight({"RustToolsTypeInfo", "cterm=bold"})
@@ -412,11 +316,12 @@ function NVIM_SECTION_CODE_SETTINGS()
     endfunction
     autocmd FileType qf call AdjustWindowHeight(3, 40)
     ]])
-end -- NVIM_SECTION_CODE_SETTINGS
-NVIM_SECTION_CODE_SETTINGS()
+end -- NEOVIM_SECTION_CODE_SETTINGS
+NEOVIM_SECTION_CODE_SETTINGS()
 
 
-function NVIM_SECTION_PLUGINS()
+
+function NEOVIM_SECTION_PLUGINS()
     -- lancement de lazy.nvim :
     local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
     if not vim.loop.fs_stat(lazypath) then
@@ -485,8 +390,32 @@ function NVIM_SECTION_PLUGINS()
               require('telescope').setup{
               defaults = {
                 dynamic_preview_title = true,
-              },
-            }
+                },
+              }
+
+              -- telescope for non-LSP things :
+              -- parcourir l'aide vim avec telescope (Ctrl+T pour ouvrir l'aide dans un nouveau tab)
+              vim.keymap.set({'n', 'i', 'v'}, '<C-h>', require('telescope.builtin').help_tags, { noremap = true })
+
+              -- visualiser les buffers (:help buffers pour avoir la signification des caractères) :
+              vim.keymap.set({'n', 'i', 'v'}, '<C-b>', function() require('telescope.builtin').buffers() end, { noremap = true })
+
+              -- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
+              vim.keymap.set({'n', 'i', 'v'}, '<C-p>', function() require('telescope.builtin').find_files({path_display={"truncate"}}) end, { noremap = true })
+
+              -- grepper le répertoire courant avec telescope :
+              vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
+
+              -- Chaque commande telescope est utilisable sous deux formes qui sont équivalentes :
+              -- :Telescope buffers
+              -- :lua require('telescope.builtin').buffers()
+
+              -- Quelques commandes telescope utiles :
+              -- :Telescope buffers
+              -- :Telescope highlights
+              -- :Telescope man_pages
+              -- :Telescope help_tags
+
             end,
         },
 
@@ -917,18 +846,117 @@ function NVIM_SECTION_PLUGINS()
     }
 
     require("lazy").setup(plugins, opts)
-end -- NVIM_SECTION_PLUGINS
-NVIM_SECTION_PLUGINS()
+end -- NEOVIM_SECTION_PLUGINS
+NEOVIM_SECTION_PLUGINS()
 
 
-function NVIM_SECTION_LSP_RELATED()
+function NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
+    -- more visible left-column signs :
+    vim.cmd.highlight({"FoldColumn", "ctermbg=250"})
+
+    -- options spécifiques à VimOutliner :
+    vim.api.nvim_create_autocmd({"BufEnter"}, {
+        pattern = {"*.otl"},
+        callback = function (opts)
+
+            -- without termguicolors, lualine doesn't render properly -> OTL files do not need lualine anyway :
+            require('lualine').hide()
+
+            -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
+            -- vim.opt_local: behaves like :setlocal
+            vim.opt_local.wrap = true
+            vim.opt_local.linebreak = true
+            vim.opt_local.termguicolors = false  -- if set at true by colorschemes, this messes up with my vimoutliner colors
+            vim.cmd([[
+                " on part d'une base colorscheme :
+                colorscheme morning
+
+                " overriding default colors (cf. :help cterm-colors) :
+                hi OL1 ctermfg=Black
+                hi OL2 ctermfg=DarkRed
+                hi OL3 ctermfg=DarkBlue
+                hi OL4 ctermfg=DarkYellow
+                hi OL5 ctermfg=DarkMagenta
+                hi OL6 ctermfg=DarkCyan
+                hi OL7 ctermfg=DarkGreen
+                hi OL8 ctermfg=Grey
+
+                hi Folded ctermfg=DarkGray ctermbg=Gray
+
+
+                " I prefer a large outline lindewidth :
+                set tw=120
+
+                " a convenient localleader for me ("ç" instead of ",") :
+                let maplocalleader = "çç"
+
+                " color for body text
+                hi BT1 guifg=black	ctermfg=black
+                hi BT2 guifg=black	ctermfg=black
+                hi BT3 guifg=black	ctermfg=black
+                hi BT4 guifg=black	ctermfg=black
+                hi BT5 guifg=black	ctermfg=black
+                hi BT6 guifg=black	ctermfg=black
+                hi BT7 guifg=black	ctermfg=black
+                hi BT8 guifg=black	ctermfg=black
+                hi BT9 guifg=black	ctermfg=black
+
+                " color for pre-formatted text
+                hi PT1 guifg=black	ctermfg=black
+                hi PT2 guifg=black	ctermfg=black
+                hi PT3 guifg=black	ctermfg=black
+                hi PT4 guifg=black	ctermfg=black
+                hi PT5 guifg=black	ctermfg=black
+                hi PT6 guifg=black	ctermfg=black
+                hi PT7 guifg=black	ctermfg=black
+                hi PT8 guifg=black	ctermfg=black
+                hi PT9 guifg=black	ctermfg=black
+
+                " color for user text (wrapping)
+                hi UT1 guifg=black	ctermfg=black
+                hi UT2 guifg=black	ctermfg=black
+                hi UT3 guifg=black	ctermfg=black
+                hi UT4 guifg=black	ctermfg=black
+                hi UT5 guifg=black	ctermfg=black
+                hi UT6 guifg=black	ctermfg=black
+                hi UT7 guifg=black	ctermfg=black
+                hi UT8 guifg=black	ctermfg=black
+                hi UT9 guifg=black	ctermfg=black
+
+                " color for user text (non-wrapping)
+                hi UB1 guifg=black	ctermfg=black
+                hi UB2 guifg=black	ctermfg=black
+                hi UB3 guifg=black	ctermfg=black
+                hi UB4 guifg=black	ctermfg=black
+                hi UB5 guifg=black	ctermfg=black
+                hi UB6 guifg=black	ctermfg=black
+                hi UB7 guifg=black	ctermfg=black
+                hi UB8 guifg=black	ctermfg=black
+                hi UB9 guifg=black	ctermfg=black
+            ]])
+            -- vim.cmd.highlight({"Search", "cterm=reverse"})
+            -- vim.cmd.highlight({"IncSearch", "cterm=reverse"})
+            vim.cmd.highlight({"CurSearch", "ctermbg=LightGray"})
+
+            -- les leading tabulations (importantes en OTL) sont coloriées en Whitespace, qui est un lien vers NonText
+            -- je les veux sans coloration particulières (elles partagent ce groupe avec les trailing whitespace, qui perdront aussi leur background)
+            vim.opt_local.list = true
+            vim.cmd([[set listchars=trail:●,nbsp:␣,precedes:←,extends:→]])
+            vim.opt_local.listchars:append({ tab = "  " })
+            vim.cmd.highlight({"NonText", "NONE"})
+        end,
+    })
+end -- NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF
+NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
+
+
+function NEOVIM_SECTION_LSP_RELATED()
     -- See `:help vim.diagnostic.*` for documentation on any of the below functions
 
 
     -- Use an on_attach function to only map the following keys
     -- after the language server attaches to the current buffer
     local on_lsp_attach = function(client, bufnr)
-
       -- weirdly, lsp highlights overwrite polyglot (and are awful + laggy), better to disable them :
       -- see https://neovim.io/doc/user/lsp.html#lsp-semantic-highlight
       -- see https://gist.github.com/swarn/fb37d9eefe1bc616c2a7e476c0bc0316
@@ -1032,52 +1060,17 @@ function NVIM_SECTION_LSP_RELATED()
             }
         },
     }
-
     -- null-lsp :
     local null_ls = require("null-ls")
     local sources = {
         null_ls.builtins.diagnostics.flake8.with({extra_args = {"--max-line-length","120"}}),
     }
     null_ls.setup({ sources = sources })
+end -- NEOVIM_SECTION_LSP_RELATED
+NEOVIM_SECTION_LSP_RELATED()
 
 
-    -- always show error columns :
-    vim.api.nvim_set_option('signcolumn', 'auto:1-3')
-    vim.cmd.highlight({"SignColumn", "ctermbg=Grey"})
-
-
-    -- use of telescope for non-LSP things :
-    local telescope_non_lsp = function()
-      -- parcourir l'aide vim avec telescope (Ctrl+T pour ouvrir l'aide dans un nouveau tab)
-      vim.keymap.set({'n', 'i', 'v'}, '<C-h>', require('telescope.builtin').help_tags, { noremap = true })
-
-      -- visualiser les buffers (:help buffers pour avoir la signification des caractères) :
-      vim.keymap.set({'n', 'i', 'v'}, '<C-b>', function() require('telescope.builtin').buffers() end, { noremap = true })
-
-      -- Ctrl+p already use in vscode : https://linuxpip.org/vscode-find-file/
-      vim.keymap.set({'n', 'i', 'v'}, '<C-p>', function() require('telescope.builtin').find_files({path_display={"truncate"}}) end, { noremap = true })
-
-      -- grepper le répertoire courant avec telescope :
-      vim.keymap.set({'n', 'i', 'v'}, '<C-A-g>', require('telescope.builtin').live_grep, bufopts)
-
-
-      -- Chaque commande telescope est utilisable sous deux formes qui sont équivalentes :
-      -- :Telescope buffers
-      -- :lua require('telescope.builtin').buffers()
-
-      -- Quelques commandes telescope utiles :
-      -- :Telescope buffers
-      -- :Telescope highlights
-      -- :Telescope man_pages
-      -- :Telescope help_tags
-
-    end  -- telescope_non_lsp
-    telescope_non_lsp()
-end -- NVIM_SECTION_LSP_RELATED
-NVIM_SECTION_LSP_RELATED()
-
-
-function NVIM_SECTION_MY_CHEATSHEET()
+function NEOVIM_SECTION_MY_CHEATSHEET()
     -- FIXME : ceci pourrait plutôt être un fichier OTL, et la fonction se contenterait de le charger dans un tab
     --         (un OTL sera plus facile à écrire, maintenir et même consulter)
     function display_mycheatsheet_in_tab()
@@ -1102,25 +1095,18 @@ function NVIM_SECTION_MY_CHEATSHEET()
      
     ======= LAZY.NVIM :
         https://github.com/folke/lazy.nvim
-          └─ :Lazy check        afficher l'UI de gestion de lazy.nvim (qui donne accès à toutes les commandes)
+          └─ :Lazy              afficher l'UI de gestion de lazy.nvim (qui donne accès à toutes les commandes)
      
     ======= DEV :
         CTRL-o / CTRL-i        jumper à un emplacement précédent / suivant du curseur
-        :help tags
-          ├─build tags :
-          │   apt install exuberant-ctags
-          │   ctags --recurse --c++-kinds=+p --fields=+iaS --extras=+q .
-          ├─CTRL+]              jumper à la définition du tag
-          ├─CTRL+t              revenir à l'emplacement précédent
-          ├─g puis CTRL+]       choisir la destination du jump dans une liste
-          └─vim -t pouet        ouvrim vim sur le fichier + à l'emplacement du tag 'pouet'
         LSP
-          ├─ F12                 go to definition
+          ├─ F12   (g+F12)       go to definition (in a new  tab)
           ├─ Shift+F12           see references
           ├─ gh                  infos sur le symbole courant dans une bulle hover
           ├─ Alt+j / Alt+k       go to next/previous error
           ├─ :LspStop/Start      (dés)activer le LSP client (semble mal marcher avec null-ls...)
           ├─ :LspInfo            des infos sur la config des LSP (e.g. quels linters sont actifs)
+          ├─ :LspLog             fichier de log LSP
           ├─ gt                  toggle les diagnostics LSP
           └─ CTRL+x CTRL+o       complétion intelligente respectant le contexte via LSP
         CTRL+n                 complétion 'dumb'
@@ -1132,21 +1118,17 @@ function NVIM_SECTION_MY_CHEATSHEET()
           ├─ CTRL+ALT+t          rechercher des noms de symboles dans l'index LSP
           └─ CTRL+p              fuzzy search files by name (telescope)
         Alt-o                  alterner entre .h / .cpp
-        :AT                    alterner entre .h / .cpp dans un nouvel onglet
-        CTRL-y + ,             lancer emmet (pour tags HTML faciles)
         CTRL-t + <sep>         (visual) tabularize avec des colonnes séparées par <sep>
-        :IndentLinesToggle     toggle le marqueur des indentations python
-        :gJ  /  gS             split/join les arguments d'une fonction, placer curseur sur parenthèse ouvrante
-        == / (visual)=         reformatter tout le fichier (ou uniquement la sélection visuelle)
+        gs                     split/join les arguments d'une fonction
+        ==   (visual : =)      reformatter tout le fichier (ou uniquement la sélection visuelle)
      
     ======= MES ALIAS PERSOS (hors plugins) :
         CTRL-HAUT/BAS          scroller une ligne vers le bas/haut
-        ALT-DROITE/GAUCHE      :tabNext / :tabPrev  (EDIT : également commandes natives : gt/gT)
+        ALT-DROITE/GAUCHE      :tabNext / :tabPrev  (également commandes natives : gt/gT)
         ççh                    toggle hlsearch
         ççi                    toggle ignorecase
         ççn                    toggle line numbers
         ççsyntax               refresh la syntaxe
-        |                      ouvrir le tag dans un onglet (ou sinon : C-w + C-]  puis C-w + S-T)
      
     ======= OTHER CORE VIM FEATURES :
         :help fold
@@ -1154,7 +1136,7 @@ function NVIM_SECTION_MY_CHEATSHEET()
           ├─zO / zC             ouvrir/fermer le fold actuel et tous ses fils
           ├─zr / zm             ouvrir/fermer un niveau de fold supplémentaire
           └─zR / zM             ouvrir/fermer TOUS les folds du fichier (utile dans vimdiff)
-        vimdiff file1 file2
+        nvim -d -O file1 file2
           ├─dp                  [P]ut the diff to other file
           ├─do                  [O]btain the diff from other file
           ├─:diffupdate         refresh diff
@@ -1196,8 +1178,8 @@ function NVIM_SECTION_MY_CHEATSHEET()
     -- how to display my sheatsheet :
     vim.api.nvim_create_user_command('Cheat', display_mycheatsheet_in_tab, {})
     vim.api.nvim_create_user_command('Cheatsheet', display_mycheatsheet_in_tab, {})
-end -- NVIM_SECTION_MY_CHEATSHEET
-NVIM_SECTION_MY_CHEATSHEET()
+end -- NEOVIM_SECTION_MY_CHEATSHEET
+NEOVIM_SECTION_MY_CHEATSHEET()
 
 
 EOF
