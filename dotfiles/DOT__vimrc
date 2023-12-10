@@ -423,6 +423,16 @@ function NEOVIM_SECTION_PLUGINS()
             end,
         },
 
+        -- telescope picker sur les fichiers récents :
+        {
+            "smartpde/telescope-recent-files",
+            config= function()
+                require("telescope").load_extension("recent_files")
+                -- je choisis le shortcut "gp" pour se rapprocher de <Ctrl+p> qui est un autre picker sur les fichiers
+                vim.keymap.set({"n"}, "gp", require('telescope').extensions.recent_files.pick, {noremap = true, silent = true})
+            end,
+        },
+
         -- enhances ga to display info on a character, including its digraph code
         {
             'https://github.com/tpope/vim-characterize'
