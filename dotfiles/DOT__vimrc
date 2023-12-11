@@ -217,23 +217,24 @@ lua << EOF
 
 function NEOVIM_SECTION_CODE_SETTINGS()
     -- settings spécifiques aux buffers contenant du code :
+    local code_patterns = {
+        '*.html',
+        '*.css',
+        '*.py',
+        '*.js',
+        '*.json',
+        '*.ts',
+        '*.c',
+        '*.cpp',
+        '*.h',
+        '*.hpp',
+        '*.rb',
+        '*.sh',
+        '*.Jenkinsfile',
+        '*.rs'
+    }
     vim.api.nvim_create_autocmd({"BufEnter"}, {
-        pattern = {
-            '*.html',
-            '*.css',
-            '*.py',
-            '*.js',
-            '*.json',
-            '*.ts',
-            '*.c',
-            '*.cpp',
-            '*.h',
-            '*.hpp',
-            '*.rb',
-            '*.sh',
-            '*.Jenkinsfile',
-            '*.rs'
-        },
+        pattern = code_patterns,
         callback = function ()
             -- limites verticales à 120 caractères :
             vim.opt.colorcolumn = {100, 120}
@@ -257,8 +258,12 @@ function NEOVIM_SECTION_CODE_SETTINGS()
 
             -- numéros de lignes :
             vim.opt.nu = true;
-
-            -- on force un `edit` sur les buffers de code pour contourner le bug treesitter en triggant
+        end,
+    })
+    vim.api.nvim_create_autocmd({"BufReadPost"}, {
+        pattern = code_patterns,
+        callback = function ()
+            -- on force un `edit` sur les buffers de code (pour contourner le bug treesitter) en triggant
             -- manuellement le déclenchement des clients LSP (cf. mes notes dans le plugin treesitter)
             vim.cmd.edit()
         end,
@@ -381,7 +386,7 @@ function NEOVIM_SECTION_PLUGINS()
             end,
         },
 
-        -- " fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
+        -- TELESCOPE = fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
         {
             'https://github.com/nvim-telescope/telescope.nvim',
             tag = '0.1.4',
