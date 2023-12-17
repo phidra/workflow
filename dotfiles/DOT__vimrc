@@ -10,7 +10,7 @@
 " L'idée est que la config lua a vocation à n'être utilisée qu'avec neovim sur mes postes de travail,
 " alors que la config vimscript peut être utilisée avec un vim vanilla, depuis n'importe où.
 
-if 1  " pour homogénéiser les foldings entre les deux sections
+if 1  " cet if inutile est là pour homogénéiser les foldings entre les deux sections
 
 function VIM_SECTION_GENERAL()
 
@@ -260,12 +260,22 @@ function NEOVIM_SECTION_CODE_SETTINGS()
             vim.opt.nu = true;
         end,
     })
+    local has_already_reedited_the_buffer_to_work_around_treesitter_bug = false
     vim.api.nvim_create_autocmd({"BufReadPost"}, {
         pattern = code_patterns,
         callback = function ()
             -- on force un `edit` sur les buffers de code (pour contourner le bug treesitter) en triggant
             -- manuellement le déclenchement des clients LSP (cf. mes notes dans le plugin treesitter)
-            vim.cmd.edit()
+            -- NOTE : trigger l'edit immédiatement ne fonctionne pas ; je sette donc un délai, ajusté expérimentalement...
+            -- (c'est vraiment hacky, beurk)
+            -- En dernier recours, refaire ":e" manuellement.
+            vim.defer_fn(function()
+                if not has_already_reedited_the_buffer_to_work_around_treesitter_bug  -- ensure only called once
+                then
+                    has_already_reedited_the_buffer_to_work_around_treesitter_bug = true
+                    vim.cmd.edit()
+                end
+            end, 200)
         end,
     })
 
@@ -372,6 +382,14 @@ function NEOVIM_SECTION_PLUGINS()
                     filters = {
                         dotfiles = true,
                     },
+
+                    -- configs suggested by https://github.com/ahmedkhalf/project.nvim :
+                    sync_root_with_cwd = true,
+                    respect_buf_cwd = true,
+                    update_focused_file = {
+                        enable = true,
+                        update_root = true
+                        },
                 }
                 -- F8 = ouvrir nvim-tree sur le fichier courant :
                 vim.keymap.set({'n', 'i', 'v'}, '<F8>', ':NvimTreeFindFileToggle<CR>', { noremap = true })
@@ -555,7 +573,7 @@ function NEOVIM_SECTION_PLUGINS()
                 highlight = { enable = true },
                 indent = { enable = false },
               })
-              -- NOTE : il y a un bug que je n'explique pas avec nvim-treesitter : il empêche le démarrage automatiuqe des clients LSP.
+              -- NOTE : il y a un bug que je n'explique pas avec nvim-treesitter : il empêche le démarrage automatique des clients LSP.
               --        Pour contourner, il suffit d'éditer le fichier `:e`, ce qui trigge le démarrage du client LSP.
             end,
         },
@@ -643,7 +661,10 @@ function NEOVIM_SECTION_PLUGINS()
         {
             "https://github.com/ahmedkhalf/project.nvim",
             config = function()
-                require('project_nvim').setup {}
+                require('project_nvim').setup {
+                  detection_methods = { "pattern" },  -- lsp sometimes sets root to ~ (and I don't really want lsp root anyway : I want git)
+                }
+
             end,
         },
 
@@ -795,6 +816,50 @@ function NEOVIM_SECTION_PLUGINS()
         {
             "https://github.com/vimoutliner/vimoutliner.git",
             ft = 'votl',
+            build = function()
+                -- j'ajoute une étape de build custom à cause de la conjonction de deux faits :
+                --
+                -- smart_paste :
+                --     vimoutliner a une extension "smart_paste" que j'aimerais désactiver
+                --     pour la désactiver, il ne faut pas la charger, i.e. que g:vo_modules_load ne contienne pas 'smart_paste'
+                --     ceci doit être défini dans le vimoutlinerrc
+                --
+                -- vimoutlinerrc :
+                --     dans mon workflow, je ne veux pas avoir à gérer un fichier de config spécifique à un plugin
+                --     (heureusement que tous les plugins vim ne font pas ça...)
+                --     mais je ne définis pas mon propre vimoutlinerrc, le plugin vimoutliner utilise un fichier par défaut
+                --     ce fichier par défaut contient... l'activation du smart_paste :
+                --         let g:vo_modules_load = "checkbox:tags:smart_paste"
+                --
+                -- mon but = je veux à la fois ne pas avoir à installer un fichier de config spécifique + désactiver le smart_paste
+                -- pour cela, au build du plugin, je remplace le fichier de config par défaut du plugin par un à moi.
+                -- (note : on dirait que ça crée une erreur avec un autre plugin ; comme elle n'arrive qu'une fois = au build, je n'investigue pas)
+                --
+                -- Si quelque chose tourne mal, ne pas hésiter à commenter le plugin, puis :Lazy clean , puis décommenter le plugin.
+                local vimoutlinerrc = vim.fn.stdpath("data") .. "/lazy/vimoutliner/vimoutlinerrc"
+
+                -- d'abord on sauvegarde l'ancien fichier :
+                local SAVED_vimoutlinerrc = vim.fn.stdpath("data") .. "/lazy/vimoutliner/SAVED__vimoutlinerrc"
+                print("OTL tweaking> renaming ", vimoutlinerrc, " to ", SAVED_vimoutlinerrc)
+                vim.loop.fs_rename(vimoutlinerrc, SAVED_vimoutlinerrc)
+
+                -- puis on écrit le nouveau :
+                local file = io.open(vimoutlinerrc, "w")
+                if file then
+                    file:write([[
+let g:vo_modules_load = "checkbox:format"
+
+" I prefer a large outline lindewidth :
+set tw=120
+
+" a convenient localleader for me ("ç" instead of ",") :
+let maplocalleader = "çç"
+]])
+                    file:close()
+                else
+                    print("OTL tweaking> erreur à l'écriture d'un vimoutlinerrc spécial.")
+                end
+            end,
         },
 
         -- colorscheme :
@@ -835,15 +900,6 @@ function NEOVIM_SECTION_PLUGINS()
               vim.cmd([[hi TreesitterContext gui=bold guibg=LightGrey]])
               vim.cmd([[hi TreesitterContextSeparator gui=underline]])
               vim.cmd([[hi TreesitterContextBottom gui=underline]])
-          end,
-        },
-
-        -- indications sur le status git des fichiers :
-        {
-          'https://github.com/lewis6991/gitsigns.nvim',
-          config = function()
-              require('gitsigns').setup()
-              -- une intégration plus poussée avec git est possible, mais pour le moment je me contente d'un simple indicateur dans la gutter column
           end,
         },
 
