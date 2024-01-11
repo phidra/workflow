@@ -890,19 +890,6 @@ let maplocalleader = "çç"
           end,
         },
 
-        -- garder la fonction active visible sur la première ligne quand on scrolle sur une fonction qui dépasse un écran:
-        {
-          'https://github.com/nvim-treesitter/nvim-treesitter-context',
-          dependencies = { 'nvim-treesitter/nvim-treesitter' },
-          config = function()
-              require('treesitter-context').setup({
-              })
-              vim.cmd([[hi TreesitterContext gui=bold guibg=LightGrey]])
-              vim.cmd([[hi TreesitterContextSeparator gui=underline]])
-              vim.cmd([[hi TreesitterContextBottom gui=underline]])
-          end,
-        },
-
         -- markdown previewer :
         {
             -- nécessite deno ; ce que j'ai fait pour l'installer (ça n'installe qu'un unique binaire) :
