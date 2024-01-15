@@ -216,3 +216,5 @@ function j() {
     just "$@"
   fi
 }
+
+export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"

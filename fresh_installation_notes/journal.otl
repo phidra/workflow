@@ -52,7 +52,7 @@ PHASE 1 = les étapes à faire en priorité sont celles facilitant la suite de l
 			:PlugInstall
 		Dépendances de telescope :
 			sudo apt install fd-find
-			sudo apt install ripgrep
+			sudo apt install ripgrep  # EDIT : il faut aussi copier mon DOT__ripgreprc dans ~/.ripgreprc)
 	ZSH RELATED :
 		zsh :
 			sudo apt install zsh
