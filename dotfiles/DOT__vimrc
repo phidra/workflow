@@ -649,9 +649,12 @@ function NEOVIM_SECTION_PLUGINS()
         {
             'https://github.com/tzachar/local-highlight.nvim',
             config = function()
+                -- être plus réactif que les 4000 ms par défaut :
+                vim.api.nvim_set_option('updatetime', 300)
+
                 require('local-highlight').setup({
                     file_types = {'python', 'cpp', 'rust'},
-                    hlgroup = 'CursorColumn',
+                    hlgroup = 'TabLine',
                     insert_mode = false,
                 })
             end
@@ -717,7 +720,10 @@ function NEOVIM_SECTION_PLUGINS()
 
             config = function()
                 require("outline").setup {
-                -- Your setup opts here (leave empty to use defaults)
+                    -- unfold all at startup :
+                    symbol_folding = {
+                      autofold_depth = false,
+                    },
                 }
             end,
         },
@@ -1108,6 +1114,7 @@ function NEOVIM_SECTION_LSP_RELATED()
     require('lspconfig')['clangd'].setup{
         on_attach = on_lsp_attach,
         flags = lsp_flags,
+        cmd = { "clangd-14" },
     }
     require('lspconfig')['tsserver'].setup{
         on_attach = on_lsp_attach,
