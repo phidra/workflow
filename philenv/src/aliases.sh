@@ -46,6 +46,10 @@ alias myip="curl http://wtfismyip.com/text"
 alias dco="docker-compose"
 # alias myclangformat="clang-format -style=\"{BasedOnStyle: Chromium, IndentWidth: 4, ColumnLimit: 100, SortIncludes: false}\""
 
+# gs lance ghostscript, que je n'utilise strictement jamais
+# quand je tape "gs", c'est que je me suis gouré et que je voulais taper gst :
+alias gs=gst
+
 ########################################################################################################################
 # Aliases de navigation indépendants de la machine considérée :
 ########################################################################################################################
