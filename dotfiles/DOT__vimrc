@@ -83,6 +83,10 @@ function VIM_SECTION_GENERAL()
 
     autocmd BufEnter * setlocal foldtext=CustomFoldText()
 
+    " toujours utiliser les tabs ; c'est un équivalent de "nvim -p", qui fonctionne mal avec carapace-bin
+    au VimEnter * if !&diff | tab all | tabfirst | endif
+
+
 endf  " VIM_SECTION_GENERAL
 call VIM_SECTION_GENERAL()
 
