@@ -226,9 +226,3 @@ export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
 #   pbpaste                 # moins utile = affiche le contenu du presse-papiers ; équivalent de Ctrl+Shift+V
 alias pbcopy='xsel --clipboard --input'
 alias pbpaste='xsel --clipboard --output'
-
-# 2024-02 = carapace-bin = completion :
-# cf. https://github.com/rsteube/carapace-bin
-export CARAPACE_BRIDGES='zsh,fish,bash,inshellisense' # optional
-zstyle ':completion:*' format $'\n\e[2;37m==== Completing %d\e[m'
-source <(carapace _carapace)
