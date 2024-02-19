@@ -168,6 +168,7 @@ PHASE 2 = autres actions en vrac :
 		borgbackup
 		fzf
 		p7zip-full
+		xsel
 	Si besoin, autoriser ou interdire des trucs particuliers dans la base updatedb :
 		sudo vim /etc/updatedb.conf
 		modifier PRUNEPATHS

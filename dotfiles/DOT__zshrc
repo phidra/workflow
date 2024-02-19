@@ -218,3 +218,12 @@ function j() {
 }
 
 export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
+
+# 2024-02 = copy/paste depuis le clipboard X :
+# cf. https://sweetohm.net/blog/182.html
+# nécessite : sudo apt install xsel
+# puis :
+#   pbcopy < ~/myfile.txt   # le fichier est maintenant copié dans le presse-papier
+#   pbpaste                 # moins utile = affiche le contenu du presse-papiers ; équivalent de Ctrl+Shift+V
+alias pbcopy='xsel --clipboard --input'
+alias pbpaste='xsel --clipboard --output'
