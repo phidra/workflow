@@ -92,7 +92,8 @@ call VIM_SECTION_GENERAL()
 
 
 function VIM_SECTION_TABS_AND_STATUSLINE()
-    " Barre de statut (cf. :help statusline) :
+    " Barre de statut pour vim uniquement : la statusline neovim est gérée par un plugin
+    " (cf. :help statusline) :
     if ! has("nvim")  " sous neovim, on laisse les plugins gérer la statusline
         set laststatus=2
         if has("statusline")
@@ -934,9 +935,6 @@ function NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
     vim.api.nvim_create_autocmd({"BufEnter"}, {
         pattern = {"*.otl"},
         callback = function (opts)
-
-            -- without termguicolors, lualine doesn't render properly -> OTL files do not need lualine anyway :
-            require('lualine').hide()
 
             -- see https://neovim.io/doc/user/lua-guide.html#_-vim.opt
             -- vim.opt_local: behaves like :setlocal
