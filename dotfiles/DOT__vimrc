@@ -842,7 +842,7 @@ function NEOVIM_SECTION_PLUGINS()
                 -- vimoutlinerrc :
                 --     dans mon workflow, je ne veux pas avoir à gérer un fichier de config spécifique à un plugin
                 --     (heureusement que tous les plugins vim ne font pas ça...)
-                --     mais je ne définis pas mon propre vimoutlinerrc, le plugin vimoutliner utilise un fichier par défaut
+                --     mais si je ne définis pas mon propre vimoutlinerrc, le plugin vimoutliner utilise un fichier par défaut
                 --     ce fichier par défaut contient... l'activation du smart_paste :
                 --         let g:vo_modules_load = "checkbox:tags:smart_paste"
                 --
@@ -941,6 +941,8 @@ function NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
             vim.opt_local.wrap = true
             vim.opt_local.linebreak = true
             vim.opt_local.termguicolors = false  -- if set at true by colorschemes, this messes up with my vimoutliner colors
+            vim.opt_local.foldcolumn = "0"  -- désactiver la colonne à gauche qui préfixe chaque ligne par son niveau d'indentation
+
             vim.cmd([[
                 " on part d'une base colorscheme :
                 colorscheme morning
