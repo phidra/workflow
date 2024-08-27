@@ -116,9 +116,6 @@ function VIM_SECTION_TABS_AND_STATUSLINE()
     endif  " has("nvim")
 
     " Ligne des tabs (cf. :help setting-tabline)
-    highlight UnsavedTabLine term=underline cterm=underline ctermfg=1 ctermbg=7 gui=underline guibg=LightGrey
-    highlight UnsavedTabLineSel ctermfg=1 term=bold cterm=bold gui=bold " Copie modifiée de TabLineSel
-
     function MyTabLine()
         let return_string = ''
         for fake_tab_number in range(tabpagenr('$'))
@@ -132,13 +129,13 @@ function VIM_SECTION_TABS_AND_STATUSLINE()
         " Coloration du tab courant (dépend du fait qu'il soit sélectionné, et qu'il soit modifié) :
         if tab_number == tabpagenr()
             if is_buffer_modified
-                let return_string .= '%#UnsavedTabLineSel#'
+                let return_string .= '%#DiffChange#'
             else
                 let return_string .= '%#TabLineSel#'
             endif
         else
             if is_buffer_modified
-                let return_string .= '%#UnsavedTabLine#'
+                let return_string .= '%#TermCursor#'
             else
                 let return_string .= '%#TabLine#'
             endif
@@ -152,7 +149,14 @@ function VIM_SECTION_TABS_AND_STATUSLINE()
         if empty(tab_name)
             let tab_name = "*EMPTY*"
         endif
-        let return_string .= ' ' . tab_name . ' '
+
+        if is_buffer_modified
+            " rendre les tabs modifiés *très* visibles :
+            let return_string .= '   !!!' . tab_name . '!!!   '
+        else
+            let return_string .= ' ' . tab_name . ' '
+        endif
+
         endfor
 
         " Complétion de la ligne avec TabLineFill, et reset du tab page number :
@@ -531,6 +535,16 @@ function NEOVIM_SECTION_PLUGINS()
                 -- les parsers sont installés dans :
                 --      ~/.local/share/nvim/lazy/nvim-treesitter/parser
                 -- ne pas hésiter à supprimer manuellement ceux dont je ne veux plus
+                --
+                -- EDIT 29 avril 2024 = j'avais l'erreur suivante lorsque j'ouvrais un fichier docker :
+                -- Failed to load parser for language 'dockerfile': uv_dlopen: /my/home/.local/share/nvim/lazy/nvim-treesitter/parser/dockerfile.so: undefined symbol: tree_sitter_dockerfile_external_scanner_create
+                -- "forcer" la réinstallation du parser a corrigé le problème :
+                --    1. commenter/supprimer "dockerfile" dans la liste 'ensure_installed' ci-dessous
+                --    2. ajouter "dockerfile" dans la liste 'ignore_install' ci-dessous
+                --    3. déplacer/supprimer le fichier '/my/home/.local/share/nvim/lazy/nvim-treesitter/parser/dockerfile.so'
+                --    4. commenter la config du plugin nvim-treesitter dans ~/.vimrc, puis ouvrir nvim, et faire :Lazy clean
+                --    5. faire les étapes inverses : décomemtner la config de nvim-treesitter, remettre "dockerfile" dans 'ensure_installed' + le supprimer de 'ignore_install'
+                --    6. lancer nvim + :Lazy install → il va compiler automatiquement un nouveau fichier 'dockerfile.so' (ce qui fait disparaître mon bug)
                 ensure_installed = {
                   "bash",
                   "c",
