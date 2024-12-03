@@ -610,6 +610,7 @@ function NEOVIM_SECTION_PLUGINS()
                     char = "│",
                     exclude = {
                         "markdown",
+                        "votl",
                     }
                 })
                 -- use comment color
@@ -1136,12 +1137,13 @@ function NEOVIM_SECTION_LSP_RELATED()
     require('lspconfig')['clangd'].setup{
         on_attach = on_lsp_attach,
         flags = lsp_flags,
-        cmd = { "clangd-14" },
+        cmd = { "clangd-18" },
     }
-    require('lspconfig')['tsserver'].setup{
-        on_attach = on_lsp_attach,
-        flags = lsp_flags,
-    }
+    -- 3 décembre 2024 = tsserver est deprecated ; je fixerai quand je referai du js
+    -- require('lspconfig')['tsserver'].setup{
+    --     on_attach = on_lsp_attach,
+    --     flags = lsp_flags,
+    -- }
     require('rust-tools').setup{
         server = {on_attach = on_lsp_attach},
         flags = lsp_flags,
