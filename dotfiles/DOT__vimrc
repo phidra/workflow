@@ -474,26 +474,6 @@ function NEOVIM_SECTION_PLUGINS()
             'https://github.com/tpope/vim-characterize'
         },
 
-        -- ChatGPT :
-        {
-            "https://github.com/jackMort/ChatGPT.nvim",
-            -- event = "VeryLazy",
-            config = function()
-                require("chatgpt").setup()
-            end,
-            cmd = {
-                "ChatGPT",
-                "ChatGPTActAs",
-                "ChatGPTEditWithInstructions",
-                "ChatGPTRun",
-            },
-            dependencies = {
-                "MunifTanjim/nui.nvim",
-                -- "nvim-lua/plenary.nvim",  -- already installed
-                -- "nvim-telescope/telescope.nvim"  -- already installed
-            }
-        },
-
         -- align tokens of a line according to a separator :
         {
             "https://github.com/godlygeek/tabular.git",
@@ -543,7 +523,7 @@ function NEOVIM_SECTION_PLUGINS()
                 --    2. ajouter "dockerfile" dans la liste 'ignore_install' ci-dessous
                 --    3. déplacer/supprimer le fichier '/my/home/.local/share/nvim/lazy/nvim-treesitter/parser/dockerfile.so'
                 --    4. commenter la config du plugin nvim-treesitter dans ~/.vimrc, puis ouvrir nvim, et faire :Lazy clean
-                --    5. faire les étapes inverses : décomemtner la config de nvim-treesitter, remettre "dockerfile" dans 'ensure_installed' + le supprimer de 'ignore_install'
+                --    5. faire les étapes inverses : décommenter la config de nvim-treesitter, remettre "dockerfile" dans 'ensure_installed' + le supprimer de 'ignore_install'
                 --    6. lancer nvim + :Lazy install → il va compiler automatiquement un nouveau fichier 'dockerfile.so' (ce qui fait disparaître mon bug)
                 ensure_installed = {
                   "bash",
@@ -700,32 +680,6 @@ function NEOVIM_SECTION_PLUGINS()
             "https://github.com/NoahTheDuke/vim-just",
         },
 
-        -- debugger = DAP-client :
-        {
-            "https://github.com/puremourning/vimspector",
-            keys = {
-                -- lazy-load on vimspector shortcuts (so that the 'g' shortcuts are available for other plugins) :
-                '<leader><F5>',
-                '<leader><F9>',
-                '<leader><F8>',
-            },
-            config = function()
-                -- démarrer / arrêter le débugging d'un programme :
-                vim.keymap.set('n', '<leader><F5>', '<Plug>VimspectorContinue', { noremap = true })
-                vim.keymap.set('n', '<leader><F3>', '<Plug>VimspectorStop', { noremap = true })
-                vim.keymap.set('n', '<leader><F4>', '<Plug>VimspectorRestart', { noremap = true })
-                vim.keymap.set('n', '<leader><F6>', '<Plug>VimspectorPause', { noremap = true })
-                vim.keymap.set('n', '<leader><F9>', '<Plug>VimspectorToggleBreakpoint', { noremap = true })
-                vim.keymap.set('n', '<leader><F8>', '<Plug>VimspectorRunToCursor', { noremap = true })
-                -- piloter l'avancée du programme en cours d'exécution :
-                vim.keymap.set('n', 'gn', '<Plug>VimspectorStepOver', { noremap = true })
-                vim.keymap.set('n', 'gs', '<Plug>VimspectorStepInto', { noremap = true })
-                vim.keymap.set('n', 'go', '<Plug>VimspectorStepOut', { noremap = true })
-                -- fermer la fenêtre vimspector :
-                vim.keymap.set('n', '<leader>q', ':VimspectorReset<CR>', { noremap = true })
-            end,
-        },
-
         -- outline des structures LSP du buffer courant :
         {
             "https://github.com/hedyhli/outline.nvim",
@@ -771,6 +725,18 @@ function NEOVIM_SECTION_PLUGINS()
                         component_separators = { left = '|', right = '|'},
                         section_separators = { left = '', right = ''},
                         always_divide_middle = false,
+
+                        -- ce qui suit permet d'empêcher lualine d'écraser les titres des fenêtres de nvim-dap-ui :
+                        -- cf. https://www.reddit.com/r/neovim/comments/1054k8y/mixing_lualine_and_nvimdapui/
+                        -- pour connaître l'id de fenêtre, positionner le curseur dessus, puis :echo &ft
+                        ignore_focus = {
+                          "dapui_watches",
+                          "dapui_breakpoints",
+                          "dapui_scopes",
+                          "dapui_console",
+                          "dapui_stacks",
+                          "dap-repl"
+                        },
                       },
                       sections = {
                         lualine_a = {
@@ -826,7 +792,7 @@ function NEOVIM_SECTION_PLUGINS()
                       tabline = {},
                       winbar = {},
                       inactive_winbar = {},
-                      extensions = {'quickfix', 'nvim-tree', },  -- plus tard : nvim-dap-ui ? symbols-outline ?
+                      extensions = {'quickfix', 'nvim-tree', 'lazy'},
                 }
             end,
         },
@@ -933,6 +899,128 @@ let maplocalleader = "çç"
                 require("peek").setup()
                 vim.api.nvim_create_user_command("PeekOpen", require("peek").open, {})
                 vim.api.nvim_create_user_command("PeekClose", require("peek").close, {})
+            end,
+        },
+
+        -- debugger = DAP-client :
+        {
+            "https://github.com/mfussenegger/nvim-dap",
+            dependencies = { 'nvim-telescope/telescope-dap.nvim' },  -- surtout utile pour lister les breakpoints
+            keys = {
+            	-- lazy-load on dap shortcuts (so that the 'g' shortcuts are available for other plugins) :
+                'gtb',
+                'glb',
+                '<leader><F5>',
+                '<leader><F9>',
+                '<leader><F8>',
+                '<leader>q',
+            },
+            config = function()
+                local dap = require('dap')
+                dap.adapters.lldb = {
+                    type = 'executable',
+                    command = '/usr/bin/lldb-dap-18',
+                    name = 'lldb'
+                }
+
+                -- configuration globale (sera écrasée si besoin par celle de NOGIT_launch.json)
+                dap.configurations.cpp = {
+                    {
+                        name = 'Start C++ debug session',
+                        type = 'lldb',
+                        request = 'launch',
+                        program = function()
+                            -- on passera ici s'il n'y a pas de fichier launch.json qui définit le programme à débugger :
+                            return vim.fn.input('Path to executable: ', vim.fn.getcwd() .. '/', 'file')
+                        end,
+                        cwd = '${workspaceFolder}',
+                        stopOnEntry = false,
+                        args = {},
+                    },
+                }
+
+                -- configuration per-project :
+                -- À la base, la configuration (notamment, le choix du programme à débugger) est définie en dur dans le vimrc.
+                -- MAIS comme c'est pas vraiment ce qu'on veut (notamment, le choix du programme à débugger est plutôt à faire
+                -- projet par projet), nvim-dap permet d'overwritter la config globale avec une config lue depuis le fichier
+                -- launch.json de vscode.
+                --
+                -- Dans mon setup, je le renomme en NOGIT_launch.json à la racine du projet. Exemple de contenu :
+                --  {
+                --    "version": "0.2.0",
+                --    "configurations": [
+                --      {
+                --        "type": "lldb",
+                --        "request": "launch",
+                --        "name": "Start C++ debug session",
+                --        "program": "/home/myself/myproject/builddir/mycomponent/test-of-my-app"
+                --      }
+                --    ]
+                --  }
+                --
+                -- NOTE : les champs 'type' et 'name' doivent matcher exactement avec ceux de la config globale pour les overwritter.
+                require('dap.ext.vscode').load_launchjs('NOGIT_launch.json', { lldb = {'c', 'cpp'} })
+
+                -- pour rendre les breakpoints plus visibles :
+                vim.fn.sign_define('DapBreakpoint', {text='🛑', texthl='', linehl='', numhl=''})
+
+                -- utiliser telescope pour l'UI dap :
+                require('telescope').load_extension('dap')
+            end,
+        },
+
+        -- UI pour le debugger :
+        {
+            "https://github.com/rcarriga/nvim-dap-ui",
+            dependencies = {
+                "mfussenegger/nvim-dap",
+                "nvim-neotest/nvim-nio",
+            },
+            keys = {
+            	-- lazy-load on dap shortcuts (so that the 'g' shortcuts are available for other plugins) :
+                'gtb',
+                'glb',
+                '<leader><F5>',
+                '<leader><F9>',
+                '<leader><F8>',
+                '<leader>q',
+            },
+            config = function()
+                require("dapui").setup()
+                -- démarrer / arrêter une session de debugging :
+                vim.keymap.set({'n', 'i', 'v'}, '<leader><F5>', function() require('dapui').open() require('dap').continue() end, { noremap = true })
+                vim.keymap.set({'n', 'i', 'v'}, '<leader>q', function() require('dap').terminate() require('dapui').close() end, { noremap = true })
+
+                -- gtb pour [T]oggle un [B]reakpoint  /  glb pour [L]ister les [B]reakpoints :
+                vim.keymap.set({'n', 'i', 'v'}, 'gtb', require('dap').toggle_breakpoint, { noremap = true })
+                vim.keymap.set({'n', 'i', 'v'}, 'glb', '<ESC>:Telescope dap list_breakpoints<CR>', bufopts)
+
+                -- plusieurs possibilités pour piloter l'avancée du programme en cours d'exécution,  :
+                --     mapper un raccourci à une commande de pilotage :
+                --         vim.keymap.set('n', 'gs', require('dap').step_into, { noremap = true })
+                --     utiliser l'API dap (cf. :help dat.txt) :
+                --         :lua require'dap'.step_into()
+                --     utiliser la commande raccourcie définie par dap :
+                --         :DapStepInto
+                --     cliquer sur les boutons définis par nvim-dap-ui dans la REPL
+                --     ^ c'est cette option que je retiens pour commencer.
+
+                -- HOTWO debug en résumé :
+                --    1. éditer NOGIT_launch.json pour définir le programme à débugger
+                --    2. setter des breakpoints avec gtb (les lister avec glb)
+                --    3. démarrer la session de debug avec <leader><F5>
+                --    4. naviguer dans le programme avec les boutons de la REPL UI
+                --    5. utiliser les fenêtres de nvim-dap-ui pour inspecter l'état
+                --    6. arrêter la session de debug avec <leader>q
+
+                -- HOWTO use nvim-dap-ui en résumé :
+                --    DAP Scopes = fenêtre des variables :
+                --        <CR> pour expand les variables et inspecter leur contenu
+                --    DAP Breakpoints = fenêtre des breakpoints
+                --        o pour jumper sur le breakpoint
+                --        t pour toggle le breakpoint
+                --    DAP REPL :
+                --        utiliser les boutons pour contrôler l'exécution du programme débuggé
             end,
         },
     }
