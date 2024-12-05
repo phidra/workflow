@@ -595,6 +595,7 @@ function NEOVIM_SECTION_PLUGINS()
                 })
                 -- use comment color
                 vim.cmd.highlight("default link IndentLine Comment")
+                vim.cmd.highlight("default link IndentLineCurrent WarningMsg")
             end,
         },
 
@@ -939,26 +940,6 @@ let maplocalleader = "çç"
                     },
                 }
 
-                -- configuration per-project :
-                -- À la base, la configuration (notamment, le choix du programme à débugger) est définie en dur dans le vimrc.
-                -- MAIS comme c'est pas vraiment ce qu'on veut (notamment, le choix du programme à débugger est plutôt à faire
-                -- projet par projet), nvim-dap permet d'overwritter la config globale avec une config lue depuis le fichier
-                -- launch.json de vscode.
-                --
-                -- Dans mon setup, je le renomme en NOGIT_launch.json à la racine du projet. Exemple de contenu :
-                --  {
-                --    "version": "0.2.0",
-                --    "configurations": [
-                --      {
-                --        "type": "lldb",
-                --        "request": "launch",
-                --        "name": "Start C++ debug session",
-                --        "program": "/home/myself/myproject/builddir/mycomponent/test-of-my-app"
-                --      }
-                --    ]
-                --  }
-                --
-                -- NOTE : les champs 'type' et 'name' doivent matcher exactement avec ceux de la config globale pour les overwritter.
                 require('dap.ext.vscode').load_launchjs('NOGIT_launch.json', { lldb = {'c', 'cpp'} })
 
                 -- pour rendre les breakpoints plus visibles :
@@ -995,15 +976,7 @@ let maplocalleader = "çç"
                 vim.keymap.set({'n', 'i', 'v'}, 'gtb', require('dap').toggle_breakpoint, { noremap = true })
                 vim.keymap.set({'n', 'i', 'v'}, 'glb', '<ESC>:Telescope dap list_breakpoints<CR>', bufopts)
 
-                -- plusieurs possibilités pour piloter l'avancée du programme en cours d'exécution,  :
-                --     mapper un raccourci à une commande de pilotage :
-                --         vim.keymap.set('n', 'gs', require('dap').step_into, { noremap = true })
-                --     utiliser l'API dap (cf. :help dat.txt) :
-                --         :lua require'dap'.step_into()
-                --     utiliser la commande raccourcie définie par dap :
-                --         :DapStepInto
-                --     cliquer sur les boutons définis par nvim-dap-ui dans la REPL
-                --     ^ c'est cette option que je retiens pour commencer.
+                -- globalement, il y a beaucoup de choses dans :help dap.txt (notamment la liste des commandes)
 
                 -- HOTWO debug en résumé :
                 --    1. éditer NOGIT_launch.json pour définir le programme à débugger
@@ -1013,6 +986,16 @@ let maplocalleader = "çç"
                 --    5. utiliser les fenêtres de nvim-dap-ui pour inspecter l'état
                 --    6. arrêter la session de debug avec <leader>q
 
+                -- plusieurs possibilités pour piloter l'avancée du programme en cours d'exécution,  :
+                --     1. cliquer sur les boutons définis par nvim-dap-ui dans la REPL
+                --         ^ c'est l'option que je retiens pour commencer, car ça m'évite de définir whatmille mappings...
+                --     2. mapper un raccourci à une commande de pilotage :
+                --         vim.keymap.set('n', 'gs', require('dap').step_into, { noremap = true })
+                --     3. utiliser l'API dap (cf. :help dat.txt) :
+                --         :lua require'dap'.step_into()
+                --     4. utiliser la commande raccourcie définie par dap :
+                --         :DapStepInto
+
                 -- HOWTO use nvim-dap-ui en résumé :
                 --    DAP Scopes = fenêtre des variables :
                 --        <CR> pour expand les variables et inspecter leur contenu
@@ -1021,6 +1004,38 @@ let maplocalleader = "çç"
                 --        t pour toggle le breakpoint
                 --    DAP REPL :
                 --        utiliser les boutons pour contrôler l'exécution du programme débuggé
+                --    DAP Watch :
+                --        observer le contenu de variables
+
+                -- CHOIX DU PROGRAMME À DÉBUGGER = configuration per-project :
+                -- À la base, la configuration (notamment, le choix du programme à débugger) est définie en dur dans le vimrc.
+                -- MAIS comme c'est pas *vraiment* ce qu'on veut (notamment, le choix du programme à débugger est plutôt à faire
+                -- projet par projet), nvim-dap permet d'overwritter la config globale avec une config lue depuis le fichier
+                -- launch.json de vscode.
+                -- Je l'ai renommé en NOGIT_launch.json, à la racine du projet. Exemple de contenu :
+                --  {
+                --    "version": "0.2.0",
+                --    "configurations": [
+                --      {
+                --        "type": "lldb",
+                --        "request": "launch",
+                --        "name": "Start C++ debug session",
+                --        "program": "/home/myself/myproject/builddir/mycomponent/test-of-my-app"
+                --      }
+                --    ]
+                --  }
+                -- ATTENTION : les champs 'type' et 'name' doivent matcher exactement avec ceux de la config globale .vimrc pour les overwritter.
+                -- Si le fichier est absent, la config globale sera utilisée (actuellement, elle demande en prompt le programme à débugger)
+
+                -- Trucs utiles :
+                --    centrer la vizu là où le programme est arrêté :
+                --        :lua require('dap').focus_frame()
+                --    continuer l'exécution jusqu'à la position du curseur :
+                --        :lua require('dap').run_to_cursor()
+                --        This temporarily removes all breakpoints, sets a breakpoint at the cursor,
+                --        resumes execution and then adds back all breakpoints again.
+                --    passer l'une des fenêtre de nvim-dap-ui en plein écran :
+                --        on dirait qu'on ne peut pas...
             end,
         },
     }
