@@ -155,7 +155,8 @@ prompt_virtualenv() {
 
 # 2022-07 = neovim :
 export PATH="$HOME/neovim/bin:$PATH"
-alias vim="echo '' ; echo 'UTILISER PLUTÔT NVIM !!!' ; echo '' ; sleep 1 ; nvim"
+alias vim="echo '' ; echo 'UTILISER PLUTÔT NVIM !!!' ; echo '' ; sleep 1 ; nvim -p"
+alias nvim="nvim -p"
 
 alias clang-format=clang-format-11
 
@@ -215,6 +216,7 @@ function j() {
     just "$@"
   fi
 }
+alias js="j --show"
 
 export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
 
