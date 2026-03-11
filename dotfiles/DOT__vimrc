@@ -295,9 +295,6 @@ function NEOVIM_SECTION_CODE_SETTINGS()
     vim.api.nvim_set_option('signcolumn', 'auto:1-3')
     vim.cmd.highlight({"SignColumn", "ctermbg=Grey"})
 
-    -- coloration des type-infos par rust-tools à la fin de la ligne :
-    vim.cmd.highlight({"RustToolsTypeInfo", "cterm=bold"})
-
     -- Compatibilité tmux (cf. https://sunaku.github.io/vim-256color-bce.html), qui nécessite côté tmux :
     -- set-window-option -g xterm-keys on
     -- set -g default-terminal "screen-256color"
@@ -641,9 +638,13 @@ function NEOVIM_SECTION_PLUGINS()
             "https://github.com/jose-elias-alvarez/null-ls.nvim",
         },
 
-        -- rust-tools :
+        -- rustaceanvim :
+        -- cf. aussi ceci pour migrer depuis rust-tools que j'utilisais jusqu'au 11 mars 2026 :
+        --       https://github.com/mrcjkb/rustaceanvim/discussions/122
         {
-            "https://github.com/simrat39/rust-tools.nvim",
+          'https://github.com/mrcjkb/rustaceanvim',
+          version = '^8',
+          lazy = false, -- This plugin is already lazy
         },
 
 
@@ -1226,31 +1227,42 @@ function NEOVIM_SECTION_LSP_RELATED()
       vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
       vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
       vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
+
+      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
     end  -- on_lsp_attach
 
-    require('lspconfig')['pyright'].setup{
+    vim.lsp.config.pyright = {
         on_attach = on_lsp_attach,
         flags = lsp_flags,
     }
-    require('lspconfig')['clangd'].setup{
+    vim.lsp.enable({ 'pyright' })
+
+    vim.lsp.config.clangd = {
         on_attach = on_lsp_attach,
         flags = lsp_flags,
-        cmd = { "clangd-18" },
+        cmd = { "clangd-14" },
     }
+    vim.lsp.enable({ 'clangd' })
+
     -- 3 décembre 2024 = tsserver est deprecated ; je fixerai quand je referai du js
     -- require('lspconfig')['tsserver'].setup{
     --     on_attach = on_lsp_attach,
     --     flags = lsp_flags,
     -- }
-    require('rust-tools').setup{
-        server = {on_attach = on_lsp_attach},
-        flags = lsp_flags,
-        tools = {inlay_hints = {
-            max_len_align = true,
-            highlight= "RustToolsTypeInfo",
-            }
+    vim.g.rustaceanvim = {
+        server = {
+            on_attach = on_lsp_attach,
+            flags = lsp_flags,
+        },
+        settings = {
+            ["rust-analyzer"] = {
+                inlayHints = {
+                    maxLength = 80,
+                },
+            },
         },
     }
+
     -- null-lsp :
     local null_ls = require("null-ls")
     local sources = {
