@@ -112,6 +112,9 @@ function VIM_SECTION_TABS_AND_STATUSLINE()
     endif  " has("nvim")
 
     " Ligne des tabs (cf. :help setting-tabline)
+    highlight UnsavedTabLine term=underline cterm=underline ctermfg=1 ctermbg=7 gui=underline guibg=LightGrey
+    highlight UnsavedTabLineSel ctermfg=1 term=bold cterm=bold gui=bold " Copie modifiée de TabLineSel
+
     function MyTabLine()
         let return_string = ''
         for fake_tab_number in range(tabpagenr('$'))
@@ -125,13 +128,13 @@ function VIM_SECTION_TABS_AND_STATUSLINE()
         " Coloration du tab courant (dépend du fait qu'il soit sélectionné, et qu'il soit modifié) :
         if tab_number == tabpagenr()
             if is_buffer_modified
-                let return_string .= '%#DiffChange#'
+                let return_string .= '%#UnsavedTabLineSel#'
             else
                 let return_string .= '%#TabLineSel#'
             endif
         else
             if is_buffer_modified
-                let return_string .= '%#TermCursor#'
+                let return_string .= '%#UnsavedTabLine#'
             else
                 let return_string .= '%#TabLine#'
             endif
@@ -506,7 +509,7 @@ function NEOVIM_SECTION_PLUGINS()
               require("nvim-treesitter.install").update({ with_sync = true })()
             end,
             config = function ()
-              local configs = require("nvim-treesitter.configs")
+              local configs = require("nvim-treesitter.config")
               configs.setup({
                 -- les parsers sont installés dans :
                 --      ~/.local/share/nvim/lazy/nvim-treesitter/parser
@@ -657,6 +660,9 @@ function NEOVIM_SECTION_PLUGINS()
                     file_types = {'python', 'cpp', 'rust'},
                     hlgroup = 'TabLine',
                     insert_mode = false,
+                    animate = {
+                        enabled = false,
+                    },
                 })
             end
         },
