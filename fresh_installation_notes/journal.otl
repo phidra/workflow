@@ -262,14 +262,23 @@ PHASE 2 = autres actions en vrac :
 		sudo apt install fonts-liberation ttf-mscorefonts-installer ttf-anonymous-pro fonts-inconsolata
 		EDIT : en fait, il s'agit plutôt de :
 			sudo apt install fonts-powerline
-	À faire graphiquement :
-		firefox :
-			Toujours demander où enregistrer les téléchargements.
-			about:preferences#home
-				choisir "Page vide" partout
-			Toujours visualiser le préfixe HTTP(S) dans les URLs :
-				about:config
-				browser.urlbar.trimURLs -> mettre à false
+	Configurer firefox via about:config :
+		Toujours demander où enregistrer les téléchargements :
+			browser.download.useDownloadDir = false
+		Ouvrir des pages vides :
+			browser.newtabpage.enabled = false
+			browser.startup.homepage = about:blank
+			browser.startup.page = 0
+		Toujours visualiser le préfixe HTTP(S) dans les URLs :
+			browser.urlbar.trimURLs =false
+		L'autocomplétion dans la barre d'URL doit chercher uniquement dans mon historique et dans les onglets ouverts :
+			browser.urlbar.suggest.history	true
+			browser.urlbar.suggest.openpage	true
+			browser.urlbar.suggest.bookmark	false
+			browser.urlbar.suggest.searches	false
+			browser.search.suggest.enabled	false
+			browser.urlbar.quicksuggest.enabled
+			browser.urlbar.showSearchSuggestionsFirst	false
 		clavier :
 			La configuration de la répétition des touches au clavier est dans le menu "Accessibilité" des paramètres.
 			Il faut cliquer sur "Touches de répétition" pour accéder à l'IHM (ça n'est pas qu'un booléen).
