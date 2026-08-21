@@ -416,7 +416,7 @@ function NEOVIM_SECTION_PLUGINS()
         -- TELESCOPE = fuzzy finder of... things (files, tags, LSP symbols, git commits, etc.)
         {
             'https://github.com/nvim-telescope/telescope.nvim',
-            tag = '0.1.4',
+            tag = 'v0.2.2',
             dependencies = { 'nvim-lua/plenary.nvim' },
             config= function()
               require('telescope').setup{
