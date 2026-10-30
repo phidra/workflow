@@ -117,55 +117,40 @@ function VIM_SECTION_TABS_AND_STATUSLINE()
 
     function MyTabLine()
         let return_string = ''
-        for fake_tab_number in range(tabpagenr('$'))
-        " Initialisation des variables :
-        let tab_number = fake_tab_number + 1
-        let buflist = tabpagebuflist(tab_number)
-        let win_number = tabpagewinnr(tab_number)
-        let buffer_number = buflist[win_number - 1]
-        let is_buffer_modified = getbufvar(buffer_number, "&modified")
+        for tab_number in range(1, tabpagenr('$'))
+            " Initialisation des variables :
+            let buflist = tabpagebuflist(tab_number)
+            let win_number = tabpagewinnr(tab_number)
+            let buffer_number = buflist[win_number - 1]
+            let is_buffer_modified = getbufvar(buffer_number, "&modified")
 
-        " Coloration du tab courant (dépend du fait qu'il soit sélectionné, et qu'il soit modifié) :
-        if tab_number == tabpagenr()
-            if is_buffer_modified
-                let return_string .= '%#UnsavedTabLineSel#'
+            " Coloration du tab courant :
+            if tab_number == tabpagenr()
+                let return_string .= '%#Search#'
             else
-                let return_string .= '%#TabLineSel#'
+                let return_string .= '%#TermCursor#'
             endif
-        else
-            if is_buffer_modified
-                let return_string .= '%#UnsavedTabLine#'
-            else
-                let return_string .= '%#TabLine#'
+
+            " Numéro de l'onglet (pour les clics de souris) :
+            let return_string .= '%' . tab_number . 'T'
+
+            " Le titre du tab courant est le nom court du buffer :
+            let tab_name = fnamemodify(bufname(buffer_number), ":t")
+            if empty(tab_name)
+                let tab_name = "*EMPTY*"
             endif
-        endif
 
-        " Numéro de l'onglet (pour les clics de souris) :
-        let return_string .= '%' . tab_number . 'T'
-
-        " Le titre du tab courant est le nom court du buffer :
-        let tab_name = fnamemodify(bufname(buffer_number), ":t")
-        if empty(tab_name)
-            let tab_name = "*EMPTY*"
-        endif
-
-        if is_buffer_modified
             " rendre les tabs modifiés *très* visibles :
-            let return_string .= '   !!!' . tab_name . '!!!   '
-        else
-            let return_string .= ' ' . tab_name . ' '
-        endif
+            if is_buffer_modified
+                let return_string .= '   !!!' . tab_name . '!!!   '
+            else
+                let return_string .= ' ' . tab_name . ' '
+            endif
 
         endfor
 
         " Complétion de la ligne avec TabLineFill, et reset du tab page number :
         let return_string .= '%#TabLineFill#%T'
-
-        " Ajout du symbole de fermeture, aligné à droite :
-        let close_symbol = 'X'
-        if tabpagenr('$') > 1
-            let return_string .= '%=%#TabLine#%999X' . close_symbol
-        endif
 
         return return_string
     endfunction
@@ -635,7 +620,7 @@ function NEOVIM_SECTION_PLUGINS()
 
         -- running generic tools as LSP servers
         {
-            "https://github.com/jose-elias-alvarez/null-ls.nvim",
+            "https://github.com/nvimtools/none-ls.nvim",
         },
 
         -- rustaceanvim :
@@ -1136,6 +1121,74 @@ function NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
             vim.cmd.highlight({"NonText", "NONE"})
         end,
     })
+
+    -- fonction pour passer d'une liste OTL à une liste à puces markdown :
+    local function tabs_to_markdown_bullets(first_line, last_line)
+      local lines = vim.api.nvim_buf_get_lines(0, first_line - 1, last_line, false)
+      local result = {}
+
+      for i, line in ipairs(lines) do
+        -- Préserve les lignes vides
+        if line:match("%S") then
+          -- Récupère exclusivement les tabulations initiales
+          local tabs, content = line:match("^(\t*)(.*)$")
+          local depth = #tabs
+
+          -- Chaque tabulation devient 4 espaces, suivis d'une puce
+          result[i] = string.rep("    ", depth) .. "- " .. content
+        else
+          result[i] = line
+        end
+      end
+
+      vim.api.nvim_buf_set_lines(0, first_line - 1, last_line, false, result)
+    end
+
+    vim.api.nvim_create_user_command("TabsToMarkdownList", function(opts)
+      tabs_to_markdown_bullets(opts.line1, opts.line2)
+    end, {
+      range = true,
+      desc = "Convert leading tabs into nested Markdown bullets",
+    })
+
+    -- Insertion de la date courante en français sur une nouvelle ligne au-dessus du curseur
+    local function get_french_date()
+      local days = { "dimanche", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi" }
+      local months = {
+        "janvier", "février", "mars", "avril", "mai", "juin",
+        "juillet", "août", "septembre", "octobre", "novembre", "décembre"
+      }
+      local t = os.date("*t")
+      return string.format("%s %d %s %d", days[t.wday], t.day, months[t.month], t.year)
+    end
+
+    local function insert_date_above()
+      local cursor = vim.api.nvim_win_get_cursor(0)
+      local current_line = cursor[1]
+      local date_line = get_french_date()
+      vim.api.nvim_buf_set_lines(0, current_line - 1, current_line - 1, false, { date_line })
+      vim.api.nvim_win_set_cursor(0, { current_line + 1, cursor[2] })
+    end
+
+    vim.api.nvim_create_autocmd({"FileType"}, {
+      pattern = {"votl"},
+      callback = function(args)
+        local keymap_opts = { noremap = true, silent = true, buffer = args.buf }
+        vim.keymap.set('n', 'ççd', insert_date_above, keymap_opts)
+        vim.keymap.set('i', 'ççd', function()
+          insert_date_above()
+        end, keymap_opts)
+        vim.keymap.set({'v', 's'}, 'ççd', function()
+          local esc = vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+          vim.api.nvim_feedkeys(esc, 'n', false)
+          vim.schedule(function()
+            insert_date_above()
+          end)
+        end, keymap_opts)
+      end,
+    })
+
+
 end -- NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF
 NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
 
@@ -1143,6 +1196,20 @@ NEOVIM_SECTION_VIMOUTLINER_AND_VIMDIFF()
 function NEOVIM_SECTION_LSP_RELATED()
     -- See `:help vim.diagnostic.*` for documentation on any of the below functions
 
+
+    vim.diagnostic.config({
+      virtual_text = true,
+      underline = true,
+      signs = true,
+      update_in_insert = false,
+      severity_sort = true,
+      float = { border = "rounded", source = "if_many" },
+    })
+
+    vim.cmd("hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red")
+    vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
+    vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
+    vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
 
     -- Use an on_attach function to only map the following keys
     -- after the language server attaches to the current buffer
@@ -1154,121 +1221,105 @@ function NEOVIM_SECTION_LSP_RELATED()
         vim.api.nvim_set_hl(0, group, {})
       end
 
-      -- Enable completion triggered by <c-x><c-o> :
-      vim.api.nvim_buf_set_option(bufnr, 'omnifunc', 'v:lua.vim.lsp.omnifunc')
-      -- fermer la preview window une fois qu'on a choisi l'automplétion :
-      vim.api.nvim_create_autocmd({"CompleteDone"}, { callback = function() vim.cmd.pclose() end})
-
-      -- Mappings.
-      -- See `:help vim.lsp.*` for documentation on any of the below functions
-      local bufopts = { noremap=true, silent=true, buffer=bufnr }
-
-      -- naviguer entre les erreurs LSP :
-      vim.keymap.set('n', '<A-k>', vim.diagnostic.goto_prev, { noremap=true, silent=true})
-      vim.keymap.set('n', '<A-j>', vim.diagnostic.goto_next, { noremap=true, silent=true})
-
-      -- native LSP-client :
-      vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.definition, bufopts)  -- F12 = go to definition in the same tab
-      vim.keymap.set({'n', 'i', 'v'}, 'g<F12>', '<ESC><cmd>tab split<CR><cmd>lua vim.lsp.buf.definition()<CR>', bufopts)  -- g-F12 = go to definition in a new tab
-      vim.keymap.set({'n', 'v'}, 'gh', vim.lsp.buf.hover, bufopts)
-      vim.keymap.set({'n', 'v'}, 'gb', vim.lsp.buf.code_action, bufopts)  -- "gb" car le C (pour [C]ode-actions) et le A (pour code-[A]ctions) sont déjà pris...
-      vim.keymap.set('n', '==', vim.lsp.buf.format, bufopts)
-      vim.keymap.set('v', '=', vim.lsp.buf.format, bufopts)  -- range format
-
-      -- telescope + LSP = <3
-      vim.keymap.set({'n', 'i', 'v'}, '<C-A-t>', require('telescope.builtin').lsp_dynamic_workspace_symbols, bufopts)
-      -- to make S-Fxx work in neovim, I have to use Fyy where yy = xx + 12 :
-      vim.keymap.set({'n', 'i', 'v'}, '<F24>', function() require('telescope.builtin').lsp_references({path_display={"tail"}}) end, bufopts)  -- S-F12 = who uses this symbol ?
-
-
-      -- NdM : rename = besoin suffisamment rare pour ne pas ajouter de mapping :
-      -- un alias me permet de compléter la commande plus facilement (il va demander le nouveau nom) :
-      --
-      --      :lua lsp_rename()
-      --
-      -- attention : des buffers peuvent être modifiés par le renommage sans être directement visibles !
-      -- contournement 1 = les consulter (:Telescope buffers)
-      -- contournement 2 = tout enregistrer avec :wa (= :writeall)
-      lsp_rename = vim.lsp.buf.rename
-
-      -- NdM : moins utile que 'definition' :
-      -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.declaration, bufopts)
-
-      -- NdM : non-pris en charge par clangd et/ou pyright :
-      -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.type_definition, bufopts)
-      -- vim.keymap.set({'n', 'i', 'v'}, '<F12>', vim.lsp.buf.implementation, bufopts)
-
-      -- toggling diagnostics (there is no native function for that) :
-      -- inspired by https://www.reddit.com/r/neovim/comments/ng0dj0/lsp_diagnostics_query_is_there_an_way_to_toggle/
-      vim.g.diagnostics_active = true
-      function _G.toggle_diagnostics()
-        if vim.g.diagnostics_active then
-          print('disabling diagnostics...')
-          vim.g.diagnostics_active = false
-          vim.diagnostic.disable()
-        else
-          print('enabling diagnostics...')
-          vim.g.diagnostics_active = true
-          vim.diagnostic.enable()
-        end
+      local map = function(mode, lhs, rhs)
+        vim.keymap.set(mode, lhs, rhs, { buffer = bufnr, silent = true })
       end
-      -- gt sert normalement à switcher de tab, mais je n'utilise pas -> g[T]oggle :
-      vim.keymap.set({'n', 'v'}, 'gt', _G.toggle_diagnostics, bufopts)
 
-      -- Je préfère ces couleurs pour les diagnostics LSP :
-      -- :hi pour voir les highlights actuels (avec exemples)
-      -- pour info, valeurs par défaut :
-      -- DiagnosticError xxx ctermfg=1 guifg=Red
-      -- DiagnosticWarn xxx ctermfg=3 guifg=Orange
-      -- DiagnosticInfo xxx ctermfg=4 guifg=LightBlue
-      -- DiagnosticHint xxx ctermfg=7 guifg=LightGrey
-      -- NDM : vim.cmd() permet de passer des commandes vimscript
-      vim.cmd("hi DiagnosticError cterm=underline,bold ctermfg=1 gui=bold guifg=Red")
-      vim.cmd("hi DiagnosticWarn  cterm=underline,bold ctermfg=3 gui=bold guifg=Orange")
-      vim.cmd("hi DiagnosticInfo  cterm=underline,bold ctermfg=4 gui=bold guifg=LightBlue")
-      vim.cmd("hi DiagnosticHint  cterm=underline,bold ctermfg=0 gui=bold guifg=Black")
+      map("n", "<A-k>", vim.diagnostic.goto_prev)
+      map("n", "<A-j>", vim.diagnostic.goto_next)
 
-      vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
-    end  -- on_lsp_attach
+      map({ "n", "i", "v" }, "<F12>", vim.lsp.buf.definition)
+      map({ "n", "i", "v" }, "g<F12>", function()
+        vim.cmd("tab split")
+        vim.lsp.buf.definition()
+      end)
 
-    vim.lsp.config.pyright = {
-        on_attach = on_lsp_attach,
-        flags = lsp_flags,
-    }
-    vim.lsp.enable({ 'pyright' })
+      map({ "n", "v" }, "gh", vim.lsp.buf.hover)
+      map({ "n", "v" }, "gb", vim.lsp.buf.code_action)
 
-    vim.lsp.config.clangd = {
-        on_attach = on_lsp_attach,
-        flags = lsp_flags,
-        cmd = { "clangd-14" },
-    }
-    vim.lsp.enable({ 'clangd' })
+      map({ "n", "i", "v" }, "<C-A-t>", require("telescope.builtin").lsp_dynamic_workspace_symbols)
+      map({ "n", "i", "v" }, "<F24>", function()
+        require("telescope.builtin").lsp_references({ path_display = { "tail" } })
+      end)
 
-    -- 3 décembre 2024 = tsserver est deprecated ; je fixerai quand je referai du js
-    -- require('lspconfig')['tsserver'].setup{
-    --     on_attach = on_lsp_attach,
-    --     flags = lsp_flags,
-    -- }
+      _G.lsp_rename = vim.lsp.buf.rename
+
+      local diagnostics_active = true
+      map({ "n", "v" }, "gt", function()
+        diagnostics_active = not diagnostics_active
+        if diagnostics_active then
+          vim.diagnostic.enable(bufnr)
+          print("enabling diagnostics...")
+        else
+          vim.diagnostic.disable(bufnr)
+          print("disabling diagnostics...")
+        end
+      end)
+
+      if client:supports_method("textDocument/inlayHint") then
+        vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+      end
+    end
+
+    vim.lsp.config("basedpyright", {
+      filetypes = { "python" },
+      on_attach = on_lsp_attach,
+      settings = {
+        basedpyright = {
+          analysis = {
+            typeCheckingMode = "standard",
+            diagnosticMode = "workspace",
+            autoSearchPaths = true,
+            useLibraryCodeForTypes = true,
+          },
+        },
+      },
+    })
+
+    vim.lsp.config("ruff", {
+      filetypes = { "python" },
+      on_attach = on_lsp_attach,
+    })
+
+    vim.lsp.config("clangd", {
+      filetypes = { "c", "cpp", "objc", "objcpp", "cuda" },
+      on_attach = on_lsp_attach,
+      cmd = { "clangd" }, -- remplace par { "clangd-14" } si nécessaire
+    })
+
+    vim.lsp.config("ts_ls", {
+      filetypes = {
+        "javascript",
+        "javascriptreact",
+        "javascript.jsx",
+        "typescript",
+        "typescriptreact",
+        "typescript.tsx",
+      },
+      on_attach = on_lsp_attach,
+    })
+
+    vim.lsp.enable({
+      "basedpyright",
+      "ruff",
+      "clangd",
+      "ts_ls",
+    })
+
     vim.g.rustaceanvim = {
-        server = {
-            on_attach = on_lsp_attach,
-            flags = lsp_flags,
+      server = {
+        on_attach = on_lsp_attach,
+      },
+      settings = {
+        ["rust-analyzer"] = {
+          inlayHints = {
+            maxLength = 80,
+          },
         },
-        settings = {
-            ["rust-analyzer"] = {
-                inlayHints = {
-                    maxLength = 80,
-                },
-            },
-        },
+      },
     }
 
-    -- null-lsp :
-    local null_ls = require("null-ls")
-    local sources = {
-        null_ls.builtins.diagnostics.flake8.with({extra_args = {"--max-line-length","120"}}),
-    }
-    null_ls.setup({ sources = sources })
+
 end -- NEOVIM_SECTION_LSP_RELATED
 NEOVIM_SECTION_LSP_RELATED()
 
