@@ -1,0 +1,74 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "plan",
+
+// NOTES au 30 octobre 2026 :
+//
+// Deux providers possibles :
+//
+// - opencode-go (qui ne propose que des modèles payants)
+//     liste des modèles ici = https://opencode.ai/go
+//     monthly usage et requêtes décrites ici = https://opencode.ai/go
+// - opencode-console (qui propose aussi des modèles gratuits)
+//     liste des modèles ici = https://dev.opencode.ai/v2/docs/console/models
+//
+//
+// Connexion à opencode console :
+//     /connect
+//     Choisir OpenCode Console
+//     Choisir "OpenCode Console Account"
+//     Il propose une URL à ouvrir (nécessitant de me connecter à l'IHM web opencode) pour autoriser l'accès.
+//
+//
+// Fonctionnement du quota opencode go :
+//     il y a un quota mensuel ("allowance")
+//     il y a des sous-quotas plus petits, calculés à partir du quota mensuel :
+//         20% of the monthly allowance per 5 hours, 50% per week, and 100% per month
+//     ATTENTION : la limite est indépendante du modèle :
+//         une fois que j'ai atteint une limite opencode go (peu importe laquelle : 5h, weekly, monthly), je ne peux plus utiliser AUCUN modèle opencode go
+//         (mais je peux switcher sur un modèle gratuit opencode console)
+//         SOURCE = https://github.com/anomalyco/opencode/issues/54875#issuecomment-6131426566
+//             All paid models in OpenCode Go draw from one shared allowance, with model-specific weighting. The allowances aren't separate for each model.
+//     ATTENTION : dans la liste des modèles, le nombre de requêtes (indicatif de toutes façons) est le nombre MENSUEL : pour les 5h, il faut diviser par 5 !
+//     On peut surveiller sa consommation en se connectant à son compte (onglet "Go") :
+//         https://opencode.ai/console/login
+  "agent": {
+    // choix des modèles recommandés par ChatGPT le 30 octobre 2026 :
+    "plan": {
+      // modèles opencode-go :
+      // "model": "opencode-go/kimi-k3"  // bien mais cher
+      // "model": "opencode-go/qwen3.8-max"  // bien mais cher
+      "model": "opencode-go/qwen3.8-flash"  // moins cher
+      // "model": "opencode-go/glm-5.3-flash"
+
+      // modèles opencode-console gratuit (à date de rédaction) :
+      // "model": "opencode/deepseek-v4.1-flash-free"
+    },
+    "build": {
+      // modèles opencode-go :
+      // "model": "opencode-go/kimi-k2.7-code"
+      // "model": "opencode-go/glm-5.3"
+      "model": "opencode-go/mimo-v2.6-pro"
+      // "model": "opencode-go/minimax-m2.7"
+
+      // modèles opencode-console gratuit (à date de rédaction) :
+      // "model": "opencode/glm-5.3-flash-free"
+    },
+    "explore": {
+      // modèles opencode-go :
+      "model": "opencode-go/mimo-v2.6-flash"
+      // "model": "opencode-go/deepseek-v4.1-flash"
+
+      // modèles opencode-console gratuit (à date de rédaction) :
+      // "model": "opencode/mimo-v2.6-flash-free"
+    },
+    "general": {
+      // modèles opencode-go :
+      "model": "opencode-go/glm-5.3"
+      // "model": "opencode-go/deepseek-v4.1-flash"
+
+      // modèles opencode-console gratuit (à date de rédaction) :
+      // "model": "opencode/deepseek-v4.1-flash-free"
+    }
+  }
+}
