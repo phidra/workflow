@@ -212,9 +212,10 @@ function tmux-smart-new-session()
     tmux new-session -d -s "$SESSION_NAME" || return 40
 
     # setting windows :
-    tmux rename-window -t "$SESSION_NAME:0" "EDIT"
-    tmux new-window -t "$SESSION_NAME:1" -n "TERMINAL"
-    tmux new-window -t "$SESSION_NAME:2" -n "TERMINALBIS"
+    tmux rename-window -t "$SESSION_NAME:0" "AI"
+    tmux rename-window -t "$SESSION_NAME:1" "EDIT"
+    tmux new-window -t "$SESSION_NAME:2" -n "TERMINAL"
+    tmux new-window -t "$SESSION_NAME:3" -n "TERMINALBIS"
 
     tmux attach-session -t "$SESSION_NAME:0"
 }
