@@ -21,12 +21,22 @@ alias gojour="cd ${projects}/JournauxDeSuivi"
 #################################################################################
 
 export DATA="/media/DATA"
+
 alias godata="cd ${DATA}"
 alias god="godata"
+
 alias goesp="cd ${DATA}/Events/2026_08_12_ESPAGNE_ECLIPSE"
 alias goe="goesp"
+
 alias gobackup="cd ${DATA}/Backups/pixel8"
 alias gob="gobackup"
+
+alias gonasdocker="cd /media/nas-docker/"
+alias gond="gonasdocker"
+alias gonasexchange="cd /media/nas-exchange/"
+alias gone="gonasexchange"
+alias gonasprivate="cd /media/nas-private/"
+alias gonp="gonasprivate"
 
 # À moins qu'on ait ouvert le terminal sur une localisation spéciale (dans ce cas, le pwd n'est pas HOME), on va directement dans DATA :
 [ "$(pwd)" = "${HOME}" ] && cd "${DATA}"
