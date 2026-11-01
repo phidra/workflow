@@ -33,10 +33,14 @@
 //     On peut surveiller sa consommation en se connectant à son compte (onglet "Go") :
 //         https://opencode.ai/console/login
   "agent": {
+    // REMARQUE : pour lister les modèles :
+    //    opencode models
+    //
     // choix des modèles recommandés par ChatGPT le 30 octobre 2026 :
     "plan": {
       // modèles opencode-go :
       // "model": "opencode-go/kimi-k3"  // bien mais cher
+      // "model": "opencode-go/kimi-k3.1-pro"  // bien mais cher
       // "model": "opencode-go/qwen3.8-max"  // bien mais cher
       "model": "opencode-go/qwen3.8-flash"  // moins cher
       // "model": "opencode-go/glm-5.3-flash"
